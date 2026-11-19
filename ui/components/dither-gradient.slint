@@ -7,8 +7,8 @@ export component DitherGradient inherits Rectangle {
     in property <float> to: 1;
     in property <DitherMatrix> matrix: DitherMatrix.bayer4;
     in property <length> cell: 3px;
-    in property <color> ink: DitherTheme.foreground;
-    in property <color> paper: DitherTheme.background;
+    in property <[color]> palette: [DitherTheme.background, DitherTheme.foreground];
+    in property <int> levels;
 
     property <length> snapped-cell: max(1phx, round(root.cell / 1phx) * 1phx);
     property <int> columns: Math.ceil(root.width / root.snapped-cell);
@@ -23,7 +23,7 @@ export component DitherGradient inherits Rectangle {
         height: root.rows * root.snapped-cell;
         image-fit: fill;
         image-rendering: pixelated;
-        source: DitherEngine.linear-gradient(root.columns, root.rows, root.angle / 1deg, root.from, root.to, root.matrix, root.ink, root.paper);
+        source: DitherEngine.linear-gradient(root.columns, root.rows, root.angle / 1deg, root.from, root.to, root.matrix, root.palette, root.levels);
     }
 
     @children

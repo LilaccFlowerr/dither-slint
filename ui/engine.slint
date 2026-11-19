@@ -15,11 +15,11 @@ export enum DitherPress { ripple, burst, flash, pulse, glitch, none }
 export enum DitherIdle { none, shimmer, breathe, twinkle }
 
 export global DitherEngine {
-    pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, ink: color, paper: color) -> image;
+    pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, palette: [color], levels: int) -> image;
     pure callback fill(columns: int, rows: int, fill: DitherFill, edge: DitherEdge, length: float, from: float, to: float, matrix: DitherMatrix, color: color, frame: bool) -> image;
-    pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, ink: color, paper: color) -> image;
+    pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;
     pure callback mix(base: color, other: color, amount: float) -> color;
-    pure callback hover(kind: DitherHover, columns: int, rows: int, t: float, x: float, y: float, level: float, strength: float, color: color) -> image;
-    pure callback press(kind: DitherPress, columns: int, rows: int, t: float, x: float, y: float, seed: int, strength: float, color: color) -> image;
-    pure callback idle(kind: DitherIdle, columns: int, rows: int, t: float, strength: float, color: color, cell: float) -> image;
+    pure callback hover(kind: DitherHover, columns: int, rows: int, t: float, x: float, y: float, level: float, strength: float, color: color, matrix: DitherMatrix) -> image;
+    pure callback press(kind: DitherPress, columns: int, rows: int, t: float, x: float, y: float, seed: int, strength: float, color: color, matrix: DitherMatrix) -> image;
+    pure callback idle(kind: DitherIdle, columns: int, rows: int, t: float, strength: float, color: color, cell: float, matrix: DitherMatrix) -> image;
 }

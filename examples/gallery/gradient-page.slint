@@ -1,4 +1,4 @@
-import { DitherGradient, DitherMatrix, DitherTheme } from "../../ui/lib.slint";
+import { DitherGradient, DitherMatrix, DitherPalette, DitherTheme } from "../../ui/lib.slint";
 
 export component GradientPage inherits VerticalLayout {
     padding: 24px;
@@ -14,6 +14,26 @@ export component GradientPage inherits VerticalLayout {
         DitherGradient {
             angle: 90deg;
             matrix: matrix;
+            height: 72px;
+        }
+    }
+
+    VerticalLayout {
+        spacing: 6px;
+        Text { text: "palette"; color: DitherTheme.foreground; }
+        DitherGradient {
+            angle: 90deg;
+            palette: [DitherTheme.background, DitherPalette.blue, DitherPalette.green, DitherPalette.orange, DitherTheme.foreground];
+            height: 72px;
+        }
+    }
+
+    VerticalLayout {
+        spacing: 6px;
+        Text { text: "levels: 4"; color: DitherTheme.foreground; }
+        DitherGradient {
+            angle: 90deg;
+            levels: 4;
             height: 72px;
         }
     }

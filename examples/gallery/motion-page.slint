@@ -1,5 +1,5 @@
-import { Slider } from "std-widgets.slint";
-import { DitherFx, DitherHover, DitherIdle, DitherMotion, DitherPress, DitherTheme } from "../../ui/lib.slint";
+import { ComboBox, Slider } from "std-widgets.slint";
+import { DitherFx, DitherHover, DitherIdle, DitherMatrix, DitherMotion, DitherPress, DitherTheme } from "../../ui/lib.slint";
 
 component FxBox inherits Rectangle {
     in property <string> label;
@@ -63,6 +63,15 @@ export component MotionPage inherits VerticalLayout {
         Slider { value <=> DitherMotion.speed; minimum: 0.25; maximum: 3; }
         Text { text: "intensity"; color: DitherTheme.foreground; vertical-alignment: center; }
         Slider { value <=> DitherMotion.intensity; minimum: 0; maximum: 1.5; }
+        ComboBox {
+            model: ["bayer 2", "bayer 4", "bayer 8", "blue noise"];
+            current-index: 1;
+            selected(name) => {
+                DitherMotion.matrix = name == "bayer 2" ? DitherMatrix.bayer2
+                    : name == "bayer 8" ? DitherMatrix.bayer8
+                    : name == "blue noise" ? DitherMatrix.blue-noise : DitherMatrix.bayer4;
+            }
+        }
     }
 
     Heading { text: "Hover"; }

@@ -15,7 +15,7 @@ pub use slint;
 #[macro_export]
 macro_rules! install {
     ($component:expr) => {{
-        use $crate::slint::ComponentHandle as _;
+        use $crate::slint::{ComponentHandle as _, Model as _};
         use $crate::style::{FillEdge, FillVariant};
 
         fn matrix(matrix: DitherMatrix) -> $crate::Matrix {
@@ -28,8 +28,8 @@ macro_rules! install {
         }
 
         let engine = $component.global::<DitherEngine>();
-        engine.on_linear_gradient(|columns, rows, angle, from, to, kind, ink, paper| {
-            let options = $crate::render::GradientOptions { angle, from, to, matrix: matrix(kind), ink, paper };
+        engine.on_linear_gradient(|columns, rows, angle, from, to, kind, palette, levels| {
+            let options = $crate::render::GradientOptions { angle, from, to, matrix: matrix(kind), palette: palette.iter().collect(), levels: levels.max(0) as u32 };
             $crate::render::linear_gradient(columns.max(0) as u32, rows.max(0) as u32, &options)
         });
         engine.on_fill(|columns, rows, variant, edge, length, from, to, kind, color, frame| {
@@ -48,7 +48,7 @@ macro_rules! install {
             let options = $crate::render::FillOptions { variant, edge, length, from, to, matrix: matrix(kind), color, frame };
             $crate::render::fill(columns.max(0) as u32, rows.max(0) as u32, &options)
         });
-        engine.on_picture(|source, columns, rows, method, threshold, ink, paper| {
+        engine.on_picture(|source, columns, rows, method, threshold, palette| {
             use $crate::diffuse::Method;
             let method = match method {
                 DitherMethod::Bayer4 => Method::Bayer4,
@@ -58,11 +58,11 @@ macro_rules! install {
                 DitherMethod::Atkinson => Method::Atkinson,
                 DitherMethod::SierraLite => Method::SierraLite,
             };
-            let options = $crate::render::PictureOptions { method, threshold, ink, paper };
+            let options = $crate::render::PictureOptions { method, threshold, palette: palette.iter().collect() };
             $crate::render::picture(&source, columns.max(0) as u32, rows.max(0) as u32, &options)
         });
         engine.on_mix($crate::render::mix);
-        engine.on_hover(|kind, columns, rows, t, x, y, level, strength, color| {
+        engine.on_hover(|kind, columns, rows, t, x, y, level, strength, color, pattern| {
             use $crate::lively::Hover;
             let kind = match kind {
                 DitherHover::Sweep => Hover::Sweep,
@@ -73,10 +73,10 @@ macro_rules! install {
                 DitherHover::Noise => Hover::Noise,
                 DitherHover::None => Hover::None,
             };
-            let layer = $crate::lively::Layer::new(columns, rows, strength, color);
+            let layer = $crate::lively::Layer::new(columns, rows, strength, color, matrix(pattern));
             $crate::lively::hover(kind, &layer, t, (x, y), level)
         });
-        engine.on_press(|kind, columns, rows, t, x, y, seed, strength, color| {
+        engine.on_press(|kind, columns, rows, t, x, y, seed, strength, color, pattern| {
             use $crate::lively::Press;
             let kind = match kind {
                 DitherPress::Ripple => Press::Ripple,
@@ -86,10 +86,10 @@ macro_rules! install {
                 DitherPress::Glitch => Press::Glitch,
                 DitherPress::None => Press::None,
             };
-            let layer = $crate::lively::Layer::new(columns, rows, strength, color);
+            let layer = $crate::lively::Layer::new(columns, rows, strength, color, matrix(pattern));
             $crate::lively::press(kind, &layer, t, (x, y), seed)
         });
-        engine.on_idle(|kind, columns, rows, t, strength, color, cell| {
+        engine.on_idle(|kind, columns, rows, t, strength, color, cell, pattern| {
             use $crate::lively::Idle;
             let kind = match kind {
                 DitherIdle::None => Idle::None,
@@ -97,7 +97,7 @@ macro_rules! install {
                 DitherIdle::Breathe => Idle::Breathe,
                 DitherIdle::Twinkle => Idle::Twinkle,
             };
-            let layer = $crate::lively::Layer::new(columns, rows, strength, color);
+            let layer = $crate::lively::Layer::new(columns, rows, strength, color, matrix(pattern));
             $crate::lively::idle(kind, &layer, t, cell)
         });
     }};

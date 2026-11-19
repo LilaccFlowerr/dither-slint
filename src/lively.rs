@@ -7,33 +7,35 @@ fn ease_out(t: f32) -> f32 {
     1.0 - (1.0 - t).powi(3)
 }
 
-fn draw(columns: u32, rows: u32, color: Color, tone: impl Fn(f32, f32) -> f32) -> Image {
-    let (columns, rows) = (columns.max(1), rows.max(1));
-    let (ink, clear) = (pixel(color), Rgba8Pixel::new(0, 0, 0, 0));
+fn draw(layer: &Layer, tone: impl Fn(f32, f32) -> f32) -> Image {
+    let (columns, rows) = (layer.columns.max(1), layer.rows.max(1));
+    let (ink, clear) = (pixel(layer.color), Rgba8Pixel::new(0, 0, 0, 0));
     paint(columns, rows, |x, y| {
-        let inked = Matrix::Bayer4.is_inked(x as i32, y as i32, tone(x as f32, y as f32));
+        let inked = layer.matrix.is_inked(x as i32, y as i32, tone(x as f32, y as f32));
         if inked { ink } else { clear }
     })
 }
 
-pub fn sweep(columns: u32, rows: u32, t: f32, strength: f32, color: Color) -> Image {
+pub fn sweep(layer: &Layer, t: f32) -> Image {
+    let Layer { columns, rows, strength, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let width = (columns as f32 * 0.18).max(6.0);
     let front = -width + t * (columns as f32 + rows as f32 + width * 2.0);
     let fade = (std::f32::consts::PI * t).sin();
-    draw(columns, rows, color, |x, y| {
+    draw(layer, |x, y| {
         let d = (x + y * 0.6 - front).abs() / width;
         if d < 1.0 { (1.0 - d * d) * strength * fade } else { 0.0 }
     })
 }
 
-pub fn ripple(columns: u32, rows: u32, cx: f32, cy: f32, t: f32, strength: f32, color: Color) -> Image {
+pub fn ripple(layer: &Layer, (cx, cy): (f32, f32), t: f32) -> Image {
+    let Layer { columns, rows, strength, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let far = cx.max(columns as f32 - cx).hypot(cy.max(rows as f32 - cy));
     let radius = far * ease_out(t);
     let band = 2.0 + 4.0 * (1.0 - t);
     let peak = strength * (1.0 - t);
-    draw(columns, rows, color, |x, y| {
+    draw(layer, |x, y| {
         let d = ((x - cx).hypot(y - cy) - radius).abs() / band;
         if d < 1.0 { (1.0 - d) * peak } else { 0.0 }
     })
@@ -48,12 +50,13 @@ fn hash(x: i32, y: i32, seed: i32) -> f32 {
     ((h ^ (h >> 16)) as f64 / 4294967296.0) as f32
 }
 
-pub fn scan(columns: u32, rows: u32, t: f32, strength: f32, color: Color) -> Image {
+pub fn scan(layer: &Layer, t: f32) -> Image {
+    let Layer { rows, strength, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let front = -2.0 + ease_out(t) * (rows as f32 + 4.0);
     let trail = (rows as f32 * 0.6).max(4.0);
     let fade = 1.0 - t.powi(4);
-    draw(columns, rows, color, |_, y| {
+    draw(layer, |_, y| {
         let d = front - y;
         if d < 0.0 || d > trail {
             return 0.0;
@@ -62,13 +65,14 @@ pub fn scan(columns: u32, rows: u32, t: f32, strength: f32, color: Color) -> Ima
     })
 }
 
-pub fn trace(columns: u32, rows: u32, t: f32, strength: f32, color: Color) -> Image {
+pub fn trace(layer: &Layer, t: f32) -> Image {
+    let Layer { columns, rows, strength, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let (w, h) = (columns as i32, rows as i32);
     let perimeter = 2.0 * (columns + rows) as f32;
     let tail = perimeter * 0.3;
     let head = t * (perimeter + tail);
-    draw(columns, rows, color, |x, y| {
+    draw(layer, |x, y| {
         let (x, y) = (x as i32, y as i32);
         let (top, right, bottom, left) = (y, w - 1 - x, h - 1 - y, x);
         let near = top.min(right).min(bottom).min(left);
@@ -97,7 +101,8 @@ pub fn trace(columns: u32, rows: u32, t: f32, strength: f32, color: Color) -> Im
     })
 }
 
-pub fn noise(columns: u32, rows: u32, t: f32, strength: f32, color: Color) -> Image {
+pub fn noise(layer: &Layer, t: f32) -> Image {
+    let Layer { columns, rows, strength, color, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let frame = (t * 480.0 / 45.0).floor() as i32;
     let density = (std::f32::consts::PI * t).sin() * strength * 0.22;
@@ -107,35 +112,39 @@ pub fn noise(columns: u32, rows: u32, t: f32, strength: f32, color: Color) -> Im
     })
 }
 
-pub fn spotlight(columns: u32, rows: u32, x: f32, y: f32, level: f32, strength: f32, color: Color) -> Image {
+pub fn spotlight(layer: &Layer, (x, y): (f32, f32), level: f32) -> Image {
+    let Layer { columns, rows, strength, .. } = *layer;
     let radius = ((columns as f32).hypot(rows as f32) * 0.3).clamp(8.0, 60.0);
-    draw(columns, rows, color, |cx, cy| {
+    draw(layer, |cx, cy| {
         let d = (cx - x).hypot(cy - y) / radius;
         if d < 1.0 { level * strength * 0.8 * (1.0 - d) * (1.0 + d) } else { 0.0 }
     })
 }
 
-pub fn rise(columns: u32, rows: u32, level: f32, strength: f32, color: Color) -> Image {
-    draw(columns, rows, color, |_, y| {
+pub fn rise(layer: &Layer, level: f32) -> Image {
+    let Layer { rows, strength, .. } = *layer;
+    draw(layer, |_, y| {
         let u = (y + 1.0) / rows as f32;
         level * strength * 0.6 * u * u
     })
 }
 
-pub fn flash(columns: u32, rows: u32, (cx, cy): (f32, f32), t: f32, strength: f32, color: Color) -> Image {
+pub fn flash(layer: &Layer, (cx, cy): (f32, f32), t: f32) -> Image {
+    let Layer { columns, rows, strength, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let peak = strength * 0.85 * (1.0 - t).powi(2);
     let reach = (columns as f32).hypot(rows as f32) * 0.6;
-    draw(columns, rows, color, |x, y| {
+    draw(layer, |x, y| {
         let near = (1.0 - (x - cx).hypot(y - cy) / reach).max(0.0);
         peak * (0.45 + 0.55 * near)
     })
 }
 
-pub fn pulse(columns: u32, rows: u32, (cx, cy): (f32, f32), t: f32, strength: f32, color: Color) -> Image {
+pub fn pulse(layer: &Layer, (cx, cy): (f32, f32), t: f32) -> Image {
+    let Layer { columns, rows, strength, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let reach = cx.max(columns as f32 - cx).max(cy).max(rows as f32 - cy);
-    draw(columns, rows, color, |x, y| {
+    draw(layer, |x, y| {
         let distance = (x - cx).abs().max((y - cy).abs());
         (0..2)
             .map(|ring| {
@@ -150,7 +159,8 @@ pub fn pulse(columns: u32, rows: u32, (cx, cy): (f32, f32), t: f32, strength: f3
     })
 }
 
-pub fn burst(columns: u32, rows: u32, (cx, cy): (f32, f32), t: f32, seed: i32, strength: f32, color: Color) -> Image {
+pub fn burst(layer: &Layer, (cx, cy): (f32, f32), t: f32, seed: i32) -> Image {
+    let Layer { columns, rows, strength, color, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let reach = (columns.min(rows) as f32 * 0.8 + 6.0).clamp(10.0, 48.0);
     let blink = (t * 640.0 / 40.0).floor() as i32;
@@ -184,7 +194,8 @@ pub fn burst(columns: u32, rows: u32, (cx, cy): (f32, f32), t: f32, seed: i32, s
     })
 }
 
-pub fn glitch(columns: u32, rows: u32, t: f32, seed: i32, strength: f32, color: Color) -> Image {
+pub fn glitch(layer: &Layer, t: f32, seed: i32) -> Image {
+    let Layer { columns, rows, strength, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let tick = (t * 380.0 / 40.0).floor() as i32;
     let tone = strength * (1.1 - t * 0.7);
@@ -198,17 +209,18 @@ pub fn glitch(columns: u32, rows: u32, t: f32, seed: i32, strength: f32, color: 
             (x0, y0, length, height)
         })
         .collect();
-    draw(columns, rows, color, |x, y| {
+    draw(layer, |x, y| {
         let (x, y) = (x as u32, y as u32);
         let inside = bars.iter().any(|&(x0, y0, length, height)| x >= x0 && x < x0 + length && y >= y0 && y < y0 + height);
         if inside { tone } else { 0.0 }
     })
 }
 
-pub fn breathe(columns: u32, rows: u32, phase: f32, strength: f32, color: Color) -> Image {
+pub fn breathe(layer: &Layer, phase: f32) -> Image {
+    let Layer { columns, rows, strength, .. } = *layer;
     let b = 0.5 - 0.5 * (std::f32::consts::TAU * phase).cos();
     let depth = (columns.min(rows) as f32 * 0.18).clamp(3.0, 8.0);
-    draw(columns, rows, color, |x, y| {
+    draw(layer, |x, y| {
         let edge = x.min(y).min(columns as f32 - 1.0 - x).min(rows as f32 - 1.0 - y);
         if edge < depth { strength * 0.6 * b * (1.0 - edge / depth) } else { 0.0 }
     })
@@ -252,7 +264,8 @@ pub fn twinkle_count(columns: u32, rows: u32, cell: f32) -> usize {
     (area / 1400.0).round().clamp(3.0, 40.0) as usize
 }
 
-pub fn sparkles(columns: u32, rows: u32, cell: f32, stars: &[Star], tick: f32, excited: bool, color: Color) -> Image {
+pub fn sparkles(layer: &Layer, cell: f32, stars: &[Star], tick: f32, excited: bool) -> Image {
+    let Layer { columns, rows, color, .. } = *layer;
     let (columns, rows) = (columns.max(1), rows.max(1));
     let ink = pixel(color);
     let with_alpha = |alpha: f32| Rgba8Pixel::new(ink.r, ink.g, ink.b, (alpha * 255.0).round().clamp(0.0, 255.0) as u8);
@@ -311,54 +324,53 @@ pub enum Idle {
     Twinkle,
 }
 
+#[derive(Clone, Copy)]
 pub struct Layer {
     pub columns: u32,
     pub rows: u32,
     pub strength: f32,
     pub color: Color,
+    pub matrix: Matrix,
 }
 
 impl Layer {
-    pub fn new(columns: i32, rows: i32, strength: f32, color: Color) -> Self {
-        Self { columns: columns.max(0) as u32, rows: rows.max(0) as u32, strength, color }
+    pub fn new(columns: i32, rows: i32, strength: f32, color: Color, matrix: Matrix) -> Self {
+        Self { columns: columns.max(0) as u32, rows: rows.max(0) as u32, strength, color, matrix }
     }
 }
 
-pub fn hover(kind: Hover, layer: &Layer, t: f32, (x, y): (f32, f32), level: f32) -> Image {
-    let Layer { columns, rows, strength, color } = *layer;
+pub fn hover(kind: Hover, layer: &Layer, t: f32, at: (f32, f32), level: f32) -> Image {
     match kind {
-        Hover::Sweep => sweep(columns, rows, t, strength, color),
-        Hover::Spotlight => spotlight(columns, rows, x, y, level, strength, color),
-        Hover::Scan => scan(columns, rows, t, strength, color),
-        Hover::Trace => trace(columns, rows, t, strength, color),
-        Hover::Rise => rise(columns, rows, level, strength, color),
-        Hover::Noise => noise(columns, rows, t, strength, color),
-        Hover::None => draw(columns, rows, color, |_, _| 0.0),
+        Hover::Sweep => sweep(layer, t),
+        Hover::Spotlight => spotlight(layer, at, level),
+        Hover::Scan => scan(layer, t),
+        Hover::Trace => trace(layer, t),
+        Hover::Rise => rise(layer, level),
+        Hover::Noise => noise(layer, t),
+        Hover::None => draw(layer, |_, _| 0.0),
     }
 }
 
 pub fn press(kind: Press, layer: &Layer, t: f32, at: (f32, f32), seed: i32) -> Image {
-    let Layer { columns, rows, strength, color } = *layer;
     match kind {
-        Press::Ripple => ripple(columns, rows, at.0, at.1, t, strength, color),
-        Press::Burst => burst(columns, rows, at, t, seed, strength, color),
-        Press::Flash => flash(columns, rows, at, t, strength, color),
-        Press::Pulse => pulse(columns, rows, at, t, strength, color),
-        Press::Glitch => glitch(columns, rows, t, seed, strength, color),
-        Press::None => draw(columns, rows, color, |_, _| 0.0),
+        Press::Ripple => ripple(layer, at, t),
+        Press::Burst => burst(layer, at, t, seed),
+        Press::Flash => flash(layer, at, t),
+        Press::Pulse => pulse(layer, at, t),
+        Press::Glitch => glitch(layer, t, seed),
+        Press::None => draw(layer, |_, _| 0.0),
     }
 }
 
 pub fn idle(kind: Idle, layer: &Layer, t: f32, cell: f32) -> Image {
-    let Layer { columns, rows, strength, color } = *layer;
     match kind {
-        Idle::Shimmer => sweep(columns, rows, t, strength * 0.55, color),
-        Idle::Breathe => breathe(columns, rows, t, strength, color),
+        Idle::Shimmer => sweep(&Layer { strength: layer.strength * 0.55, ..*layer }, t),
+        Idle::Breathe => breathe(layer, t),
         Idle::Twinkle => {
-            let stars = scatter(twinkle_count(columns, rows, cell), columns as f32 * cell, rows as f32 * cell, None);
-            sparkles(columns, rows, cell, &stars, t, false, color)
+            let stars = scatter(twinkle_count(layer.columns, layer.rows, cell), layer.columns as f32 * cell, layer.rows as f32 * cell, None);
+            sparkles(layer, cell, &stars, t, false)
         }
-        Idle::None => draw(columns, rows, color, |_, _| 0.0),
+        Idle::None => draw(layer, |_, _| 0.0),
     }
 }
 
@@ -366,51 +378,56 @@ pub fn idle(kind: Idle, layer: &Layer, t: f32, cell: f32) -> Image {
 mod tests {
     use super::*;
 
+    fn layer(columns: u32, rows: u32, strength: f32) -> Layer {
+        Layer { columns, rows, strength, color: Color::from_rgb_u8(255, 255, 255), matrix: Matrix::Bayer4 }
+    }
+
     fn inked(image: &Image) -> usize {
         image.to_rgba8().unwrap().as_slice().iter().filter(|p| p.a > 0).count()
     }
 
+    fn pixels(image: &Image) -> Vec<bool> {
+        image.to_rgba8().unwrap().as_slice().iter().map(|p| p.a > 0).collect()
+    }
+
     #[test]
     fn sweep_is_empty_at_both_ends() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        assert_eq!(inked(&sweep(40, 18, 0.0, 0.85, white)), 0);
-        assert_eq!(inked(&sweep(40, 18, 1.0, 0.85, white)), 0);
-        assert!(inked(&sweep(40, 18, 0.5, 0.85, white)) > 0);
+        let layer = layer(40, 18, 0.85);
+        assert_eq!(inked(&sweep(&layer, 0.0)), 0);
+        assert_eq!(inked(&sweep(&layer, 1.0)), 0);
+        assert!(inked(&sweep(&layer, 0.5)) > 0);
     }
 
     #[test]
     fn sweep_moves_left_to_right() {
-        let white = Color::from_rgb_u8(255, 255, 255);
+        let layer = layer(60, 10, 1.0);
         let centre = |t: f32| {
-            let buffer = sweep(60, 10, t, 1.0, white).to_rgba8().unwrap();
-            let xs: Vec<usize> = buffer.as_slice().iter().enumerate().filter(|(_, p)| p.a > 0).map(|(i, _)| i % 60).collect();
-            xs.iter().sum::<usize>() as f32 / xs.len() as f32
+            let lit: Vec<usize> = pixels(&sweep(&layer, t)).iter().enumerate().filter(|(_, on)| **on).map(|(i, _)| i % 60).collect();
+            lit.iter().sum::<usize>() as f32 / lit.len() as f32
         };
         assert!(centre(0.3) < centre(0.6));
     }
 
     #[test]
     fn ripple_fades_out() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        assert!(inked(&ripple(40, 18, 20.0, 9.0, 0.2, 0.85, white)) > 0);
-        assert_eq!(inked(&ripple(40, 18, 20.0, 9.0, 1.0, 0.85, white)), 0);
+        let layer = layer(40, 18, 0.85);
+        assert!(inked(&ripple(&layer, (20.0, 9.0), 0.2)) > 0);
+        assert_eq!(inked(&ripple(&layer, (20.0, 9.0), 1.0)), 0);
     }
 
     #[test]
     fn scan_is_empty_at_both_ends() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        assert_eq!(inked(&scan(40, 18, 0.0, 0.85, white)), 0);
-        assert_eq!(inked(&scan(40, 18, 1.0, 0.85, white)), 0);
-        assert!(inked(&scan(40, 18, 0.4, 0.85, white)) > 0);
+        let layer = layer(40, 18, 0.85);
+        assert_eq!(inked(&scan(&layer, 0.0)), 0);
+        assert_eq!(inked(&scan(&layer, 1.0)), 0);
+        assert!(inked(&scan(&layer, 0.4)) > 0);
     }
 
     #[test]
     fn trace_stays_on_the_edge() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        let buffer = trace(40, 18, 0.5, 1.0, white).to_rgba8().unwrap();
-        let lit: Vec<usize> = buffer.as_slice().iter().enumerate().filter(|(_, p)| p.a > 0).map(|(i, _)| i).collect();
-        assert!(!lit.is_empty());
-        for i in lit {
+        let lit = pixels(&trace(&layer(40, 18, 1.0), 0.5));
+        assert!(lit.iter().any(|on| *on));
+        for (i, _) in lit.iter().enumerate().filter(|(_, on)| **on) {
             let (x, y) = (i % 40, i / 40);
             assert!(x.min(39 - x).min(y).min(17 - y) < 3);
         }
@@ -418,57 +435,54 @@ mod tests {
 
     #[test]
     fn noise_flickers_in_the_middle() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        assert_eq!(inked(&noise(40, 18, 0.0, 0.85, white)), 0);
-        assert!(inked(&noise(40, 18, 0.5, 0.85, white)) > 0);
+        let layer = layer(40, 18, 0.85);
+        assert_eq!(inked(&noise(&layer, 0.0)), 0);
+        assert!(inked(&noise(&layer, 0.5)) > 0);
     }
 
     #[test]
     fn spotlight_needs_the_pointer_to_have_arrived() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        assert_eq!(inked(&spotlight(40, 18, 20.0, 9.0, 0.0, 0.85, white)), 0);
-        assert!(inked(&spotlight(40, 18, 20.0, 9.0, 1.0, 0.85, white)) > 0);
+        let layer = layer(40, 18, 0.85);
+        assert_eq!(inked(&spotlight(&layer, (20.0, 9.0), 0.0)), 0);
+        assert!(inked(&spotlight(&layer, (20.0, 9.0), 1.0)) > 0);
     }
 
     #[test]
     fn rise_is_denser_at_the_bottom() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        let buffer = rise(40, 18, 1.0, 1.0, white).to_rgba8().unwrap();
-        let row = |y: usize| buffer.as_slice()[y * 40..(y + 1) * 40].iter().filter(|p| p.a > 0).count();
+        let lit = pixels(&rise(&layer(40, 18, 1.0), 1.0));
+        let row = |y: usize| lit[y * 40..(y + 1) * 40].iter().filter(|on| **on).count();
         assert!(row(17) > row(2));
     }
 
     #[test]
     fn press_effects_fade_out() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        assert!(inked(&flash(40, 18, (20.0, 9.0), 0.2, 0.85, white)) > 0);
-        assert_eq!(inked(&flash(40, 18, (20.0, 9.0), 1.0, 0.85, white)), 0);
-        assert!(inked(&pulse(40, 18, (20.0, 9.0), 0.3, 0.85, white)) > 0);
-        assert_eq!(inked(&pulse(40, 18, (20.0, 9.0), 1.0, 0.85, white)), 0);
+        let layer = layer(40, 18, 0.85);
+        assert!(inked(&flash(&layer, (20.0, 9.0), 0.2)) > 0);
+        assert_eq!(inked(&flash(&layer, (20.0, 9.0), 1.0)), 0);
+        assert!(inked(&pulse(&layer, (20.0, 9.0), 0.3)) > 0);
+        assert_eq!(inked(&pulse(&layer, (20.0, 9.0), 1.0)), 0);
     }
 
     #[test]
     fn burst_sparks_start_at_the_press_point() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        assert_eq!(inked(&burst(40, 18, (20.0, 9.0), 1.0, 1, 0.85, white)), 0);
-        assert!(inked(&burst(40, 18, (20.0, 9.0), 0.1, 1, 0.85, white)) > 0);
+        let layer = layer(40, 18, 0.85);
+        assert_eq!(inked(&burst(&layer, (20.0, 9.0), 1.0, 1)), 0);
+        assert!(inked(&burst(&layer, (20.0, 9.0), 0.1, 1)) > 0);
     }
 
     #[test]
     fn glitch_is_stable_per_seed() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        let a = glitch(40, 18, 0.3, 5, 0.85, white).to_rgba8().unwrap();
-        let b = glitch(40, 18, 0.3, 5, 0.85, white).to_rgba8().unwrap();
-        assert_eq!(a.as_slice(), b.as_slice());
+        let layer = layer(40, 18, 0.85);
+        assert_eq!(pixels(&glitch(&layer, 0.3, 5)), pixels(&glitch(&layer, 0.3, 5)));
     }
 
     #[test]
     fn breathe_glows_only_at_the_edge() {
-        let white = Color::from_rgb_u8(255, 255, 255);
-        assert_eq!(inked(&breathe(40, 18, 0.0, 1.0, white)), 0);
-        let buffer = breathe(40, 18, 0.5, 1.0, white).to_rgba8().unwrap();
-        assert!(buffer.as_slice().iter().any(|p| p.a > 0));
-        assert_eq!(buffer.as_slice()[9 * 40 + 20].a, 0);
+        let layer = layer(40, 18, 1.0);
+        assert_eq!(inked(&breathe(&layer, 0.0)), 0);
+        let lit = pixels(&breathe(&layer, 0.5));
+        assert!(lit.iter().any(|on| *on));
+        assert!(!lit[9 * 40 + 20]);
     }
 
     #[test]
@@ -488,16 +502,16 @@ mod tests {
 
     #[test]
     fn stars_wink_in_and_out() {
-        let white = Color::from_rgb_u8(255, 255, 255);
+        let layer = layer(40, 18, 0.7);
         let stars = scatter(24, 80.0, 36.0, None);
-        let shown: Vec<usize> = (0..40).map(|tick| inked(&sparkles(40, 18, 2.0, &stars, tick as f32, false, white))).collect();
+        let shown: Vec<usize> = (0..40).map(|tick| inked(&sparkles(&layer, 2.0, &stars, tick as f32, false))).collect();
         assert!(shown.iter().max() > Some(&0));
         assert!(shown.iter().min() < shown.iter().max());
     }
 
     #[test]
     fn none_draws_nothing() {
-        let layer = Layer { columns: 40, rows: 18, strength: 0.7, color: Color::from_rgb_u8(255, 255, 255) };
+        let layer = layer(40, 18, 0.7);
         assert_eq!(inked(&hover(Hover::None, &layer, 0.5, (0.0, 0.0), 1.0)), 0);
         assert_eq!(inked(&press(Press::None, &layer, 0.5, (0.0, 0.0), 1)), 0);
         assert_eq!(inked(&idle(Idle::None, &layer, 0.5, 2.0)), 0);
@@ -505,7 +519,7 @@ mod tests {
 
     #[test]
     fn every_effect_draws_something() {
-        let layer = Layer { columns: 60, rows: 24, strength: 0.9, color: Color::from_rgb_u8(255, 255, 255) };
+        let layer = layer(60, 24, 0.9);
         for kind in [Hover::Sweep, Hover::Spotlight, Hover::Scan, Hover::Trace, Hover::Rise, Hover::Noise] {
             assert!(inked(&hover(kind, &layer, 0.4, (30.0, 12.0), 1.0)) > 0, "{kind:?}");
         }
@@ -515,5 +529,12 @@ mod tests {
         for (kind, t) in [(Idle::Shimmer, 0.5), (Idle::Breathe, 0.5), (Idle::Twinkle, 9.0)] {
             assert!(inked(&idle(kind, &layer, t, 2.0)) > 0, "{kind:?}");
         }
+    }
+
+    #[test]
+    fn the_matrix_changes_the_grain() {
+        let bayer = layer(40, 18, 0.85);
+        let noise = Layer { matrix: Matrix::BlueNoise, ..bayer };
+        assert_ne!(pixels(&sweep(&bayer, 0.5)), pixels(&sweep(&noise, 0.5)));
     }
 }

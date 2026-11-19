@@ -1,6 +1,7 @@
 use slint::{Color, Image, Rgba8Pixel, SharedPixelBuffer};
 
 use crate::Matrix;
+use crate::matrix::quantize;
 use crate::color::mix_oklab;
 use crate::diffuse::{Method, Options, dither_image};
 use crate::style::{FillEdge, FillVariant, TextureVariant, texture_inked};
@@ -20,12 +21,16 @@ pub fn render(
     width: u32,
     height: u32,
     matrix: Matrix,
-    ink: Rgba8Pixel,
-    paper: Rgba8Pixel,
+    palette: &[Rgba8Pixel],
+    levels: u32,
     tone: impl Fn(u32, u32) -> f32,
 ) -> Image {
+    if palette.is_empty() {
+        return paint(width, height, |_, _| Rgba8Pixel::new(0, 0, 0, 0));
+    }
     paint(width, height, |x, y| {
-        if matrix.is_inked(x as i32, y as i32, tone(x, y)) { ink } else { paper }
+        let tone = quantize(tone(x, y), levels);
+        palette[matrix.palette_index(x as i32, y as i32, tone, palette.len())]
     })
 }
 
@@ -98,18 +103,20 @@ pub struct GradientOptions {
     pub from: f32,
     pub to: f32,
     pub matrix: Matrix,
-    pub ink: Color,
-    pub paper: Color,
+    pub palette: Vec<Color>,
+    pub levels: u32,
 }
 
 pub fn linear_gradient(columns: u32, rows: u32, options: &GradientOptions) -> Image {
-    let GradientOptions { angle, from, to, matrix, ink, paper } = *options;
+    let GradientOptions { angle, from, to, matrix, palette, levels } = options;
+    let (angle, from, to, matrix, levels) = (*angle, *from, *to, *matrix, *levels);
+    let palette: Vec<Rgba8Pixel> = palette.iter().copied().map(pixel).collect();
     let (columns, rows) = (columns.max(1), rows.max(1));
     let (sin, cos) = angle.to_radians().sin_cos();
     let (dx, dy) = (sin, -cos);
     let length = (columns as f32 * dx).abs() + (rows as f32 * dy).abs();
     let (cx, cy) = (columns as f32 / 2.0, rows as f32 / 2.0);
-    render(columns, rows, matrix, pixel(ink), pixel(paper), |x, y| {
+    render(columns, rows, matrix, &palette, levels, |x, y| {
         let along = (x as f32 + 0.5 - cx) * dx + (y as f32 + 0.5 - cy) * dy;
         let t = (along / length + 0.5).clamp(0.0, 1.0);
         from + (to - from) * t
@@ -119,8 +126,7 @@ pub fn linear_gradient(columns: u32, rows: u32, options: &GradientOptions) -> Im
 pub struct PictureOptions {
     pub method: Method,
     pub threshold: f32,
-    pub ink: Color,
-    pub paper: Color,
+    pub palette: Vec<Color>,
 }
 
 fn shrink(source: &[Rgba8Pixel], width: u32, height: u32, columns: u32, rows: u32) -> Vec<u8> {
@@ -160,7 +166,7 @@ pub fn picture(source: &Image, columns: u32, rows: u32, options: &PictureOptions
     let rgb = |c: Color| [c.red(), c.green(), c.blue()].map(|v| v as f32 / 255.0);
     let dither = Options {
         method: options.method,
-        palette: vec![rgb(options.paper), rgb(options.ink)],
+        palette: options.palette.iter().copied().map(rgb).collect(),
         threshold: options.threshold,
         serpentine: true,
     };
@@ -173,9 +179,8 @@ mod tests {
     use super::*;
 
     fn gradient(columns: u32, rows: u32, angle: f32, from: f32, to: f32) -> Image {
-        let ink = Color::from_rgb_u8(0, 0, 0);
-        let paper = Color::from_rgb_u8(255, 255, 255);
-        linear_gradient(columns, rows, &GradientOptions { angle, from, to, matrix: Matrix::Bayer4, ink, paper })
+        let palette = vec![Color::from_rgb_u8(255, 255, 255), Color::from_rgb_u8(0, 0, 0)];
+        linear_gradient(columns, rows, &GradientOptions { angle, from, to, matrix: Matrix::Bayer4, palette, levels: 0 })
     }
 
     fn inked_columns(image: &Image) -> Vec<usize> {
@@ -258,8 +263,7 @@ mod tests {
         let options = PictureOptions {
             method: Method::FloydSteinberg,
             threshold: 0.5,
-            ink: Color::from_rgb_u8(255, 255, 255),
-            paper: Color::from_rgb_u8(0, 0, 0),
+            palette: vec![Color::from_rgb_u8(0, 0, 0), Color::from_rgb_u8(255, 255, 255)],
         };
         picture(source, columns, rows, &options)
     }
@@ -276,5 +280,16 @@ mod tests {
         let black = picture_of(&flat(8, 8, 0), 8, 8).to_rgba8().unwrap();
         assert!(white.as_slice().iter().all(|p| p.r == 255));
         assert!(black.as_slice().iter().all(|p| p.r == 0));
+    }
+
+    #[test]
+    fn a_three_colour_palette_runs_through_the_middle_colour() {
+        let palette = vec![Color::from_rgb_u8(0, 0, 0), Color::from_rgb_u8(255, 0, 0), Color::from_rgb_u8(255, 255, 255)];
+        let options = GradientOptions { angle: 90.0, from: 0.0, to: 1.0, matrix: Matrix::Bayer4, palette, levels: 0 };
+        let image = linear_gradient(32, 4, &options).to_rgba8().unwrap();
+        let at = |x: usize, y: usize| image.as_slice()[y * 32 + x];
+        assert!((0..4).all(|y| at(0, y).g == 0 && at(0, y).r == 0));
+        assert!((0..4).all(|y| at(31, y).g == 255));
+        assert!((0..32).any(|x| at(x, 0).r == 255 && at(x, 0).g == 0));
     }
 }

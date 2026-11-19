@@ -64,8 +64,8 @@ Run the gallery with `cargo run --example gallery`.
 | `to` | `1` | Tone at the end. |
 | `matrix` | `bayer4` | `bayer2`, `bayer4`, `bayer8` or `blue-noise`. |
 | `cell` | `3px` | Size of one dither cell, rounded to whole device pixels. |
-| `ink` | `DitherTheme.foreground` | Colour of the dots. |
-| `paper` | `DitherTheme.background` | Colour behind them. |
+| `palette` | background, foreground | Two or more colours, from paper (tone 0) to ink (tone 1). The tone is spread over the list and each cell is dithered between two neighbours. |
+| `levels` | `0` | Snaps the tone to this many steps for a posterised look. `0` keeps every tone the matrix can draw. |
 
 ### DitherButton
 
