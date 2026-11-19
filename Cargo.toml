@@ -9,5 +9,6 @@ keywords = ["slint", "ui", "dither", "components", "gui"]
 categories = ["gui"]
 include = ["src/**", "ui/**", "Cargo.toml", "README.md", "LICENSE"]
 
-[workspace]
-members = ["examples/gallery"]
+[dependencies]
+base64 = "0.23.1"
+slint = { version = "1.18.1", default-features = false, features = ["std", "compat-1-18"] }
