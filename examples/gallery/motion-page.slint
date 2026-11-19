@@ -1,0 +1,96 @@
+import { Slider } from "std-widgets.slint";
+import { DitherFx, DitherHover, DitherIdle, DitherMotion, DitherPress, DitherTheme } from "../../ui/lib.slint";
+
+component FxBox inherits Rectangle {
+    in property <string> label;
+    in property <DitherHover> hover: DitherHover.none;
+    in property <DitherPress> press: DitherPress.none;
+    in property <DitherIdle> idle: DitherIdle.none;
+
+    height: 64px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: DitherTheme.foreground.with-alpha(0.2);
+    background: DitherTheme.foreground.with-alpha(0.04);
+    clip: true;
+
+    fx := DitherFx {
+        hover: root.hover;
+        press: root.press;
+        idle: root.idle;
+    }
+
+    Text {
+        text: root.label;
+        color: DitherTheme.foreground;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    TouchArea {
+        changed has-hover => {
+            if self.has-hover {
+                fx.pointer-enter(self.mouse-x, self.mouse-y);
+            } else {
+                fx.pointer-leave();
+            }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                fx.pointer-down(self.mouse-x, self.mouse-y);
+            } else if event.kind == PointerEventKind.move {
+                fx.pointer-move(self.mouse-x, self.mouse-y);
+            }
+        }
+    }
+}
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component MotionPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 12px;
+    alignment: start;
+
+    Heading { text: "Controls"; }
+    HorizontalLayout {
+        spacing: 12px;
+        Text { text: "speed"; color: DitherTheme.foreground; vertical-alignment: center; }
+        Slider { value <=> DitherMotion.speed; minimum: 0.25; maximum: 3; }
+        Text { text: "intensity"; color: DitherTheme.foreground; vertical-alignment: center; }
+        Slider { value <=> DitherMotion.intensity; minimum: 0; maximum: 1.5; }
+    }
+
+    Heading { text: "Hover"; }
+    HorizontalLayout {
+        spacing: 8px;
+        FxBox { label: "sweep"; hover: DitherHover.sweep; }
+        FxBox { label: "spotlight"; hover: DitherHover.spotlight; }
+        FxBox { label: "scan"; hover: DitherHover.scan; }
+        FxBox { label: "trace"; hover: DitherHover.trace; }
+        FxBox { label: "rise"; hover: DitherHover.rise; }
+        FxBox { label: "noise"; hover: DitherHover.noise; }
+    }
+
+    Heading { text: "Press"; }
+    HorizontalLayout {
+        spacing: 8px;
+        FxBox { label: "ripple"; press: DitherPress.ripple; }
+        FxBox { label: "burst"; press: DitherPress.burst; }
+        FxBox { label: "flash"; press: DitherPress.flash; }
+        FxBox { label: "pulse"; press: DitherPress.pulse; }
+        FxBox { label: "glitch"; press: DitherPress.glitch; }
+    }
+
+    Heading { text: "Idle"; }
+    HorizontalLayout {
+        spacing: 8px;
+        FxBox { label: "shimmer"; idle: DitherIdle.shimmer; }
+        FxBox { label: "breathe"; idle: DitherIdle.breathe; }
+        FxBox { label: "twinkle"; idle: DitherIdle.twinkle; }
+    }
+}

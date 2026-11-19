@@ -1,0 +1,51 @@
+import { DitherTheme } from "../../ui/lib.slint";
+export { DitherEngine } from "../../ui/lib.slint";
+import { GradientPage } from "gradient-page.slint";
+import { ButtonPage } from "button-page.slint";
+import { MotionPage } from "motion-page.slint";
+import { ImagePage } from "image-page.slint";
+
+export component Gallery inherits Window {
+    title: "dither-slint";
+    background: DitherTheme.background;
+    preferred-width: 900px;
+    preferred-height: 640px;
+
+    in property <image> sample;
+
+    property <[string]> pages: ["Gradient", "Button", "Motion", "Image"];
+    property <int> page: 0;
+
+    HorizontalLayout {
+        VerticalLayout {
+            width: 180px;
+            padding: 24px;
+            spacing: 4px;
+            alignment: start;
+
+            for name[index] in root.pages: Rectangle {
+                height: 32px;
+                background: root.page == index ? DitherTheme.foreground.with-alpha(0.08) : transparent;
+                border-radius: 6px;
+
+                Text {
+                    x: 10px;
+                    text: name;
+                    color: DitherTheme.foreground;
+                    vertical-alignment: center;
+                }
+
+                TouchArea {
+                    clicked => { root.page = index; }
+                }
+            }
+        }
+
+        Rectangle {
+            if root.page == 0: GradientPage { }
+            if root.page == 1: ButtonPage { }
+            if root.page == 2: MotionPage { }
+            if root.page == 3: ImagePage { sample: root.sample; }
+        }
+    }
+}

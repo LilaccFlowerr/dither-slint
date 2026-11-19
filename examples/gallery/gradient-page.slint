@@ -1,0 +1,20 @@
+import { DitherGradient, DitherMatrix, DitherTheme } from "../../ui/lib.slint";
+
+export component GradientPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    for matrix[index] in [DitherMatrix.bayer2, DitherMatrix.bayer4, DitherMatrix.bayer8, DitherMatrix.blue-noise]: VerticalLayout {
+        spacing: 6px;
+        Text {
+            text: ["bayer 2", "bayer 4", "bayer 8", "blue noise"][index];
+            color: DitherTheme.foreground;
+        }
+        DitherGradient {
+            angle: 90deg;
+            matrix: matrix;
+            height: 72px;
+        }
+    }
+}

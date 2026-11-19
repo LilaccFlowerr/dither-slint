@@ -1,0 +1,173 @@
+import { DitherEngine, DitherHover, DitherIdle, DitherPress } from "../engine.slint";
+import { DitherMotion, DitherTheme } from "../theme.slint";
+
+component FxImage inherits Image {
+    in property <int> columns;
+    in property <int> rows;
+    in property <length> step;
+
+    x: 0;
+    y: 0;
+    width: root.columns * root.step;
+    height: root.rows * root.step;
+    image-fit: ImageFit.fill;
+    image-rendering: pixelated;
+}
+
+export component DitherFx {
+    in property <length> cell: 2px;
+    in property <color> color: DitherTheme.ink;
+    in property <float> strength: 0.7;
+    in property <bool> animated: DitherTheme.animated;
+    in property <DitherHover> hover: DitherMotion.hover;
+    in property <DitherPress> press: DitherMotion.press;
+    in property <DitherIdle> idle: DitherMotion.idle;
+    in property <float> speed: DitherMotion.speed;
+    in property <float> intensity: DitherMotion.intensity;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+    property <float> amount: Math.min(1, Math.max(0, root.strength * root.intensity));
+    property <float> pace: Math.max(0.1, root.speed);
+
+    property <bool> held: root.hover == DitherHover.spotlight || root.hover == DitherHover.rise;
+    property <duration> hover-time: root.hover == DitherHover.sweep ? 620ms
+        : root.hover == DitherHover.scan ? 560ms
+        : root.hover == DitherHover.trace ? 900ms
+        : root.hover == DitherHover.noise ? 480ms : 0ms;
+    property <duration> press-time: root.press == DitherPress.burst ? 640ms
+        : root.press == DitherPress.flash ? 420ms
+        : root.press == DitherPress.pulse ? 720ms
+        : root.press == DitherPress.glitch ? 380ms
+        : root.press == DitherPress.ripple ? 560ms : 0ms;
+
+    property <bool> hovering;
+    property <float> target-x;
+    property <float> target-y;
+    property <float> spot-x: root.target-x;
+    property <float> spot-y: root.target-y;
+    property <float> level: root.hovering && root.held ? 1 : 0;
+    animate level { duration: 200ms / root.pace; }
+    animate spot-x, spot-y { duration: 70ms / root.pace; easing: ease-out; }
+
+    property <bool> entering;
+    property <duration> enter-start;
+    property <bool> pressing;
+    property <duration> press-start;
+    property <float> press-x;
+    property <float> press-y;
+    property <int> press-seed;
+    property <bool> shimmering;
+    property <duration> shimmer-start;
+
+    property <float> idle-t: {
+        if root.idle == DitherIdle.shimmer {
+            return (animation-tick() - root.shimmer-start) * root.pace / 1100ms;
+        }
+        if root.idle == DitherIdle.breathe {
+            return Math.mod(animation-tick() * root.pace / 1ms, 2600) / 2600;
+        }
+        return Math.floor(animation-tick() * root.pace / 100ms);
+    }
+
+    function start-hover() {
+        if root.animated && !root.held && root.hover != DitherHover.none && !root.entering {
+            root.enter-start = animation-tick();
+            root.entering = true;
+        }
+    }
+
+    public function pointer-enter(x: length, y: length) {
+        root.target-x = x / root.step;
+        root.target-y = y / root.step;
+        root.hovering = true;
+        root.start-hover();
+    }
+
+    public function pointer-move(x: length, y: length) {
+        root.target-x = x / root.step;
+        root.target-y = y / root.step;
+    }
+
+    public function pointer-leave() {
+        root.hovering = false;
+    }
+
+    public function pointer-focus() {
+        root.start-hover();
+    }
+
+    public function pointer-down(x: length, y: length) {
+        if root.animated && root.press != DitherPress.none {
+            root.press-x = x / root.step;
+            root.press-y = y / root.step;
+            root.press-seed += 1;
+            root.press-start = animation-tick();
+            root.pressing = true;
+        }
+    }
+
+    width: 100%;
+    height: 100%;
+
+    Timer {
+        interval: root.hover-time / root.pace;
+        running: root.entering;
+        triggered => {
+            root.entering = (animation-tick() - root.enter-start) * root.pace < root.hover-time;
+        }
+    }
+
+    Timer {
+        interval: root.press-time / root.pace;
+        running: root.pressing;
+        triggered => {
+            root.pressing = (animation-tick() - root.press-start) * root.pace < root.press-time;
+        }
+    }
+
+    Timer {
+        interval: 3400ms / root.pace;
+        running: root.animated && root.idle == DitherIdle.shimmer;
+        triggered => {
+            root.shimmer-start = animation-tick();
+            root.shimmering = true;
+        }
+    }
+
+    Timer {
+        interval: 1100ms / root.pace;
+        running: root.shimmering;
+        triggered => {
+            root.shimmering = (animation-tick() - root.shimmer-start) * root.pace < 1100ms;
+        }
+    }
+
+    if root.animated && (root.idle == DitherIdle.breathe || root.idle == DitherIdle.twinkle || root.shimmering): FxImage {
+        columns: root.columns;
+        rows: root.rows;
+        step: root.step;
+        source: DitherEngine.idle(root.idle, root.columns, root.rows, root.idle-t, root.amount, root.color, root.step / 1px);
+    }
+
+    if root.animated && (root.entering || root.level > 0): FxImage {
+        columns: root.columns;
+        rows: root.rows;
+        step: root.step;
+        source: DitherEngine.hover(
+            root.hover, root.columns, root.rows,
+            root.held ? 0 : (animation-tick() - root.enter-start) * root.pace / root.hover-time,
+            root.spot-x, root.spot-y, root.level, root.amount, root.color);
+    }
+
+    if root.animated && root.pressing: FxImage {
+        columns: root.columns;
+        rows: root.rows;
+        step: root.step;
+        source: DitherEngine.press(
+            root.press, root.columns, root.rows,
+            (animation-tick() - root.press-start) * root.pace / root.press-time,
+            root.press-x, root.press-y, root.press-seed, root.amount, root.color);
+    }
+}

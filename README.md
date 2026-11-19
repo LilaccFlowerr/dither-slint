@@ -4,7 +4,7 @@ Thanks to MVKweb for the idea and allowing me to make such a thing
 
 Dithered UI components for [Slint](https://slint.dev), based on the dither work of [Mvkweb](https://github.com/Mvkweb).
 
-> Work in progress. The dither engine is ported and `DitherGradient` is the first component. More are on the way.
+> Work in progress. The dither engine is ported, with `DitherGradient` and `DitherButton` as the first components. More are on the way.
 
 ## Install
 
@@ -31,7 +31,7 @@ fn main() {
 
 ```slint
 import { DitherGradient, DitherMatrix } from "@dither/lib.slint";
-export { DitherEngine, DitherMatrix } from "@dither/lib.slint";
+export { DitherEngine } from "@dither/lib.slint";
 
 export component App inherits Window {
     DitherGradient {
@@ -53,7 +53,7 @@ fn main() -> Result<(), slint::PlatformError> {
 }
 ```
 
-Run the demo with `cargo run --example dither_gradient`.
+Run the gallery with `cargo run --example gallery`.
 
 ### DitherGradient
 
@@ -66,6 +66,31 @@ Run the demo with `cargo run --example dither_gradient`.
 | `cell` | `3px` | Size of one dither cell, rounded to whole device pixels. |
 | `ink` | `DitherTheme.foreground` | Colour of the dots. |
 | `paper` | `DitherTheme.background` | Colour behind them. |
+
+### DitherButton
+
+A button with a lit, dithered surface: a highlight dithered down from the top and a shade dithered up from the bottom. Hover brightens it, press shades it from the top.
+
+```slint
+DitherButton { text: "Deploy"; bloom: DitherBloom.low; clicked => { deploy(); } }
+DitherButton { text: "View logs"; variant: DitherButtonVariant.outline; fill: DitherFill.dotted; }
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `text` | | The label. |
+| `icon` | | An image shown before the label, tinted like the text. |
+| `variant` | `filled` | `filled` is the lit colour surface, `outline` a faint tint that fills in on hover. |
+| `fill` | `gradient` | Texture of the shade: `gradient`, `dotted`, `hatched` or `solid`. |
+| `color` | `DitherTheme.ink` | Any colour, or one from `DitherPalette`. |
+| `size` | `md` | `sm`, `md` and `lg` are 32, 36 and 44px high. `icon` is a 36px square. |
+| `bloom` | `off` | `low` or `high` adds a glow in the button's colour. |
+| `cell` | `2px` | Size of one dither cell. |
+| `loading` | `false` | Steps three cells before the label and ignores clicks. |
+| `enabled` | `true` | |
+| `animated` | `DitherTheme.animated` | A dithered sweep on hover and a ripple from where you press. |
+
+Turn the motion off everywhere with `DitherTheme.animated = false`, or per button with `animated: false`. `DitherFx` is the layer behind it, so other components can use the same sweep and ripple.
 
 ## What is a dither
 
