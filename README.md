@@ -16,4 +16,4 @@ A dither draws a smooth tone using only a few colours. Dots of ink are placed at
 
 ## License
 
-MIT
+GPL 3.0
