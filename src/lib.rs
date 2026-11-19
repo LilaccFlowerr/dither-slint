@@ -3,8 +3,6 @@ pub mod diffuse;
 pub mod export;
 pub mod lively;
 pub mod matrix;
-pub mod motion;
-pub mod pattern;
 pub mod render;
 pub mod style;
 
@@ -50,12 +48,57 @@ macro_rules! install {
             let options = $crate::render::FillOptions { variant, edge, length, from, to, matrix: matrix(kind), color, frame };
             $crate::render::fill(columns.max(0) as u32, rows.max(0) as u32, &options)
         });
-        engine.on_mix($crate::render::mix);
-        engine.on_sweep(|columns, rows, t, strength, color| {
-            $crate::lively::sweep(columns.max(0) as u32, rows.max(0) as u32, t, strength, color)
+        engine.on_picture(|source, columns, rows, method, threshold, ink, paper| {
+            use $crate::diffuse::Method;
+            let method = match method {
+                DitherMethod::Bayer4 => Method::Bayer4,
+                DitherMethod::Bayer8 => Method::Bayer8,
+                DitherMethod::BlueNoise => Method::BlueNoise,
+                DitherMethod::FloydSteinberg => Method::FloydSteinberg,
+                DitherMethod::Atkinson => Method::Atkinson,
+                DitherMethod::SierraLite => Method::SierraLite,
+            };
+            let options = $crate::render::PictureOptions { method, threshold, ink, paper };
+            $crate::render::picture(&source, columns.max(0) as u32, rows.max(0) as u32, &options)
         });
-        engine.on_ripple(|columns, rows, x, y, t, strength, color| {
-            $crate::lively::ripple(columns.max(0) as u32, rows.max(0) as u32, x, y, t, strength, color)
+        engine.on_mix($crate::render::mix);
+        engine.on_hover(|kind, columns, rows, t, x, y, level, strength, color| {
+            use $crate::lively::Hover;
+            let kind = match kind {
+                DitherHover::Sweep => Hover::Sweep,
+                DitherHover::Spotlight => Hover::Spotlight,
+                DitherHover::Scan => Hover::Scan,
+                DitherHover::Trace => Hover::Trace,
+                DitherHover::Rise => Hover::Rise,
+                DitherHover::Noise => Hover::Noise,
+                DitherHover::None => Hover::None,
+            };
+            let layer = $crate::lively::Layer::new(columns, rows, strength, color);
+            $crate::lively::hover(kind, &layer, t, (x, y), level)
+        });
+        engine.on_press(|kind, columns, rows, t, x, y, seed, strength, color| {
+            use $crate::lively::Press;
+            let kind = match kind {
+                DitherPress::Ripple => Press::Ripple,
+                DitherPress::Burst => Press::Burst,
+                DitherPress::Flash => Press::Flash,
+                DitherPress::Pulse => Press::Pulse,
+                DitherPress::Glitch => Press::Glitch,
+                DitherPress::None => Press::None,
+            };
+            let layer = $crate::lively::Layer::new(columns, rows, strength, color);
+            $crate::lively::press(kind, &layer, t, (x, y), seed)
+        });
+        engine.on_idle(|kind, columns, rows, t, strength, color, cell| {
+            use $crate::lively::Idle;
+            let kind = match kind {
+                DitherIdle::None => Idle::None,
+                DitherIdle::Shimmer => Idle::Shimmer,
+                DitherIdle::Breathe => Idle::Breathe,
+                DitherIdle::Twinkle => Idle::Twinkle,
+            };
+            let layer = $crate::lively::Layer::new(columns, rows, strength, color);
+            $crate::lively::idle(kind, &layer, t, cell)
         });
     }};
 }

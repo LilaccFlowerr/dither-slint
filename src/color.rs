@@ -1,39 +1,5 @@
 pub type Rgba = [f32; 4];
 
-pub const DEFAULT_CELL: f32 = 3.0;
-
-const NAMED: [(&str, &str); 8] = [
-    ("ink", "#5471f5"),
-    ("blue", "#0593e6"),
-    ("purple", "#9e60e8"),
-    ("green", "#32b364"),
-    ("pink", "#e4569e"),
-    ("orange", "#ed8725"),
-    ("red", "#ea3c3c"),
-    ("grey", "#808080"),
-];
-
-fn parse_hex(value: &str) -> Option<Rgba> {
-    let digits = value.strip_prefix('#')?;
-    let digits = match digits.len() {
-        3 => digits.chars().flat_map(|c| [c, c]).collect::<String>(),
-        6 | 8 => digits.to_string(),
-        _ => return None,
-    };
-    let byte = |i: usize| u8::from_str_radix(digits.get(i * 2..i * 2 + 2)?, 16).ok();
-    let alpha = if digits.len() == 8 { byte(3)? } else { 255 };
-    Some([byte(0)?, byte(1)?, byte(2)?, alpha].map(|v| v as f32 / 255.0))
-}
-
-pub fn resolve_color(value: &str) -> Option<Rgba> {
-    let value = value.trim();
-    let hex = NAMED
-        .iter()
-        .find(|(name, _)| *name == value)
-        .map_or(value, |(_, hex)| hex);
-    parse_hex(hex)
-}
-
 fn to_linear(c: f64) -> f64 {
     if c <= 0.04045 { c / 12.92 } else { ((c + 0.055) / 1.055).powf(2.4) }
 }
@@ -86,41 +52,28 @@ pub fn mix_oklab(base: Rgba, other: Rgba, amount: f32) -> Rgba {
 mod tests {
     use super::*;
 
+    const INK: Rgba = [0.329, 0.443, 0.961, 1.0];
+
     fn close(a: Rgba, b: Rgba) -> bool {
         a.iter().zip(b).all(|(x, y)| (x - y).abs() < 0.002)
     }
 
     #[test]
     fn mix_ends() {
-        let ink = resolve_color("ink").unwrap();
         let white = [1.0, 1.0, 1.0, 1.0];
-        assert!(close(mix_oklab(ink, white, 0.0), ink));
-        assert!(close(mix_oklab(ink, white, 1.0), white));
+        assert!(close(mix_oklab(INK, white, 0.0), INK));
+        assert!(close(mix_oklab(INK, white, 1.0), white));
     }
 
     #[test]
     fn mix_towards_black_darkens() {
-        let ink = resolve_color("ink").unwrap();
-        let dark = mix_oklab(ink, [0.0, 0.0, 0.0, 1.0], 0.48);
-        assert!(dark[..3].iter().zip(&ink[..3]).all(|(d, i)| d < i));
+        let dark = mix_oklab(INK, [0.0, 0.0, 0.0, 1.0], 0.48);
+        assert!(dark[..3].iter().zip(&INK[..3]).all(|(d, i)| d < i));
     }
 
     #[test]
     fn mix_with_transparent_keeps_hue() {
-        let ink = resolve_color("ink").unwrap();
-        let tint = mix_oklab(ink, [0.0; 4], 0.91);
-        assert!(close(tint, [ink[0], ink[1], ink[2], 0.09]));
-    }
-
-    #[test]
-    fn hex() {
-        assert_eq!(resolve_color("#ff0000"), Some([1.0, 0.0, 0.0, 1.0]));
-        assert_eq!(resolve_color("#fff"), Some([1.0, 1.0, 1.0, 1.0]));
-        assert_eq!(resolve_color("nope"), None);
-    }
-
-    #[test]
-    fn names() {
-        assert!(resolve_color("green").is_some());
+        let tint = mix_oklab(INK, [0.0; 4], 0.91);
+        assert!(close(tint, [INK[0], INK[1], INK[2], 0.09]));
     }
 }

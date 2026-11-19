@@ -2,6 +2,7 @@ use slint::{Color, Image, Rgba8Pixel, SharedPixelBuffer};
 
 use crate::Matrix;
 use crate::color::mix_oklab;
+use crate::diffuse::{Method, Options, dither_image};
 use crate::style::{FillEdge, FillVariant, TextureVariant, texture_inked};
 
 pub(crate) fn paint(width: u32, height: u32, pixel_at: impl Fn(u32, u32) -> Rgba8Pixel) -> Image {
@@ -115,6 +116,58 @@ pub fn linear_gradient(columns: u32, rows: u32, options: &GradientOptions) -> Im
     })
 }
 
+pub struct PictureOptions {
+    pub method: Method,
+    pub threshold: f32,
+    pub ink: Color,
+    pub paper: Color,
+}
+
+fn shrink(source: &[Rgba8Pixel], width: u32, height: u32, columns: u32, rows: u32) -> Vec<u8> {
+    let mut out = Vec::with_capacity((columns * rows * 4) as usize);
+    for ty in 0..rows {
+        let (y0, y1) = (ty * height / rows, ((ty + 1) * height / rows).max(ty * height / rows + 1));
+        for tx in 0..columns {
+            let (x0, x1) = (tx * width / columns, ((tx + 1) * width / columns).max(tx * width / columns + 1));
+            let mut sum = [0u32; 4];
+            for y in y0..y1 {
+                for x in x0..x1 {
+                    let p = source[(y * width + x) as usize];
+                    for (total, value) in sum.iter_mut().zip([p.r, p.g, p.b, p.a]) {
+                        *total += value as u32;
+                    }
+                }
+            }
+            let count = (y1 - y0) * (x1 - x0);
+            out.extend(sum.map(|total| (total / count) as u8));
+        }
+    }
+    out
+}
+
+pub fn picture(source: &Image, columns: u32, rows: u32, options: &PictureOptions) -> Image {
+    let blank = || Image::from_rgba8(SharedPixelBuffer::<Rgba8Pixel>::new(1, 1));
+    let Some(buffer) = source.to_rgba8() else { return blank() };
+    let (width, height) = (buffer.width(), buffer.height());
+    if width == 0 || height == 0 || columns == 0 || rows == 0 {
+        return blank();
+    }
+    let scale = (columns as f32 / width as f32).min(rows as f32 / height as f32);
+    let columns = ((width as f32 * scale).round() as u32).max(1);
+    let rows = ((height as f32 * scale).round() as u32).max(1);
+
+    let small = shrink(buffer.as_slice(), width, height, columns, rows);
+    let rgb = |c: Color| [c.red(), c.green(), c.blue()].map(|v| v as f32 / 255.0);
+    let dither = Options {
+        method: options.method,
+        palette: vec![rgb(options.paper), rgb(options.ink)],
+        threshold: options.threshold,
+        serpentine: true,
+    };
+    let bytes = dither_image(&small, columns as usize, rows as usize, &dither);
+    Image::from_rgba8(SharedPixelBuffer::clone_from_slice(&bytes, columns, rows))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -194,5 +247,34 @@ mod tests {
         let counts = inked_columns(&gradient(16, 16, 90.0, 0.0, 1.0));
         assert_eq!(counts[0], 0);
         assert_eq!(counts[15], 16);
+    }
+
+    fn flat(width: u32, height: u32, grey: u8) -> Image {
+        let pixels = [grey, grey, grey, 255].repeat((width * height) as usize);
+        Image::from_rgba8(SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(&pixels, width, height))
+    }
+
+    fn picture_of(source: &Image, columns: u32, rows: u32) -> Image {
+        let options = PictureOptions {
+            method: Method::FloydSteinberg,
+            threshold: 0.5,
+            ink: Color::from_rgb_u8(255, 255, 255),
+            paper: Color::from_rgb_u8(0, 0, 0),
+        };
+        picture(source, columns, rows, &options)
+    }
+
+    #[test]
+    fn picture_keeps_the_aspect_ratio() {
+        let image = picture_of(&flat(100, 50, 128), 20, 20);
+        assert_eq!((image.size().width, image.size().height), (20, 10));
+    }
+
+    #[test]
+    fn white_picture_is_all_ink_and_black_all_paper() {
+        let white = picture_of(&flat(8, 8, 255), 8, 8).to_rgba8().unwrap();
+        let black = picture_of(&flat(8, 8, 0), 8, 8).to_rgba8().unwrap();
+        assert!(white.as_slice().iter().all(|p| p.r == 255));
+        assert!(black.as_slice().iter().all(|p| p.r == 0));
     }
 }
