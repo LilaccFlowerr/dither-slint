@@ -1,7 +1,9 @@
 mod blue_noise;
+mod diffuse;
 mod matrix;
 mod render;
 
+pub use diffuse::{Method, Options, PaletteColor, dither_image};
 pub use matrix::{Matrix, ThresholdMap};
 pub use render::render;
 
