@@ -1,5 +1,6 @@
 import { DitherBloom, DitherEdge, DitherEngine, DitherFill, DitherMatrix } from "../engine.slint";
 import { DitherTheme } from "../theme.slint";
+import { DitherFx } from "fx.slint";
 
 export enum DitherButtonVariant { filled, outline }
 
@@ -51,6 +52,7 @@ export component DitherButton {
     in property <length> cell: 2px;
     in property <bool> loading;
     in property <bool> enabled: true;
+    in property <bool> animated: DitherTheme.animated;
     out property <bool> has-hover: touch.has-hover;
     out property <bool> pressed: touch.pressed;
     out property <bool> has-focus: focus.has-focus;
@@ -181,6 +183,13 @@ export component DitherButton {
                     animate opacity { duration: root.fade; easing: cubic-bezier(0.23, 1, 0.32, 1); }
                 }
             }
+
+            fx := DitherFx {
+                cell: root.step;
+                color: root.filled ? root.light : root.color;
+                strength: root.filled ? 0.85 : 0.6;
+                animated: root.animated;
+            }
         }
 
         Rectangle {
@@ -228,6 +237,16 @@ export component DitherButton {
     touch := TouchArea {
         enabled: root.enabled;
         mouse-cursor: root.loading ? MouseCursor.progress : MouseCursor.pointer;
+        changed has-hover => {
+            if self.has-hover {
+                fx.sweep();
+            }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                fx.ripple(self.mouse-x, self.mouse-y);
+            }
+        }
         clicked => {
             if root.active {
                 root.clicked();
@@ -238,8 +257,14 @@ export component DitherButton {
     focus := FocusScope {
         enabled: root.enabled;
         focus-on-click: false;
+        changed has-focus => {
+            if self.has-focus {
+                fx.sweep();
+            }
+        }
         key-pressed(event) => {
             if root.active && (event.text == Key.Return || event.text == " ") {
+                fx.ripple(root.width / 2, root.height / 2);
                 root.clicked();
                 return accept;
             }

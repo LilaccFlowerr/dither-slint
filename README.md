@@ -88,6 +88,9 @@ DitherButton { text: "View logs"; variant: DitherButtonVariant.outline; fill: Di
 | `cell` | `2px` | Size of one dither cell. |
 | `loading` | `false` | Steps three cells before the label and ignores clicks. |
 | `enabled` | `true` | |
+| `animated` | `DitherTheme.animated` | A dithered sweep on hover and a ripple from where you press. |
+
+Turn the motion off everywhere with `DitherTheme.animated = false`, or per button with `animated: false`. `DitherFx` is the layer behind it, so other components can use the same sweep and ripple.
 
 ## What is a dither
 

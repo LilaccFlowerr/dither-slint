@@ -1,0 +1,75 @@
+import { DitherEngine } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export component DitherFx {
+    in property <length> cell: 2px;
+    in property <color> color: DitherTheme.ink;
+    in property <float> strength: 0.7;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+
+    property <bool> sweeping;
+    property <duration> sweep-start;
+    property <bool> rippling;
+    property <duration> ripple-start;
+    property <float> ripple-x;
+    property <float> ripple-y;
+
+    public function sweep() {
+        if root.animated {
+            root.sweep-start = animation-tick();
+            root.sweeping = true;
+        }
+    }
+
+    public function ripple(x: length, y: length) {
+        if root.animated {
+            root.ripple-x = x / root.step;
+            root.ripple-y = y / root.step;
+            root.ripple-start = animation-tick();
+            root.rippling = true;
+        }
+    }
+
+    width: 100%;
+    height: 100%;
+
+    Timer {
+        interval: 620ms;
+        running: root.sweeping;
+        triggered => {
+            root.sweeping = animation-tick() - root.sweep-start < 620ms;
+        }
+    }
+
+    Timer {
+        interval: 560ms;
+        running: root.rippling;
+        triggered => {
+            root.rippling = animation-tick() - root.ripple-start < 560ms;
+        }
+    }
+
+    if root.sweeping: Image {
+        x: 0;
+        y: 0;
+        width: root.columns * root.step;
+        height: root.rows * root.step;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: DitherEngine.sweep(root.columns, root.rows, (animation-tick() - root.sweep-start) / 620ms, root.strength, root.color);
+    }
+
+    if root.rippling: Image {
+        x: 0;
+        y: 0;
+        width: root.columns * root.step;
+        height: root.rows * root.step;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: DitherEngine.ripple(root.columns, root.rows, root.ripple-x, root.ripple-y, (animation-tick() - root.ripple-start) / 560ms, root.strength, root.color);
+    }
+}

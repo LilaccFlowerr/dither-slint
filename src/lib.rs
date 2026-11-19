@@ -1,6 +1,7 @@
 pub mod color;
 pub mod diffuse;
 pub mod export;
+pub mod lively;
 pub mod matrix;
 pub mod motion;
 pub mod pattern;
@@ -50,6 +51,12 @@ macro_rules! install {
             $crate::render::fill(columns.max(0) as u32, rows.max(0) as u32, &options)
         });
         engine.on_mix($crate::render::mix);
+        engine.on_sweep(|columns, rows, t, strength, color| {
+            $crate::lively::sweep(columns.max(0) as u32, rows.max(0) as u32, t, strength, color)
+        });
+        engine.on_ripple(|columns, rows, x, y, t, strength, color| {
+            $crate::lively::ripple(columns.max(0) as u32, rows.max(0) as u32, x, y, t, strength, color)
+        });
     }};
 }
 

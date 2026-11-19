@@ -10,4 +10,6 @@ export global DitherEngine {
     pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, ink: color, paper: color) -> image;
     pure callback fill(columns: int, rows: int, fill: DitherFill, edge: DitherEdge, length: float, from: float, to: float, matrix: DitherMatrix, color: color, frame: bool) -> image;
     pure callback mix(base: color, other: color, amount: float) -> color;
+    pure callback sweep(columns: int, rows: int, t: float, strength: float, color: color) -> image;
+    pure callback ripple(columns: int, rows: int, x: float, y: float, t: float, strength: float, color: color) -> image;
 }

@@ -4,7 +4,7 @@ use crate::Matrix;
 use crate::color::mix_oklab;
 use crate::style::{FillEdge, FillVariant, TextureVariant, texture_inked};
 
-fn paint(width: u32, height: u32, pixel_at: impl Fn(u32, u32) -> Rgba8Pixel) -> Image {
+pub(crate) fn paint(width: u32, height: u32, pixel_at: impl Fn(u32, u32) -> Rgba8Pixel) -> Image {
     let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width, height);
     let pixels = buffer.make_mut_slice();
     for y in 0..height {
@@ -28,7 +28,7 @@ pub fn render(
     })
 }
 
-fn pixel(color: Color) -> Rgba8Pixel {
+pub(crate) fn pixel(color: Color) -> Rgba8Pixel {
     Rgba8Pixel::new(color.red(), color.green(), color.blue(), color.alpha())
 }
 
