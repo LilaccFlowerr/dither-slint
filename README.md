@@ -10,10 +10,10 @@ Dithered UI components for [Slint](https://slint.dev), based on the dither work 
 
 ```toml
 [dependencies]
-dither-slint = "0.1"
+dither-slint = "0.2"
 
 [build-dependencies]
-dither-slint = "0.1"
+dither-slint = "0.2"
 slint-build = "1.18"
 ```
 
