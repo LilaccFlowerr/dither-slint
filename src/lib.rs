@@ -1,9 +1,11 @@
 mod blue_noise;
 mod diffuse;
+mod export;
 mod matrix;
 mod render;
 
 pub use diffuse::{Method, Options, PaletteColor, dither_image};
+pub use export::{Source, SvgOptions, svg_data_url, to_svg};
 pub use matrix::{Matrix, ThresholdMap};
 pub use render::render;
 
