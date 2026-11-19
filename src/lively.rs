@@ -1,6 +1,7 @@
 use slint::{Color, Image, Rgba8Pixel};
 
 use crate::Matrix;
+use crate::glow::Glow;
 use crate::render::{paint, pixel};
 
 fn ease_out(t: f32) -> f32 {
@@ -295,6 +296,14 @@ pub fn sparkles(layer: &Layer, cell: f32, stars: &[Star], tick: f32, excited: bo
     paint(columns, rows, |x, y| cells[(y * columns + x) as usize])
 }
 
+pub fn glow_sparkles(layer: &Layer, cell: f32, tick: f32, glow: Glow, reach: f32) -> Image {
+    let (x, y, _) = glow.origin();
+    let (width, height) = (layer.columns as f32 * cell, layer.rows as f32 * cell);
+    let around = Around { x, y, reach: reach * 0.75 };
+    let stars = scatter((reach / 14.0).round() as usize, width, height, Some(&around));
+    sparkles(layer, cell, &stars, tick, false)
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Hover {
     Sweep,
@@ -304,6 +313,10 @@ pub enum Hover {
     Rise,
     Noise,
     None,
+}
+
+impl Hover {
+    pub const ALL: [Self; 7] = [Self::Sweep, Self::Spotlight, Self::Scan, Self::Trace, Self::Rise, Self::Noise, Self::None];
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -316,12 +329,20 @@ pub enum Press {
     None,
 }
 
+impl Press {
+    pub const ALL: [Self; 6] = [Self::Ripple, Self::Burst, Self::Flash, Self::Pulse, Self::Glitch, Self::None];
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Idle {
     None,
     Shimmer,
     Breathe,
     Twinkle,
+}
+
+impl Idle {
+    pub const ALL: [Self; 4] = [Self::None, Self::Shimmer, Self::Breathe, Self::Twinkle];
 }
 
 #[derive(Clone, Copy)]

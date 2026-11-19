@@ -63,6 +63,8 @@ static BLUE_NOISE_64: LazyLock<ThresholdMap> = LazyLock::new(|| {
 });
 
 impl Matrix {
+    pub const ALL: [Self; 4] = [Self::Bayer2, Self::Bayer4, Self::Bayer8, Self::BlueNoise];
+
     pub fn map(self) -> &'static ThresholdMap {
         match self {
             Matrix::Bayer2 => &BAYER_2,

@@ -4,7 +4,7 @@ use crate::Matrix;
 use crate::matrix::quantize;
 use crate::color::mix_oklab;
 use crate::diffuse::{Method, Options, dither_image};
-use crate::style::{FillEdge, FillVariant, TextureVariant, texture_inked};
+use crate::style::{FillEdge, FillVariant, texture_inked};
 
 pub(crate) fn paint(width: u32, height: u32, pixel_at: impl Fn(u32, u32) -> Rgba8Pixel) -> Image {
     let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width, height);
@@ -71,9 +71,6 @@ pub fn fill(columns: u32, rows: u32, options: &FillOptions) -> Image {
     let (columns, rows) = (columns.max(1), rows.max(1));
     let fade = length.round().max(1.0);
     let inked = |x: u32, y: u32| match variant {
-        FillVariant::Solid => true,
-        FillVariant::Dotted => texture_inked(TextureVariant::Dotted, x as usize, y as usize),
-        FillVariant::Hatched => texture_inked(TextureVariant::Hatched, x as usize, y as usize),
         FillVariant::Gradient => {
             let (step, mx, my) = match edge {
                 FillEdge::Top => (y, x as i32, y as i32),
@@ -85,6 +82,7 @@ pub fn fill(columns: u32, rows: u32, options: &FillOptions) -> Image {
             let level = if step >= fade { to } else { from + (to - from) * ((step + 0.5) / fade) };
             matrix.is_inked(mx, my, level.max(to))
         }
+        textured => texture_inked(textured, x as usize, y as usize),
     };
     let clear = Rgba8Pixel::new(0, 0, 0, 0);
     paint(columns, rows, |x, y| {

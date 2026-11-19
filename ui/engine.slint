@@ -6,6 +6,8 @@ export enum DitherEdge { top, bottom, left, right }
 
 export enum DitherBloom { off, low, high }
 
+export enum DitherGlow { top-left, top-right, bottom-left, bottom-right, top, bottom }
+
 export enum DitherMethod { bayer4, bayer8, blue-noise, floyd-steinberg, atkinson, sierra-lite }
 
 export enum DitherHover { sweep, spotlight, scan, trace, rise, noise, none }
@@ -18,6 +20,8 @@ export global DitherEngine {
     pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, palette: [color], levels: int) -> image;
     pure callback fill(columns: int, rows: int, fill: DitherFill, edge: DitherEdge, length: float, from: float, to: float, matrix: DitherMatrix, color: color, frame: bool) -> image;
     pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;
+    pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
+    pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;
     pure callback mix(base: color, other: color, amount: float) -> color;
     pure callback hover(kind: DitherHover, columns: int, rows: int, t: float, x: float, y: float, level: float, strength: float, color: color, matrix: DitherMatrix) -> image;
     pure callback press(kind: DitherPress, columns: int, rows: int, t: float, x: float, y: float, seed: int, strength: float, color: color, matrix: DitherMatrix) -> image;

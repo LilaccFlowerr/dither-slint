@@ -1,0 +1,52 @@
+import { DitherCard, DitherFill, DitherGlow, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+component Sample inherits DitherCard {
+    in property <string> title;
+    in property <string> body: "A dithered glow, a dithered rim.";
+
+    width: 200px;
+    height: 120px;
+    inset: 16px;
+    reach: 130px;
+    spacing: 4px;
+
+    Text { text: root.title; color: DitherTheme.foreground; font-size: 14px; font-weight: 600; }
+    Text { text: root.body; color: DitherTheme.foreground.transparentize(0.35); font-size: 12px; wrap: word-wrap; }
+}
+
+export component CardPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 14px;
+    alignment: start;
+
+    Heading { text: "Glow"; }
+    HorizontalLayout {
+        spacing: 14px;
+        alignment: start;
+        Sample { title: "top-left"; glow: DitherGlow.top-left; }
+        Sample { title: "top-right"; glow: DitherGlow.top-right; }
+        Sample { title: "top"; glow: DitherGlow.top; }
+    }
+    HorizontalLayout {
+        spacing: 14px;
+        alignment: start;
+        Sample { title: "bottom-left"; glow: DitherGlow.bottom-left; }
+        Sample { title: "bottom-right"; glow: DitherGlow.bottom-right; }
+        Sample { title: "bottom"; glow: DitherGlow.bottom; }
+    }
+
+    Heading { text: "Fills, colour and hover"; }
+    HorizontalLayout {
+        spacing: 14px;
+        alignment: start;
+        Sample { title: "dotted"; fill: DitherFill.dotted; }
+        Sample { title: "hatched"; fill: DitherFill.hatched; color: DitherPalette.green; }
+        Sample { title: "interactive"; body: "Hover me and the glow grows."; interactive: true; color: DitherPalette.orange; strength: 0.7; }
+    }
+}

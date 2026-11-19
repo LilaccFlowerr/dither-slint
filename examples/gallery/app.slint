@@ -4,6 +4,8 @@ import { GradientPage } from "gradient-page.slint";
 import { ButtonPage } from "button-page.slint";
 import { MotionPage } from "motion-page.slint";
 import { ImagePage } from "image-page.slint";
+import { BadgePage } from "badge-page.slint";
+import { CardPage } from "card-page.slint";
 
 export component Gallery inherits Window {
     title: "dither-slint";
@@ -13,7 +15,7 @@ export component Gallery inherits Window {
 
     in property <image> sample;
 
-    property <[string]> pages: ["Gradient", "Button", "Motion", "Image"];
+    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Motion", "Image"];
     property <int> page: 0;
 
     HorizontalLayout {
@@ -44,8 +46,10 @@ export component Gallery inherits Window {
         Rectangle {
             if root.page == 0: GradientPage { }
             if root.page == 1: ButtonPage { }
-            if root.page == 2: MotionPage { }
-            if root.page == 3: ImagePage { sample: root.sample; }
+            if root.page == 2: BadgePage { }
+            if root.page == 3: CardPage { }
+            if root.page == 4: MotionPage { }
+            if root.page == 5: ImagePage { sample: root.sample; }
         }
     }
 }
