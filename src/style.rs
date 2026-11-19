@@ -80,16 +80,18 @@ pub struct FillTile {
     pub path: String,
 }
 
-pub fn fill_tile(variant: TextureVariant) -> FillTile {
+pub fn texture_inked(variant: TextureVariant, x: usize, y: usize) -> bool {
+    let (x, y) = (x % 4, y % 4);
     match variant {
-        TextureVariant::Dotted => FillTile {
-            path: cells_path(4, 4, |x, y| y % 2 == 0 && (x + y / 2) % 2 == 0),
-            size: 4,
-        },
-        TextureVariant::Hatched => FillTile {
-            path: cells_path(4, 4, |x, y| (x + y) % 4 == 3),
-            size: 4,
-        },
+        TextureVariant::Dotted => y % 2 == 0 && (x + y / 2) % 2 == 0,
+        TextureVariant::Hatched => (x + y) % 4 == 3,
+    }
+}
+
+pub fn fill_tile(variant: TextureVariant) -> FillTile {
+    FillTile {
+        path: cells_path(4, 4, |x, y| texture_inked(variant, x, y)),
+        size: 4,
     }
 }
 

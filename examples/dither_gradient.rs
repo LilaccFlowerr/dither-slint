@@ -1,4 +1,5 @@
 slint::slint! {
+    #[edition = "1.19"]
     import { DitherGradient, DitherMatrix, DitherTheme } from "ui/lib.slint";
     export { DitherEngine, DitherMatrix } from "ui/lib.slint";
 

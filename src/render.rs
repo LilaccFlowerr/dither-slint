@@ -1,6 +1,19 @@
 use slint::{Color, Image, Rgba8Pixel, SharedPixelBuffer};
 
 use crate::Matrix;
+use crate::color::mix_oklab;
+use crate::style::{FillEdge, FillVariant, TextureVariant, texture_inked};
+
+fn paint(width: u32, height: u32, pixel_at: impl Fn(u32, u32) -> Rgba8Pixel) -> Image {
+    let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width, height);
+    let pixels = buffer.make_mut_slice();
+    for y in 0..height {
+        for x in 0..width {
+            pixels[(y * width + x) as usize] = pixel_at(x, y);
+        }
+    }
+    Image::from_rgba8(buffer)
+}
 
 pub fn render(
     width: u32,
@@ -10,19 +23,73 @@ pub fn render(
     paper: Rgba8Pixel,
     tone: impl Fn(u32, u32) -> f32,
 ) -> Image {
-    let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width, height);
-    let pixels = buffer.make_mut_slice();
-    for y in 0..height {
-        for x in 0..width {
-            let inked = matrix.is_inked(x as i32, y as i32, tone(x, y));
-            pixels[(y * width + x) as usize] = if inked { ink } else { paper };
-        }
-    }
-    Image::from_rgba8(buffer)
+    paint(width, height, |x, y| {
+        if matrix.is_inked(x as i32, y as i32, tone(x, y)) { ink } else { paper }
+    })
 }
 
 fn pixel(color: Color) -> Rgba8Pixel {
     Rgba8Pixel::new(color.red(), color.green(), color.blue(), color.alpha())
+}
+
+pub fn mix(base: Color, other: Color, amount: f32) -> Color {
+    let rgba = |c: Color| [c.red(), c.green(), c.blue(), c.alpha()].map(|v| v as f32 / 255.0);
+    let [r, g, b, a] = mix_oklab(rgba(base), rgba(other), amount).map(|v| (v * 255.0).round() as u8);
+    Color::from_argb_u8(a, r, g, b)
+}
+
+pub struct FillOptions {
+    pub variant: FillVariant,
+    pub edge: FillEdge,
+    pub length: f32,
+    pub from: f32,
+    pub to: f32,
+    pub matrix: Matrix,
+    pub color: Color,
+    pub frame: bool,
+}
+
+fn frame_alpha(y: u32, rows: u32) -> f32 {
+    let at = (y as f32 + 0.5) / rows as f32;
+    match at {
+        at if at <= 0.30 => 1.0,
+        at if at < 0.34 => (0.34 - at) / 0.04,
+        at if at <= 0.66 => 0.0,
+        at if at < 0.70 => (at - 0.66) / 0.04,
+        _ => 1.0,
+    }
+}
+
+pub fn fill(columns: u32, rows: u32, options: &FillOptions) -> Image {
+    let FillOptions { variant, edge, length, from, to, matrix, color, frame } = *options;
+    let (columns, rows) = (columns.max(1), rows.max(1));
+    let fade = length.round().max(1.0);
+    let inked = |x: u32, y: u32| match variant {
+        FillVariant::Solid => true,
+        FillVariant::Dotted => texture_inked(TextureVariant::Dotted, x as usize, y as usize),
+        FillVariant::Hatched => texture_inked(TextureVariant::Hatched, x as usize, y as usize),
+        FillVariant::Gradient => {
+            let (step, mx, my) = match edge {
+                FillEdge::Top => (y, x as i32, y as i32),
+                FillEdge::Left => (x, x as i32, y as i32),
+                FillEdge::Bottom => (rows - 1 - y, x as i32, y as i32 - rows as i32),
+                FillEdge::Right => (columns - 1 - x, x as i32 - columns as i32, y as i32),
+            };
+            let step = step as f32;
+            let level = if step >= fade { to } else { from + (to - from) * ((step + 0.5) / fade) };
+            matrix.is_inked(mx, my, level.max(to))
+        }
+    };
+    let clear = Rgba8Pixel::new(0, 0, 0, 0);
+    paint(columns, rows, |x, y| {
+        if !inked(x, y) {
+            return clear;
+        }
+        let alpha = if frame { frame_alpha(y, rows) } else { 1.0 };
+        let mut ink = pixel(color);
+        ink.a = (ink.a as f32 * alpha).round() as u8;
+        ink
+    })
 }
 
 pub struct GradientOptions {
@@ -68,6 +135,40 @@ mod tests {
             }
         }
         counts
+    }
+
+    fn layer(variant: FillVariant, edge: FillEdge, from: f32, frame: bool) -> Vec<Rgba8Pixel> {
+        let color = Color::from_rgb_u8(255, 0, 0);
+        let options = FillOptions { variant, edge, length: 4.0, from, to: 0.0, matrix: Matrix::Bayer4, color, frame };
+        fill(8, 10, &options).to_rgba8().unwrap().as_slice().to_vec()
+    }
+
+    fn inked_in_row(pixels: &[Rgba8Pixel], y: usize) -> usize {
+        pixels[y * 8..(y + 1) * 8].iter().filter(|p| p.a > 0).count()
+    }
+
+    #[test]
+    fn gradient_is_dense_at_its_edge() {
+        let pixels = layer(FillVariant::Gradient, FillEdge::Bottom, 1.0, false);
+        assert!(inked_in_row(&pixels, 9) > inked_in_row(&pixels, 7));
+        assert!(inked_in_row(&pixels, 9) >= 6);
+        assert_eq!(inked_in_row(&pixels, 0), 0);
+    }
+
+    #[test]
+    fn frame_clears_the_label_band() {
+        let pixels = layer(FillVariant::Solid, FillEdge::Bottom, 1.0, true);
+        assert_eq!(inked_in_row(&pixels, 0), 8);
+        assert!(pixels[5 * 8..6 * 8].iter().all(|p| p.a == 0));
+        assert_eq!(pixels[9 * 8].a, 255);
+    }
+
+    #[test]
+    fn textures_tile_every_four_cells() {
+        let pixels = layer(FillVariant::Hatched, FillEdge::Bottom, 1.0, false);
+        assert_eq!(pixels[3].a, 255);
+        assert_eq!(pixels[7].a, 255);
+        assert_eq!(pixels[0].a, 0);
     }
 
     #[test]
