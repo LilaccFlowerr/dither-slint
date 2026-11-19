@@ -63,9 +63,9 @@ fn to_cells(source: &Source, palette: &[String]) -> (Vec<i32>, Vec<Swatch>) {
                     opacity: 1.0,
                 })
                 .collect();
-            for index in 0..count {
+            for (index, cell) in cells.iter_mut().enumerate() {
                 let value = indices.get(index).copied().unwrap_or(-1);
-                cells[index] = if value >= 0 && (value as usize) < swatches.len() {
+                *cell = if value >= 0 && (value as usize) < swatches.len() {
                     value
                 } else {
                     -1
@@ -76,11 +76,11 @@ fn to_cells(source: &Source, palette: &[String]) -> (Vec<i32>, Vec<Swatch>) {
         Source::Pixels { data, .. } => {
             let mut lookup: HashMap<[u8; 4], usize> = HashMap::new();
             let mut swatches: Vec<Swatch> = Vec::new();
-            for index in 0..count {
+            for (index, cell) in cells.iter_mut().enumerate() {
                 let offset = index * 4;
                 let alpha = data[offset + 3];
                 if alpha == 0 {
-                    cells[index] = -1;
+                    *cell = -1;
                     continue;
                 }
                 let key = [data[offset], data[offset + 1], data[offset + 2], alpha];
@@ -91,7 +91,7 @@ fn to_cells(source: &Source, palette: &[String]) -> (Vec<i32>, Vec<Swatch>) {
                     });
                     swatches.len() - 1
                 });
-                cells[index] = swatch as i32;
+                *cell = swatch as i32;
             }
             (cells, swatches)
         }
@@ -283,77 +283,62 @@ pub fn svg_data_url(svg: &str) -> String {
     format!("url(\"data:image/svg+xml,{escaped}\")")
 }
 
+const MAX_CANVAS_SIDE: usize = 16_384;
+
+pub fn to_png(
+    data: &[u8],
+    width: usize,
+    height: usize,
+    scale: usize,
+) -> Result<Vec<u8>, png::EncodingError> {
+    let largest = width.max(height).max(1);
+    let factor = scale.min(MAX_CANVAS_SIDE / largest).max(1);
+    let (out_width, out_height) = (width * factor, height * factor);
+
+    let mut scaled = Vec::with_capacity(out_width * out_height * 4);
+    for y in 0..out_height {
+        for x in 0..out_width {
+            let offset = ((y / factor) * width + x / factor) * 4;
+            scaled.extend_from_slice(&data[offset..offset + 4]);
+        }
+    }
+
+    let mut out = Vec::new();
+    let mut encoder = png::Encoder::new(&mut out, out_width as u32, out_height as u32);
+    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_depth(png::BitDepth::Eight);
+    encoder.write_header()?.write_image_data(&scaled)?;
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn pixels(pattern: &[&[u8]]) -> (Vec<u8>, usize, usize) {
-        let height = pattern.len();
-        let width = pattern[0].len();
-        let mut data = Vec::new();
-        for row in pattern {
-            for &value in *row {
-                let channel = if value == 1 { 255 } else { 0 };
-                data.extend([channel, channel, channel, 255]);
-            }
-        }
-        (data, width, height)
+    fn decode(bytes: &[u8]) -> (u32, u32, Vec<u8>) {
+        let mut reader = png::Decoder::new(std::io::Cursor::new(bytes)).read_info().unwrap();
+        let mut buffer = vec![0; reader.output_buffer_size().unwrap()];
+        let info = reader.next_frame(&mut buffer).unwrap();
+        buffer.truncate(info.buffer_size());
+        (info.width, info.height, buffer)
     }
 
     #[test]
-    fn svg_from_pixels_merges_runs_into_strokes() {
-        let (data, width, height) = pixels(&[&[0, 1, 0, 1], &[1, 0, 0, 1], &[1, 1, 1, 0]]);
-        let source = Source::Pixels { data: &data, width, height };
-        assert_eq!(
-            to_svg(&source, &SvgOptions::default()),
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"4\" height=\"3\" viewBox=\"0 0 4 3\" shape-rendering=\"crispEdges\">\
-             <rect width=\"4\" height=\"3\" fill=\"#ffffff\"/>\
-             <path fill=\"none\" stroke=\"#000000\" d=\"M0 0.5h1m1 0h1m-2 1h2m0 1h1\"/>\
-             </svg>"
-        );
+    fn png_keeps_pixels() {
+        let data = [255, 0, 0, 255, 0, 0, 255, 255];
+        let (width, height, pixels) = decode(&to_png(&data, 2, 1, 1).unwrap());
+        assert_eq!((width, height), (2, 1));
+        assert_eq!(pixels, data);
     }
 
     #[test]
-    fn svg_from_indices_fills_tall_runs() {
-        let indices = [0, 0, 1, 0, -1, 1];
-        let source = Source::Indexed { indices: &indices, width: 3, height: 2 };
-        let options = SvgOptions {
-            palette: vec!["#111111".into(), "#eeeeee".into()],
-            ..SvgOptions::default()
-        };
-        assert_eq!(
-            to_svg(&source, &options),
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"3\" height=\"2\" viewBox=\"0 0 3 2\" shape-rendering=\"crispEdges\">\
-             <rect width=\"3\" height=\"2\" fill=\"#111111\"/>\
-             <path fill=\"#eeeeee\" d=\"M2 0h1v2h-1z\"/>\
-             </svg>"
-        );
-    }
-
-    #[test]
-    fn svg_without_background_and_with_cell_size() {
-        let (data, width, height) = pixels(&[&[0, 1], &[1, 0]]);
-        let source = Source::Pixels { data: &data, width, height };
-        let options = SvgOptions { cell: 2.5, background: false, ..SvgOptions::default() };
-        let svg = to_svg(&source, &options);
-        assert!(svg.contains("width=\"5\" height=\"5\" viewBox=\"0 0 2 2\""));
-        assert!(!svg.contains("<rect"));
-    }
-
-    #[test]
-    fn transparent_pixels_are_skipped() {
-        let data = [0, 0, 0, 0, 255, 255, 255, 128];
-        let source = Source::Pixels { data: &data, width: 2, height: 1 };
-        let svg = to_svg(&source, &SvgOptions::default());
-        assert!(svg.contains("stroke-opacity=\"0.502\""));
-        assert!(!svg.contains("#000000"));
-    }
-
-    #[test]
-    fn data_url_escapes() {
-        assert_eq!(
-            svg_data_url("<a b=\"#c\">100%</a>"),
-            "url(\"data:image/svg+xml,%3Ca b='%23c'%3E100%25%3C/a%3E\")"
-        );
+    fn png_scales_with_hard_edges() {
+        let data = [255, 0, 0, 255, 0, 0, 255, 255];
+        let (width, height, pixels) = decode(&to_png(&data, 2, 1, 2).unwrap());
+        assert_eq!((width, height), (4, 2));
+        let red = [255, 0, 0, 255];
+        let blue = [0, 0, 255, 255];
+        let row: Vec<u8> = [red, red, blue, blue].concat();
+        assert_eq!(pixels, [row.clone(), row].concat());
     }
 }

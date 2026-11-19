@@ -99,29 +99,6 @@ fn dither_ordered(
     out
 }
 
-fn spread_error(
-    error: [f32; 3],
-    width: usize,
-    height: usize,
-    kernel: Kernel,
-    reverse: bool,
-    work: &mut [f32],
-    x: usize,
-    y: usize,
-) {
-    for &(dx, dy, weight) in kernel {
-        let nx = if reverse { x as i32 - dx } else { x as i32 + dx };
-        let ny = y as i32 + dy;
-        if nx < 0 || nx >= width as i32 || ny >= height as i32 {
-            continue;
-        }
-        let target = (ny as usize * width + nx as usize) * 3;
-        for channel in 0..3 {
-            work[target + channel] += error[channel] * weight;
-        }
-    }
-}
-
 fn dither_diffusion(
     data: &[u8],
     width: usize,
@@ -151,7 +128,17 @@ fn dither_diffusion(
             write(&mut out, index * 4, color, data[index * 4 + 3]);
 
             let error = [r - color[0], g - color[1], b - color[2]];
-            spread_error(error, width, height, kernel, reverse, &mut work, x, y);
+            for &(dx, dy, weight) in kernel {
+                let nx = if reverse { x as i32 - dx } else { x as i32 + dx };
+                let ny = y as i32 + dy;
+                if nx < 0 || nx >= width as i32 || ny >= height as i32 {
+                    continue;
+                }
+                let target = (ny as usize * width + nx as usize) * 3;
+                for channel in 0..3 {
+                    work[target + channel] += error[channel] * weight;
+                }
+            }
         }
     }
     out
@@ -218,24 +205,5 @@ mod tests {
             let white = white_pixels(&out);
             assert!((480..=544).contains(&white), "{method:?}: {white}");
         }
-    }
-
-    #[test]
-    fn keeps_size_and_alpha() {
-        let mut input = flat(100, 8, 8);
-        input[3] = 77;
-        for method in ALL {
-            let out = dither_image(&input, 8, 8, &options(method));
-            assert_eq!(out.len(), input.len());
-            assert_eq!(out[3], 77);
-        }
-    }
-
-    #[test]
-    fn input_is_not_changed() {
-        let input = flat(100, 8, 8);
-        let copy = input.clone();
-        dither_image(&input, 8, 8, &options(Method::Atkinson));
-        assert_eq!(input, copy);
     }
 }

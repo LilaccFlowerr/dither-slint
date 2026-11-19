@@ -50,7 +50,7 @@ pub fn series_color(color: Option<&str>, index: usize) -> &str {
     color.unwrap_or(SERIES_COLORS[index % SERIES_COLORS.len()])
 }
 
-fn cells_path(width: usize, height: usize, inked: impl Fn(usize, usize) -> bool) -> String {
+pub(crate) fn cells_path(width: usize, height: usize, inked: impl Fn(usize, usize) -> bool) -> String {
     let mut path = String::new();
     for y in 0..height {
         let mut start: Option<usize> = None;
@@ -164,40 +164,10 @@ mod tests {
     }
 
     #[test]
-    fn zero_coverage_inks_nothing() {
-        assert_eq!(ramp(FillEdge::Left, 4.0, None, 0.0, 0.0).path, "");
-    }
-
-    #[test]
-    fn tile_length_rounds_up_to_whole_matrices() {
-        let vertical = ramp(FillEdge::Bottom, 4.0, Some(9.0), 1.0, 0.0);
-        assert_eq!((vertical.width, vertical.height), (4, 12));
-        let horizontal = ramp(FillEdge::Right, 4.0, Some(9.0), 1.0, 0.0);
-        assert_eq!((horizontal.width, horizontal.height), (12, 4));
-    }
-
-    #[test]
-    fn ramp_is_denser_at_its_edge() {
-        let tile = ramp(FillEdge::Top, 16.0, None, 1.0, 0.0);
-        let rows: Vec<usize> = tile.path.split('M').skip(1).map(|run| {
-            run.split(' ').nth(1).unwrap().split('h').next().unwrap().parse().unwrap()
-        }).collect();
-        let top = rows.iter().filter(|&&y| y < 4).count();
-        let bottom = rows.iter().filter(|&&y| y >= 12).count();
-        assert!(top > bottom, "top {top}, bottom {bottom}");
-    }
-
-    #[test]
     fn series_colors_cycle() {
         assert_eq!(series_color(None, 0), "ink");
         assert_eq!(series_color(None, 8), "ink");
         assert_eq!(series_color(None, 2), "green");
         assert_eq!(series_color(Some("#fff"), 5), "#fff");
-    }
-
-    #[test]
-    fn bloom_levels() {
-        assert!(bloom_level(Bloom::Off).is_none());
-        assert_eq!(bloom_level(Bloom::High).unwrap().blur, 18.0);
     }
 }

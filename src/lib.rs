@@ -1,18 +1,15 @@
-mod blue_noise;
-mod diffuse;
-mod export;
-mod matrix;
-mod render;
-mod style;
+pub mod color;
+pub mod diffuse;
+pub mod export;
+pub mod matrix;
+pub mod motion;
+pub mod pattern;
+pub mod render;
+pub mod style;
 
-pub use diffuse::{Method, Options, PaletteColor, dither_image};
-pub use export::{Source, SvgOptions, svg_data_url, to_svg};
-pub use matrix::{Matrix, ThresholdMap};
-pub use render::render;
-pub use style::{
-    Bloom, BloomLevel, FillEdge, FillTile, FillVariant, RampOptions, RampTile, TextureVariant,
-    SERIES_COLORS, bloom_level, dither_ramp, fill_tile, series_color,
-};
+mod blue_noise;
+
+pub use matrix::Matrix;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
