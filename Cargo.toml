@@ -2,7 +2,7 @@
 name = "dither-slint"
 version = "0.1.0"
 edition = "2024"
-description = "Dithered Slint component library, inspired by dither-sdk"
+description = "Dithered Slint component library"
 license = "MIT"
 repository = "https://github.com/LilaccFlowerr/dither-slint"
 keywords = ["slint", "ui", "dither", "components", "gui"]
