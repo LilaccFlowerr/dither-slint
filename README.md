@@ -53,7 +53,7 @@ fn main() -> Result<(), slint::PlatformError> {
 }
 ```
 
-Run the demos with `cargo run --example dither_gradient` and `cargo run --example dither_button`.
+Run the gallery with `cargo run --example gallery`.
 
 ### DitherGradient
 

@@ -1,0 +1,43 @@
+import { DitherImage, DitherMethod, DitherTheme } from "../../ui/lib.slint";
+
+export component ImagePage inherits VerticalLayout {
+    in property <image> sample;
+
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    for row in [
+        [DitherMethod.bayer4, DitherMethod.bayer8, DitherMethod.blue-noise],
+        [DitherMethod.floyd-steinberg, DitherMethod.atkinson, DitherMethod.sierra-lite],
+    ]: HorizontalLayout {
+        spacing: 16px;
+        alignment: start;
+
+        for method in row: VerticalLayout {
+            spacing: 6px;
+            Text {
+                text: method == DitherMethod.bayer4 ? "bayer 4"
+                    : method == DitherMethod.bayer8 ? "bayer 8"
+                    : method == DitherMethod.blue-noise ? "blue noise"
+                    : method == DitherMethod.floyd-steinberg ? "floyd-steinberg"
+                    : method == DitherMethod.atkinson ? "atkinson" : "sierra-lite";
+                color: DitherTheme.foreground;
+            }
+            DitherImage {
+                source: root.sample;
+                method: method;
+                width: 200px;
+                height: 130px;
+            }
+        }
+    }
+
+    Text { text: "original"; color: DitherTheme.foreground; }
+    Image {
+        source: root.sample;
+        width: 200px;
+        height: 130px;
+        image-fit: ImageFit.contain;
+    }
+}
