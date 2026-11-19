@@ -1,3 +1,10 @@
+mod blue_noise;
+mod matrix;
+mod render;
+
+pub use matrix::{Matrix, ThresholdMap};
+pub use render::render;
+
 use std::collections::HashMap;
 use std::path::PathBuf;
 
