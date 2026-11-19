@@ -1,0 +1,5 @@
+export enum DitherMatrix { bayer2, bayer4, bayer8, blue-noise }
+
+export global DitherEngine {
+    pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, ink: color, paper: color) -> image;
+}

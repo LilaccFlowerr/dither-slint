@@ -1,0 +1,30 @@
+import { DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export component DitherGradient inherits Rectangle {
+    in property <angle> angle: 180deg;
+    in property <float> from: 0;
+    in property <float> to: 1;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <color> ink: DitherTheme.foreground;
+    in property <color> paper: DitherTheme.background;
+
+    property <length> snapped-cell: max(1phx, round(root.cell / 1phx) * 1phx);
+    property <int> columns: Math.ceil(root.width / root.snapped-cell);
+    property <int> rows: Math.ceil(root.height / root.snapped-cell);
+
+    clip: true;
+
+    Image {
+        x: 0;
+        y: 0;
+        width: root.columns * root.snapped-cell;
+        height: root.rows * root.snapped-cell;
+        image-fit: fill;
+        image-rendering: pixelated;
+        source: DitherEngine.linear-gradient(root.columns, root.rows, root.angle / 1deg, root.from, root.to, root.matrix, root.ink, root.paper);
+    }
+
+    @children
+}
