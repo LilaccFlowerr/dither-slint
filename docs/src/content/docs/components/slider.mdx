@@ -8,9 +8,10 @@ import Demo from '../../../components/Demo.astro';
 
 The filled part of the track is a dither ramp worked out cell by cell: sparse far from the thumb, denser towards it, and solid for the last two cells before a one-cell gap at the thumb. Hover, keyboard focus and drag fade in a longer, denser ramp.
 
-The slider supports two distinct variants:
-- **`thumb`** (default): An upstream notched cap lit like the button with highlights, shade bevels, and a central grip line.
-- **`bar`**: A seamless draggable progress-bar slider with a 1-cell leading edge cap and optional segment breaks.
+There are two variants:
+- **`thumb`** (default): a notched cap lit like the button, with highlights, shade bevels and a grip line.
+- **`bar`**: a progress bar you drag directly, with a one-cell cap at the leading edge and optional segment breaks.
+
 
 <Demo
 	title="Basic"
@@ -24,38 +25,39 @@ The slider supports two distinct variants:
 </Demo>
 
 <Demo
-	title="Variants: Thumb and Bar"
+	title="Variants: thumb and bar"
 	code={`DitherSlider {
     variant: DitherSliderVariant.thumb;
     value: 65;
-    label: "Thumb variant";
+    label: "Thumb";
 }
 
 DitherSlider {
     variant: DitherSliderVariant.bar;
     value: 45;
-    label: "Bar variant";
+    label: "Bar";
 }`}
 >
-	<Slider value={65} label="Thumb variant" />
-	<Slider value={45} label="Bar variant" />
+	<Slider value={65} label="Thumb" />
+	<Slider variant="bar" value={45} label="Bar" />
 </Demo>
 
 <Demo
-	title="Fills and Segments"
+	title="Segments"
 	code={`DitherSlider {
-    fill: DitherFill.hatched;
-    value: 70;
+    variant: DitherSliderVariant.bar;
+    segments: 10;
+    value: 60;
 }
 
 DitherSlider {
     variant: DitherSliderVariant.bar;
-    segments: 10;
-    value: 60;
+    segments: 5;
+    value: 40;
 }`}
 >
-	<Slider value={70} label="Hatched fill" />
-	<Slider value={60} label="Segmented bar" />
+	<Slider variant="bar" segments={10} value={60} label="Ten segments" />
+	<Slider variant="bar" segments={5} value={40} label="Five segments" />
 </Demo>
 
 <Demo
@@ -81,7 +83,7 @@ DitherSlider {
 </Demo>
 
 <Demo
-	title="Colours, glow, ticks and range"
+	title="Colours, glow, steps and disabled"
 	code={`DitherSlider {
     color: DitherPalette.green;
     value: 60;
@@ -94,12 +96,8 @@ DitherSlider {
 }
 
 DitherSlider {
-    step: 1;
-    minimum: 0;
-    maximum: 10;
-    value: 7;
-    ticks: true;
-    show-range: true;
+    step: 10;
+    value: 30;
 }
 
 DitherSlider {
@@ -112,6 +110,30 @@ DitherSlider {
 	<Slider step={10} value={30} label="Steps of ten" />
 	<Slider disabled value={50} label="Disabled" />
 </Demo>
+
+## Fills, ticks and range
+
+These are only in the Slint component, so they are not in the previews above.
+
+```slint
+DitherSlider {
+    fill: DitherFill.hatched;
+    value: 70;
+}
+
+DitherSlider {
+    maximum: 10;
+    value: 7;
+    ticks: true;
+    show-range: true;
+}
+
+DitherSlider {
+    is-range: true;
+    value: 20;
+    value-high: 80;
+}
+```
 
 ## Properties
 

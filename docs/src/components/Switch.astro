@@ -78,17 +78,17 @@ const { checked, fill = 'gradient', color = 'ink', size = 'md', bloom = 'off', d
 	}
 	.switch .wave {
 		clip-path: inset(0 100% 0 0);
-		transition: clip-path 180ms steps(var(--steps), jump-end);
-		transition-delay: calc((4 - var(--i)) * 20ms);
+		transition: clip-path 130ms steps(var(--steps), jump-end);
+		transition-delay: calc((4 - var(--i)) * 10ms);
 	}
 	.switch[aria-checked='true'] .wave {
 		clip-path: inset(0 0 0 0);
-		transition-delay: calc(var(--i) * 20ms);
+		transition-delay: calc(var(--i) * 10ms);
 	}
 	.switch .thumb {
 		position: absolute;
 		transform: translateX(0);
-		transition: transform 180ms steps(var(--steps), jump-end);
+		transition: transform 140ms steps(var(--steps), jump-end);
 		pointer-events: none;
 	}
 	.switch[aria-checked='true'] .thumb {
