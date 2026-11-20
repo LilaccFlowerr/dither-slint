@@ -30,6 +30,7 @@ export default defineConfig({
 						{ label: 'DitherGradient', slug: 'components/gradient' },
 						{ label: 'DitherImage', slug: 'components/image' },
 						{ label: 'DitherSwitch', slug: 'components/switch' },
+						{ label: 'DitherTabs', slug: 'components/tabs' },
 					],
 				},
 				{ label: 'Motion', items: [{ label: 'Overview', slug: 'motion/overview' }] },

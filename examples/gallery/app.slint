@@ -2,11 +2,12 @@ import { DitherTheme } from "../../ui/lib.slint";
 export { DitherEngine } from "../../ui/lib.slint";
 import { GradientPage } from "gradient-page.slint";
 import { ButtonPage } from "button-page.slint";
+import { BadgePage } from "badge-page.slint";
+import { CardPage } from "card-page.slint";
+import { TabsPage } from "tabs-page.slint";
 import { MotionPage } from "motion-page.slint";
 import { ImagePage } from "image-page.slint";
 import { BackgroundsPage } from "backgrounds-page.slint";
-import { BadgePage } from "badge-page.slint";
-import { CardPage } from "card-page.slint";
 import { DividerPage } from "divider-page.slint";
 import { SwitchPage } from "switch-page.slint";
 
@@ -18,7 +19,7 @@ export component Gallery inherits Window {
 
     in property <image> sample;
 
-    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Motion", "Image", "Backgrounds", "Divider", "Switch"];
+    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch"];
     property <int> page: 0;
 
     HorizontalLayout {
@@ -51,11 +52,12 @@ export component Gallery inherits Window {
             if root.page == 1: ButtonPage { }
             if root.page == 2: BadgePage { }
             if root.page == 3: CardPage { }
-            if root.page == 4: MotionPage { }
-            if root.page == 5: ImagePage { sample: root.sample; }
-            if root.page == 6: BackgroundsPage { }
-            if root.page == 7: DividerPage { }
-            if root.page == 8: SwitchPage { }
+            if root.page == 4: TabsPage { }
+            if root.page == 5: MotionPage { }
+            if root.page == 6: ImagePage { sample: root.sample; }
+            if root.page == 7: BackgroundsPage { }
+            if root.page == 8: DividerPage { }
+            if root.page == 9: SwitchPage { }
         }
     }
 }
