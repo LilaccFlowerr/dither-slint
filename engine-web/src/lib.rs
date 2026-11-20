@@ -178,3 +178,14 @@ pub fn avatar(name: &str, fill: usize, color: &[u8]) -> Vec<u8> {
 pub fn avatar_hue(name: &str) -> usize {
     dither_slint::avatar::hue(name)
 }
+
+#[wasm_bindgen]
+pub fn loader(variant: usize, height: f32, cell: f32, time: f32, matrix: usize, color: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::loader::loader(dither_slint::loader::Variant::ALL[variant], height, cell, time, Matrix::ALL[matrix], colors(color)[0]))
+}
+
+#[wasm_bindgen]
+pub fn loader_grid(variant: usize, height: f32, cell: f32) -> Vec<u32> {
+    let (columns, rows) = dither_slint::loader::grid(dither_slint::loader::Variant::ALL[variant], height, cell);
+    vec![columns, rows]
+}

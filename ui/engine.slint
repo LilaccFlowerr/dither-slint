@@ -8,6 +8,8 @@ export enum DitherBloom { off, low, high }
 
 export enum DitherGlow { top-left, top-right, bottom-left, bottom-right, top, bottom }
 
+export enum DitherLoaderVariant { ring, dots, pulse, bar }
+
 export enum DitherTabsVariant { pill, underline }
 
 export enum DitherMethod { bayer4, bayer8, blue-noise, floyd-steinberg, atkinson, sierra-lite }
@@ -25,6 +27,7 @@ export global DitherEngine {
     pure callback slider-fill(columns: int, rows: int, end: int, hot: bool, matrix: DitherMatrix, color: color) -> image;
     pure callback avatar(name: string, fill: DitherFill, color: color) -> image;
     pure callback avatar-hue(name: string) -> int;
+    pure callback loader(variant: DitherLoaderVariant, height: float, cell: float, time: float, matrix: DitherMatrix, color: color) -> image;
     pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;
     pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;

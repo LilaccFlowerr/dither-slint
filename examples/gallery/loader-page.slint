@@ -1,0 +1,40 @@
+import { DitherLoader, DitherLoaderSize, DitherLoaderVariant, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component LoaderPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 18px;
+    alignment: start;
+
+    Heading { text: "Variants"; }
+    HorizontalLayout {
+        spacing: 32px;
+        alignment: start;
+        for variant in [DitherLoaderVariant.ring, DitherLoaderVariant.dots, DitherLoaderVariant.pulse, DitherLoaderVariant.bar]: DitherLoader {
+            variant: variant;
+        }
+    }
+
+    Heading { text: "Sizes"; }
+    HorizontalLayout {
+        spacing: 32px;
+        alignment: start;
+        DitherLoader { size: DitherLoaderSize.sm; }
+        DitherLoader { size: DitherLoaderSize.md; }
+        DitherLoader { size: DitherLoaderSize.lg; }
+    }
+
+    Heading { text: "Colours"; }
+    HorizontalLayout {
+        spacing: 32px;
+        alignment: start;
+        DitherLoader { variant: DitherLoaderVariant.ring; color: DitherPalette.green; size: DitherLoaderSize.lg; }
+        DitherLoader { variant: DitherLoaderVariant.pulse; color: DitherPalette.pink; size: DitherLoaderSize.lg; }
+        DitherLoader { variant: DitherLoaderVariant.bar; color: DitherPalette.orange; size: DitherLoaderSize.lg; }
+    }
+}

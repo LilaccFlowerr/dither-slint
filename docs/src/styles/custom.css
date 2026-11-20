@@ -22,6 +22,7 @@
 .tabs *,
 .dmenu *,
 .avatar *,
-.avatar-group * {
+.avatar-group *,
+.loader * {
 	margin-top: 0 !important;
 }

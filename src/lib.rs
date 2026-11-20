@@ -6,6 +6,7 @@ pub mod export;
 pub mod field;
 pub mod glow;
 pub mod lively;
+pub mod loader;
 pub mod matrix;
 pub mod noise;
 pub mod render;
@@ -71,6 +72,9 @@ macro_rules! install {
         });
         engine.on_avatar(|name, fill, color| $crate::avatar::avatar(&name, FillVariant::ALL[fill as usize], color));
         engine.on_avatar_hue(|name| $crate::avatar::hue(&name) as i32);
+        engine.on_loader(|variant, height, cell, time, matrix, color| {
+            $crate::loader::loader($crate::loader::Variant::ALL[variant as usize], height, cell, time, Matrix::ALL[matrix as usize], color)
+        });
         engine.on_picture(|source, columns, rows, method, threshold, palette| {
             let method = Method::ALL[method as usize];
             let options = render::PictureOptions { method, threshold, palette: palette.iter().collect() };
@@ -187,5 +191,6 @@ mod tests {
         assert_eq!(in_rust(&Press::ALL), in_slint("DitherPress"));
         assert_eq!(in_rust(&Idle::ALL), in_slint("DitherIdle"));
         assert_eq!(in_rust(&Method::ALL), in_slint("DitherMethod"));
+        assert_eq!(in_rust(&crate::loader::Variant::ALL), in_slint("DitherLoaderVariant"));
     }
 }

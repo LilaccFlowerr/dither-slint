@@ -32,6 +32,7 @@ export default defineConfig({
 						{ label: 'DitherGradient', slug: 'components/gradient' },
 						{ label: 'DitherImage', slug: 'components/image' },
 						{ label: 'DitherInput', slug: 'components/input' },
+						{ label: 'DitherLoader', slug: 'components/loader' },
 						{ label: 'DitherSlider', slug: 'components/slider' },
 						{ label: 'DitherSwitch', slug: 'components/switch' },
 						{ label: 'DitherTabs', slug: 'components/tabs' },

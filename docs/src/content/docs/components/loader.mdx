@@ -1,0 +1,69 @@
+---
+title: DitherLoader
+description: "A small dithered loading indicator: a ring, three dots, a pulse or a bar."
+---
+
+import Loader from '../../../components/Loader.astro';
+import Demo from '../../../components/Demo.astro';
+
+Every variant is a field of tones on a small grid. Each frame the loader thresholds the tones with the dither matrix and draws the cells that are on. The edges of a shape stay hard and only the tone inside it fades, so the outline stays crisp and the dither carries the motion.
+
+<Demo
+	title="Variants"
+	code={`DitherLoader {
+    variant: DitherLoaderVariant.ring;
+}
+
+DitherLoader {
+    variant: DitherLoaderVariant.dots;
+}
+
+DitherLoader {
+    variant: DitherLoaderVariant.pulse;
+}
+
+DitherLoader {
+    variant: DitherLoaderVariant.bar;
+}`}
+>
+	<Loader variant="ring" label="ring" />
+	<Loader variant="dots" label="dots" />
+	<Loader variant="pulse" label="pulse" />
+	<Loader variant="bar" label="bar" />
+</Demo>
+
+<Demo
+	title="Sizes and colours"
+	code={`DitherLoader {
+    size: DitherLoaderSize.sm;
+}
+
+DitherLoader {
+    size: DitherLoaderSize.lg;
+    color: DitherPalette.green;
+}
+
+DitherLoader {
+    variant: DitherLoaderVariant.pulse;
+    size: DitherLoaderSize.lg;
+    color: DitherPalette.pink;
+}`}
+>
+	<Loader size="sm" />
+	<Loader size="lg" color="green" />
+	<Loader variant="pulse" size="lg" color="pink" />
+	<Loader variant="bar" size="lg" color="orange" />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `variant` | `ring` | `ring`, `dots`, `pulse` or `bar`. |
+| `size` | `md` | `sm`, `md` or `lg`: 24, 40 and 64 pixels high. Dots are twice as wide, the bar three times. |
+| `color` | `DitherTheme.ink` | Any colour, or one from `DitherPalette`. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `2px` (`1px` at `sm`) | Size of one dither cell. |
+| `speed` | `1` | Speed multiplier. |
+| `label` | `Loading` | What a screen reader announces. |
+| `animated` | `DitherTheme.animated` | When `false` it holds a still frame. |
