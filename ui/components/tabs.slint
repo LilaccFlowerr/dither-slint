@@ -169,17 +169,6 @@ export component DitherTabs {
                     background: #33312e;
                 }
 
-                if root.bloom != DitherBloom.off: Rectangle {
-                    x: root.to-x;
-                    y: root.to-y;
-                    width: root.to-w;
-                    height: root.to-h;
-                    border-radius: root.variant == DitherTabsVariant.pill ? 8px : 0px;
-                    background: root.color.transparentize(0.5);
-                    drop-shadow-blur: root.bloom == DitherBloom.low ? 10px : 18px;
-                    drop-shadow-color: root.color.transparentize(root.bloom == DitherBloom.high ? 0.45 : 0.7);
-                }
-
                 indicator := Image {
                     x: 0;
                     y: 0;
@@ -204,16 +193,6 @@ export component DitherTabs {
                         root.to-h / 1phx,
                         root.moving ? Math.min(1.0, (animation-tick() - root.move-start) / 260ms) : 1.0
                     );
-                }
-
-                if focus.has-focus: Rectangle {
-                    x: -3px;
-                    y: -3px;
-                    width: parent.width + 6px;
-                    height: parent.height + 6px;
-                    border-radius: root.variant == DitherTabsVariant.pill ? 14px : 4px;
-                    border-width: 2px;
-                    border-color: DitherTheme.foreground;
                 }
 
                 list-layout := HorizontalLayout {
@@ -264,6 +243,20 @@ export component DitherTabs {
                             }
                         }
 
+                        changed y => {
+                            if i == root.current && !root.moving {
+                                root.to-y = self.y;
+                                root.from-y = self.y;
+                            }
+                        }
+
+                        changed height => {
+                            if i == root.current && !root.moving {
+                                root.to-h = self.height;
+                                root.from-h = self.height;
+                            }
+                        }
+
                         changed is-active => {
                             if self.is-active && !root.moving {
                                 root.to-x = self.x;
@@ -290,7 +283,7 @@ export component DitherTabs {
 
     focus := FocusScope {
         enabled: root.enabled;
-        focus-on-click: true;
+        focus-on-click: false;
         key-pressed(event) => {
             if event.text == Key.LeftArrow || event.text == Key.UpArrow {
                 root.jump-to(Math.max(0, root.current - 1));
