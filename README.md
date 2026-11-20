@@ -75,7 +75,9 @@ A button with a lit, dithered surface: a highlight dithered down from the top an
 DitherButton {
     text: "Deploy";
     bloom: DitherBloom.low;
-    clicked => { deploy(); }
+    clicked => {
+        debug("clicked");
+    }
 }
 
 DitherButton {

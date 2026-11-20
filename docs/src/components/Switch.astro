@@ -1,0 +1,205 @@
+---
+interface Props {
+	checked?: boolean;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	color?: string;
+	size?: 'sm' | 'md' | 'lg';
+	bloom?: 'off' | 'low' | 'high';
+	disabled?: boolean;
+	label?: string;
+}
+
+const { checked, fill = 'gradient', color = 'ink', size = 'md', bloom = 'off', disabled, label } = Astro.props;
+---
+
+<button
+	class="switch"
+	type="button"
+	role="switch"
+	aria-checked={checked ? 'true' : 'false'}
+	aria-label={label}
+	data-fill={fill}
+	data-color={color}
+	data-size={size}
+	data-bloom={bloom}
+	disabled={disabled}
+></button>
+
+<style is:global>
+	.switch {
+		position: relative;
+		display: inline-block;
+		flex: none;
+		padding: 0;
+		border: 0;
+		background: none;
+		cursor: pointer;
+		isolation: isolate;
+	}
+	.switch:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+	}
+	.switch:focus-visible {
+		outline: 2px solid var(--sl-color-white);
+		outline-offset: 3px;
+	}
+	.switch .surface,
+	.switch .frame,
+	.switch .wave,
+	.switch .part {
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		pointer-events: none;
+	}
+	.switch .surface {
+		overflow: hidden;
+	}
+	.switch .layer {
+		position: absolute;
+		top: 0;
+		left: 0;
+		image-rendering: pixelated;
+		opacity: var(--opacity);
+	}
+	.switch .layer.hover,
+	.switch .layer.press {
+		opacity: 0;
+		transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.switch:not(:disabled):hover .layer.hover,
+	.switch:focus-visible .layer.hover {
+		opacity: var(--opacity);
+	}
+	.switch:not(:disabled):active .layer.press {
+		opacity: var(--opacity);
+		transition-duration: 80ms;
+	}
+	.switch .wave {
+		clip-path: inset(0 100% 0 0);
+		transition: clip-path 180ms steps(var(--steps), jump-end);
+		transition-delay: calc((4 - var(--i)) * 20ms);
+	}
+	.switch[aria-checked='true'] .wave {
+		clip-path: inset(0 0 0 0);
+		transition-delay: calc(var(--i) * 20ms);
+	}
+	.switch .thumb {
+		position: absolute;
+		transform: translateX(0);
+		transition: transform 180ms steps(var(--steps), jump-end);
+		pointer-events: none;
+	}
+	.switch[aria-checked='true'] .thumb {
+		transform: translateX(var(--travel));
+	}
+	.switch[aria-checked='true'] {
+		box-shadow: var(--bloom);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.switch .wave,
+		.switch .thumb {
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	import { blend, css, layer, ready, rgba, type Layer } from '../scripts/dither';
+	import { attachFx } from '../scripts/fx';
+
+	const targets = { sm: [20, 2, 34], md: [24, 2, 42], lg: [30, 4, 54] } as const;
+	const step = 2;
+	const snap = (px: number) => Math.max(step, Math.round(px / step) * step);
+	const waveLevels = [3 / 16, 6 / 16, 9 / 16, 12 / 16];
+
+	function box(parent: HTMLElement, className: string, style: Partial<CSSStyleDeclaration> = {}) {
+		const element = document.createElement('span');
+		element.className = className;
+		Object.assign(element.style, style);
+		parent.append(element);
+		return element;
+	}
+
+	function build(button: HTMLElement) {
+		const { fill, size: name, bloom } = button.dataset as Record<string, string>;
+		const [targetHeight, targetPad, targetWidth] = targets[name as keyof typeof targets];
+		const pad = snap(targetPad);
+		const height = Math.max(snap(targetHeight), pad * 2 + step * 2);
+		const thumb = height - pad * 2;
+		const width = Math.max(snap(targetWidth), thumb + pad * 2 + step * 2);
+		const travel = width - thumb - pad * 2;
+		const radius = Math.round(height * 0.32);
+		const thumbRadius = Math.max(2, radius - pad);
+		const rows = Math.round(height / step);
+		const thumbRows = Math.round(thumb / step);
+		const cells = (count: number, share: number) => Math.max(2, Math.round(count * share));
+		const textured = fill === 'dotted' || fill === 'hatched';
+		const texture = textured ? (fill as Layer['variant']) : 'gradient';
+
+		const color = rgba(button.dataset.color!);
+		const white = rgba('white');
+		const black = rgba('black');
+		const grey = rgba('#8a8680');
+		const light = blend(color, white, 0.42);
+		const dark = blend(color, black, 0.48);
+		const edge = blend(color, black, 0.3);
+		const knob = rgba('#eeeeee');
+		const knobShade = blend(knob, black, 0.24);
+
+		Object.assign(button.style, { width: `${width}px`, height: `${height}px`, borderRadius: `${radius}px` });
+		button.style.setProperty('--steps', String(travel / step));
+		button.style.setProperty('--travel', `${travel}px`);
+		button.style.setProperty(
+			'--bloom',
+			bloom === 'off' ? 'none' : `0 0 ${bloom === 'high' ? 18 : 10}px ${css([color[0], color[1], color[2], bloom === 'high' ? 140 : 77])}`,
+		);
+
+		const surface = box(button, 'surface', { background: css([grey[0], grey[1], grey[2], 41]) });
+		const rest: Layer[] = [
+			{ variant: texture, length: cells(rows, 0.7), from: fill === 'solid' ? 0.25 : 0.5, color: grey, opacity: textured ? 0.45 : 0.7, frame: false },
+			{ length: rows, from: 0.75, to: 0.0625, color: grey, opacity: 1, hover: true, frame: false },
+		];
+		for (const options of rest) layer(surface, step, options);
+
+		waveLevels.forEach((level, index) => {
+			const wave = box(surface, 'wave');
+			wave.style.setProperty('--i', String(index));
+			layer(wave, step, { length: 1, from: level, to: level, color, frame: false });
+		});
+		const lit = box(surface, 'wave', { background: css(color) });
+		lit.style.setProperty('--i', '4');
+		const shade: Layer = { variant: texture, length: fill === 'solid' ? 3 : cells(rows, 0.55), color: dark, opacity: textured ? 0.55 : 1, frame: false };
+		for (const options of [shade, { edge: 'top', length: cells(rows, 0.25), color: light, frame: false }, { edge: 'top', length: cells(rows, 0.6), color: light, hover: true, frame: false }] as Layer[]) {
+			layer(lit, step, options);
+		}
+		const litFrame = box(lit, 'part', { boxShadow: `inset 0 0 0 1px ${css(edge)}` });
+		void litFrame;
+
+		attachFx(surface, button, { color, strength: 0.7, cell: step, effect: { hover: 'none' } });
+
+		const frame = box(button, 'frame', { boxShadow: `inset 0 0 0 1px ${css([grey[0], grey[1], grey[2], 97])}` });
+		void frame;
+
+		const thumbBox = box(button, 'thumb', { left: `${pad}px`, top: `${pad}px`, width: `${thumb}px`, height: `${thumb}px`, borderRadius: `${thumbRadius}px` });
+		box(thumbBox, 'part', { background: 'rgba(0, 0, 0, 0.3)', transform: `translateY(${step}px)` });
+		const face = box(thumbBox, 'part', { overflow: 'hidden', background: css(knob) });
+		const faceLayers: Layer[] = [
+			{ length: cells(thumbRows, 0.4), color: knobShade, frame: false },
+			{ edge: 'top', length: cells(thumbRows, 0.3), color: white, frame: false },
+			{ edge: 'top', length: cells(thumbRows, 0.6), color: white, hover: true, frame: false },
+			{ edge: 'top', length: cells(thumbRows, 0.5), from: 0.5, color: knobShade, press: true, frame: false },
+		];
+		for (const options of faceLayers) layer(face, step, options);
+		box(thumbBox, 'part', { boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.2)' });
+
+		button.addEventListener('click', () => {
+			button.setAttribute('aria-checked', String(button.getAttribute('aria-checked') !== 'true'));
+		});
+	}
+
+	ready.then(() => {
+		for (const button of document.querySelectorAll<HTMLElement>('.switch')) build(button);
+	});
+</script>

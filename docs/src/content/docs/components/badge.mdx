@@ -125,24 +125,25 @@ DitherBadge {
     color: DitherPalette.green;
 }
 
-
 DitherBadge {
     text: "Tag";
     removable: true;
-    removed => { drop-tag(); }
+    removed => {
+        debug("removed");
+    }
 }
-
 
 DitherBadge {
     text: "Glow";
     bloom: DitherBloom.high;
 }
 
-
 DitherBadge {
     text: "Click me";
     interactive: true;
-    clicked => { open(); }
+    clicked => {
+        debug("clicked");
+    }
 }`}
 >
 	<Badge text="Online" dot color="green" />

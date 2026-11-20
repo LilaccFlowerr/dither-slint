@@ -7,6 +7,8 @@ import { CardPage } from "card-page.slint";
 import { GradientPage } from "gradient-page.slint";
 import { ImagePage } from "image-page.slint";
 import { MotionPage } from "motion-page.slint";
+import { DividerPage } from "divider-page.slint";
+import { SwitchPage } from "switch-page.slint";
 
 export component Shots inherits Window {
     in property <int> which;
@@ -22,5 +24,7 @@ export component Shots inherits Window {
         if root.which == 4: ImagePage { sample: root.sample; }
         if root.which == 5: BackgroundsPage { }
         if root.which == 6: MotionPage { }
+        if root.which == 7: DividerPage { }
+        if root.which == 8: SwitchPage { }
     }
 }

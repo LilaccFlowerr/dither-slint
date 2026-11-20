@@ -29,6 +29,7 @@ export default defineConfig({
 						{ label: 'DitherDivider', slug: 'components/divider' },
 						{ label: 'DitherGradient', slug: 'components/gradient' },
 						{ label: 'DitherImage', slug: 'components/image' },
+						{ label: 'DitherSwitch', slug: 'components/switch' },
 					],
 				},
 				{ label: 'Motion', items: [{ label: 'Overview', slug: 'motion/overview' }] },

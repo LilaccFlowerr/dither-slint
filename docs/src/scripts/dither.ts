@@ -43,13 +43,14 @@ export interface Layer {
 	opacity?: number | string;
 	hover?: boolean;
 	press?: boolean;
+	frame?: boolean;
 }
 
 export function layer(box: HTMLElement, step: number, options: Layer) {
-	const { variant = 'gradient', edge = 'bottom', length, from = 1, to = 0, color, opacity = 1, hover, press } = options;
+	const { variant = 'gradient', edge = 'bottom', length, from = 1, to = 0, color, opacity = 1, hover, press, frame = true } = options;
 	const columns = Math.ceil(box.clientWidth / step);
 	const rows = Math.ceil(box.clientHeight / step);
-	const bytes = fill(columns, rows, variants[variant], edges[edge], length, from, to, new Uint8Array(color), true);
+	const bytes = fill(columns, rows, variants[variant], edges[edge], length, from, to, new Uint8Array(color), frame);
 	const canvas = document.createElement('canvas');
 	canvas.width = columns;
 	canvas.height = rows;
