@@ -1,0 +1,37 @@
+import { DitherBloom, DitherButton, DitherButtonSize, DitherButtonVariant, DitherFill, DitherPalette } from "../../ui/lib.slint";
+
+export component ButtonPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 20px;
+    alignment: start;
+
+    in-out property <bool> busy;
+
+    HorizontalLayout {
+        spacing: 12px;
+        alignment: start;
+        DitherButton { text: "Deploy"; bloom: DitherBloom.low; }
+        DitherButton { text: "View logs"; variant: DitherButtonVariant.outline; fill: DitherFill.dotted; }
+        DitherButton { text: "Save"; loading: root.busy; clicked => { root.busy = true; } }
+    }
+
+    for fill in [DitherFill.gradient, DitherFill.dotted, DitherFill.hatched, DitherFill.solid]: HorizontalLayout {
+        spacing: 12px;
+        alignment: start;
+        DitherButton { text: "Ink"; fill: fill; }
+        DitherButton { text: "Green"; fill: fill; color: DitherPalette.green; }
+        DitherButton { text: "Orange"; fill: fill; color: DitherPalette.orange; }
+        DitherButton { text: "Pink"; fill: fill; color: DitherPalette.pink; }
+        DitherButton { text: "Ink"; fill: fill; variant: DitherButtonVariant.outline; }
+        DitherButton { text: "Green"; fill: fill; variant: DitherButtonVariant.outline; color: DitherPalette.green; }
+    }
+
+    HorizontalLayout {
+        spacing: 12px;
+        alignment: start;
+        DitherButton { text: "Small"; size: DitherButtonSize.sm; }
+        DitherButton { text: "Medium"; }
+        DitherButton { text: "Large"; size: DitherButtonSize.lg; bloom: DitherBloom.high; }
+        DitherButton { text: "Disabled"; enabled: false; }
+    }
+}

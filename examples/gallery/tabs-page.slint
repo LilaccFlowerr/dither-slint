@@ -1,0 +1,142 @@
+import { DitherBloom, DitherMatrix, DitherPalette, DitherTabs, DitherTabsVariant, DitherTheme } from "../../ui/lib.slint";
+
+export component TabsPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 24px;
+    alignment: start;
+
+    VerticalLayout {
+        spacing: 8px;
+        Text {
+            text: "Pill Variant";
+            color: DitherTheme.foreground;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        HorizontalLayout {
+            spacing: 16px;
+            alignment: start;
+            DitherTabs {
+                tabs: ["Overview", "Deploys", "Settings"];
+                variant: DitherTabsVariant.pill;
+                color: DitherPalette.blue;
+                bloom: DitherBloom.low;
+            }
+            DitherTabs {
+                tabs: ["Active", "Pending", "Archived"];
+                variant: DitherTabsVariant.pill;
+                color: DitherPalette.green;
+            }
+            DitherTabs {
+                tabs: ["Light", "System", "Dark"];
+                variant: DitherTabsVariant.pill;
+                color: DitherPalette.purple;
+            }
+        }
+    }
+
+    VerticalLayout {
+        spacing: 8px;
+        Text {
+            text: "Underline Variant";
+            color: DitherTheme.foreground;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        HorizontalLayout {
+            spacing: 16px;
+            alignment: start;
+            DitherTabs {
+                tabs: ["Overview", "Deploys", "Settings"];
+                variant: DitherTabsVariant.underline;
+                color: DitherPalette.blue;
+            }
+            DitherTabs {
+                tabs: ["Code", "Issues", "Pull Requests", "Actions"];
+                variant: DitherTabsVariant.underline;
+                color: DitherPalette.pink;
+                bloom: DitherBloom.high;
+            }
+            DitherTabs {
+                tabs: ["Summary", "Metrics", "Traces"];
+                variant: DitherTabsVariant.underline;
+                color: DitherPalette.orange;
+            }
+        }
+    }
+
+    VerticalLayout {
+        spacing: 8px;
+        Text {
+            text: "Interactive Preview";
+            color: DitherTheme.foreground;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        interactive-tabs := DitherTabs {
+            tabs: ["Overview", "Deploys", "Settings"];
+            variant: DitherTabsVariant.pill;
+            color: DitherPalette.blue;
+        }
+
+        Rectangle {
+            height: 120px;
+            border-radius: 8px;
+            background: DitherTheme.foreground.with-alpha(0.04);
+            border-width: 1px;
+            border-color: DitherTheme.foreground.with-alpha(0.12);
+
+            if interactive-tabs.current == 0: VerticalLayout {
+                alignment: center;
+                Text {
+                    text: "99.98% uptime";
+                    color: DitherTheme.foreground;
+                    font-size: 18px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "Production is running normally across 14 regions.";
+                    color: DitherTheme.foreground.with-alpha(0.6);
+                    font-size: 13px;
+                    horizontal-alignment: center;
+                }
+            }
+
+            if interactive-tabs.current == 1: VerticalLayout {
+                alignment: center;
+                Text {
+                    text: "Commit 4f2a9c1 deployed";
+                    color: DitherTheme.foreground;
+                    font-size: 18px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "Deployed 38 seconds ago by main branch pipeline.";
+                    color: DitherTheme.foreground.with-alpha(0.6);
+                    font-size: 13px;
+                    horizontal-alignment: center;
+                }
+            }
+
+            if interactive-tabs.current == 2: VerticalLayout {
+                alignment: center;
+                Text {
+                    text: "Project Settings";
+                    color: DitherTheme.foreground;
+                    font-size: 18px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "Manage environment variables, alerts, and access.";
+                    color: DitherTheme.foreground.with-alpha(0.6);
+                    font-size: 13px;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+    }
+}

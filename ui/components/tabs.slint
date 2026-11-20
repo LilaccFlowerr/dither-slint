@@ -37,13 +37,17 @@ component TabTrigger {
     touch := TouchArea {
         mouse-cursor: MouseCursor.pointer;
         changed has-hover => {
-            if self.has-hover && !root.is-active {
-                fx.sweep();
+            if self.has-hover {
+                fx.pointer-enter(self.mouse-x, self.mouse-y);
+            } else {
+                fx.pointer-leave();
             }
         }
         pointer-event(event) => {
             if event.kind == PointerEventKind.down {
-                fx.ripple(self.mouse-x, self.mouse-y);
+                fx.pointer-down(self.mouse-x, self.mouse-y);
+            } else if event.kind == PointerEventKind.move {
+                fx.pointer-move(self.mouse-x, self.mouse-y);
             }
         }
         clicked => {
