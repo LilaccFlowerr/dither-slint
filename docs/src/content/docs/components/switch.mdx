@@ -1,0 +1,109 @@
+---
+title: DitherSwitch
+description: A toggle whose track fills with dither behind the thumb.
+---
+
+import Switch from '../../../components/Switch.astro';
+import Demo from '../../../components/Demo.astro';
+
+Off, the track is a faint grey tint with a sparse texture inside a hairline. Turning it on fills the track from the left in five layers: four copies of the colour masked to denser and denser dither levels, then the full lit surface. Each layer starts a beat after the one below it, so the sparse cells run just behind the thumb and the dense ones fill in after. Turning it off runs the wave backwards. Click one.
+
+<Demo
+	title="Basic"
+	code={`DitherSwitch {
+    checked: true;
+}
+
+DitherSwitch {
+    checked: false;
+}`}
+>
+	<Switch checked label="On" />
+	<Switch label="Off" />
+</Demo>
+
+<Demo
+	title="Sizes"
+	code={`DitherSwitch {
+    size: DitherSwitchSize.sm;
+}
+
+DitherSwitch {
+    size: DitherSwitchSize.md;
+}
+
+DitherSwitch {
+    size: DitherSwitchSize.lg;
+}`}
+>
+	<Switch size="sm" checked label="Small" />
+	<Switch size="md" checked label="Medium" />
+	<Switch size="lg" checked label="Large" />
+</Demo>
+
+<Demo
+	title="Fills"
+	code={`DitherSwitch {
+    fill: DitherFill.gradient;
+}
+
+DitherSwitch {
+    fill: DitherFill.dotted;
+}
+
+DitherSwitch {
+    fill: DitherFill.hatched;
+}
+
+DitherSwitch {
+    fill: DitherFill.solid;
+}`}
+>
+	<Switch fill="gradient" checked label="Gradient" />
+	<Switch fill="dotted" checked label="Dotted" />
+	<Switch fill="hatched" checked label="Hatched" />
+	<Switch fill="solid" checked label="Solid" />
+</Demo>
+
+<Demo
+	title="Colours, glow and disabled"
+	code={`DitherSwitch {
+    color: DitherPalette.green;
+}
+
+DitherSwitch {
+    color: DitherPalette.pink;
+    bloom: DitherBloom.high;
+}
+
+DitherSwitch {
+    enabled: false;
+}`}
+>
+	<Switch color="green" checked label="Green" />
+	<Switch color="pink" bloom="high" checked label="Pink glow" />
+	<Switch checked disabled label="Disabled" />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `checked` | `false` | Whether it is on. |
+| `fill` | `gradient` | Texture of the shade when on and of the track when off: `gradient`, `dotted`, `hatched` or `solid`. |
+| `color` | `DitherTheme.ink` | Colour of the ink when on. |
+| `size` | `md` | `sm`, `md` or `lg`: tracks of 34 by 20, 42 by 24 and 54 by 30 pixels, rounded to whole cells. |
+| `bloom` | `off` | `low` or `high` adds a glow in the ink's colour when on. |
+| `cell` | `2px` | Size of one dither cell. |
+| `enabled` | `true` | Drops to 45% opacity and ignores clicks and keys when `false`. |
+| `animated` | `DitherTheme.animated` | A ripple from where you press. |
+
+`toggled(bool)` is called with the new state. Space and Enter toggle it when it has focus.
+
+```slint
+DitherSwitch {
+    toggled(on) => {
+        debug(on);
+    }
+}
+```

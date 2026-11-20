@@ -6,6 +6,8 @@ export enum DitherEdge { top, bottom, left, right }
 
 export enum DitherBloom { off, low, high }
 
+export enum DitherGlow { top-left, top-right, bottom-left, bottom-right, top, bottom }
+
 export enum DitherTabsVariant { pill, underline }
 
 export enum DitherMethod { bayer4, bayer8, blue-noise, floyd-steinberg, atkinson, sierra-lite }
@@ -17,12 +19,16 @@ export enum DitherPress { ripple, burst, flash, pulse, glitch, none }
 export enum DitherIdle { none, shimmer, breathe, twinkle }
 
 export global DitherEngine {
-    pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, ink: color, paper: color) -> image;
+    pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, palette: [color], levels: int) -> image;
     pure callback fill(columns: int, rows: int, fill: DitherFill, edge: DitherEdge, length: float, from: float, to: float, matrix: DitherMatrix, color: color, frame: bool) -> image;
-    pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, ink: color, paper: color) -> image;
+    pure callback rule(columns: int, rows: int, vertical: bool, fade-start: bool, fade-end: bool, fade: float, strength: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
+    pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;
+    pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
+    pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;
+    pure callback shader(field: string, columns: int, rows: int, time: float, params: [float], palette: [color], matrix: DitherMatrix, levels: int) -> image;
     pure callback mix(base: color, other: color, amount: float) -> color;
-    pure callback hover(kind: DitherHover, columns: int, rows: int, t: float, x: float, y: float, level: float, strength: float, color: color) -> image;
-    pure callback press(kind: DitherPress, columns: int, rows: int, t: float, x: float, y: float, seed: int, strength: float, color: color) -> image;
-    pure callback idle(kind: DitherIdle, columns: int, rows: int, t: float, strength: float, color: color, cell: float) -> image;
+    pure callback hover(kind: DitherHover, columns: int, rows: int, t: float, x: float, y: float, level: float, strength: float, color: color, matrix: DitherMatrix) -> image;
+    pure callback press(kind: DitherPress, columns: int, rows: int, t: float, x: float, y: float, seed: int, strength: float, color: color, matrix: DitherMatrix) -> image;
+    pure callback idle(kind: DitherIdle, columns: int, rows: int, t: float, strength: float, color: color, cell: float, matrix: DitherMatrix) -> image;
     pure callback tabs-indicator(columns: int, rows: int, cell: float, variant: DitherTabsVariant, matrix: DitherMatrix, color: color, from-x: float, from-y: float, from-w: float, from-h: float, to-x: float, to-y: float, to-w: float, to-h: float, progress: float) -> image;
 }

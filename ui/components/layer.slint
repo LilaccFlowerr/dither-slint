@@ -1,0 +1,28 @@
+import { DitherEdge, DitherEngine, DitherFill, DitherMatrix } from "../engine.slint";
+
+export component DitherLayer {
+    in property <length> cell;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <DitherEdge> edge: DitherEdge.bottom;
+    in property <float> length;
+    in property <float> from: 1;
+    in property <float> to: 0;
+    in property <color> color;
+    in property <bool> frame: true;
+
+    property <int> columns: Math.ceil(root.width / root.cell);
+    property <int> rows: Math.ceil(root.height / root.cell);
+
+    width: 100%;
+    height: 100%;
+
+    Image {
+        x: 0;
+        y: 0;
+        width: root.columns * root.cell;
+        height: root.rows * root.cell;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: DitherEngine.fill(root.columns, root.rows, root.fill, root.edge, root.length, root.from, root.to, DitherMatrix.bayer4, root.color, root.frame);
+    }
+}

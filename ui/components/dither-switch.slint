@@ -1,0 +1,300 @@
+import { DitherBloom, DitherEdge, DitherEngine, DitherFill, DitherHover, DitherIdle, DitherMatrix, DitherPress } from "../engine.slint";
+import { DitherMotion, DitherTheme } from "../theme.slint";
+import { DitherFx } from "fx.slint";
+import { DitherLayer as Layer } from "layer.slint";
+
+export enum DitherSwitchSize { sm, md, lg }
+
+component Wave {
+    in property <bool> on;
+    in property <int> index;
+    in property <float> steps;
+    in property <length> full;
+
+    property <float> progress: root.on ? 1 : 0;
+    animate progress {
+        duration: 180ms;
+        delay: root.on ? root.index * 20ms : (4 - root.index) * 20ms;
+        easing: ease-out;
+    }
+
+    width: 100%;
+    height: 100%;
+
+    Rectangle {
+        x: 0;
+        y: 0;
+        width: Math.round(root.progress * root.steps) / root.steps * root.full;
+        clip: true;
+
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: root.full;
+            @children
+        }
+    }
+}
+
+export component DitherSwitch {
+    in-out property <bool> checked;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherSwitchSize> size: DitherSwitchSize.md;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <length> cell: 2px;
+    in property <bool> enabled: true;
+    in property <bool> animated: DitherTheme.animated;
+    in property <DitherPress> press-effect: DitherMotion.press;
+    in property <DitherMatrix> effect-matrix: DitherMotion.matrix;
+    out property <bool> has-focus: focus.has-focus;
+    callback toggled(bool);
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <bool> textured: root.fill == DitherFill.dotted || root.fill == DitherFill.hatched;
+
+    pure function snap(value: length) -> length {
+        return max(root.step, Math.round(value / root.step) * root.step);
+    }
+    pure function by-size(small: length, medium: length, large: length) -> length {
+        if root.size == DitherSwitchSize.sm { return small; }
+        if root.size == DitherSwitchSize.lg { return large; }
+        return medium;
+    }
+
+    property <length> pad: root.snap(root.by-size(2px, 2px, 4px));
+    property <length> track-h: max(root.snap(root.by-size(20px, 24px, 30px)), root.pad * 2 + root.step * 2);
+    property <length> thumb: root.track-h - root.pad * 2;
+    property <length> track-w: max(root.snap(root.by-size(34px, 42px, 54px)), root.thumb + root.pad * 2 + root.step * 2);
+    property <length> travel: root.track-w - root.thumb - root.pad * 2;
+    property <length> radius: Math.round(root.track-h / 1px * 0.32) * 1px;
+    property <length> thumb-radius: max(2px, root.radius - root.pad);
+    property <int> rows: Math.round(root.track-h / root.step);
+    property <int> thumb-rows: Math.round(root.thumb / root.step);
+
+    property <color> grey: #8a8680;
+    property <color> light: DitherEngine.mix(root.color, white, 0.42);
+    property <color> dark: DitherEngine.mix(root.color, black, 0.48);
+    property <color> knob: #eeeeee;
+    property <color> knob-shade: DitherEngine.mix(root.knob, black, 0.24);
+
+    property <float> hover: root.enabled && (touch.has-hover || focus.has-focus) ? 1 : 0;
+    property <float> press: root.enabled && touch.pressed ? 1 : 0;
+    property <float> position: root.checked ? 1 : 0;
+    animate position { duration: 180ms; easing: ease-out; }
+
+    pure function cells(share: float) -> float {
+        return max(2, Math.round(root.rows * share));
+    }
+    pure function thumb-cells(share: float) -> float {
+        return max(2, Math.round(root.thumb-rows * share));
+    }
+
+    width: root.track-w;
+    height: root.track-h;
+    opacity: root.enabled ? 1 : 0.45;
+    accessible-role: AccessibleRole.switch;
+    accessible-checkable: true;
+    accessible-checked: root.checked;
+    accessible-enabled: root.enabled;
+    accessible-action-default => { root.flip(); }
+
+    function flip() {
+        if root.enabled {
+            root.checked = !root.checked;
+            root.toggled(root.checked);
+        }
+    }
+
+    Rectangle {
+        x: -3px;
+        y: -3px;
+        width: root.width + 6px;
+        height: root.height + 6px;
+        border-radius: root.radius + 3px;
+        border-width: 2px;
+        border-color: DitherTheme.foreground;
+        visible: focus.has-focus;
+    }
+
+    Rectangle {
+        border-radius: root.radius;
+        clip: true;
+        background: root.grey.transparentize(0.84);
+        drop-shadow-blur: root.checked && root.bloom != DitherBloom.off ? (root.bloom == DitherBloom.high ? 18px : 10px) : 0px;
+        drop-shadow-color: root.color.transparentize(root.bloom == DitherBloom.high ? 0.45 : 0.7);
+
+        Layer {
+            cell: root.step;
+            fill: root.textured ? root.fill : DitherFill.gradient;
+            length: root.cells(0.7);
+            from: root.fill == DitherFill.solid ? 0.25 : 0.5;
+            color: root.grey;
+            opacity: root.textured ? 0.45 : 0.7;
+        }
+
+        Layer {
+            cell: root.step;
+            length: root.rows;
+            from: 0.75;
+            to: 0.0625;
+            color: root.grey;
+            opacity: root.hover;
+            animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        }
+
+        for level[index] in [0.1875, 0.375, 0.5625, 0.75]: Wave {
+            on: root.checked;
+            index: index;
+            steps: root.travel / root.step + 2;
+            full: root.track-w;
+
+            Layer {
+                cell: root.step;
+                length: 1;
+                from: level;
+                to: level;
+                color: root.color;
+                frame: false;
+            }
+        }
+
+        Wave {
+            on: root.checked;
+            index: 4;
+            steps: root.travel / root.step + 2;
+            full: root.track-w;
+
+            Rectangle { background: root.color; }
+
+            Layer {
+                cell: root.step;
+                fill: root.textured ? root.fill : DitherFill.gradient;
+                length: root.fill == DitherFill.solid ? 3 : root.cells(0.55);
+                color: root.dark;
+                opacity: root.textured ? 0.55 : 1;
+                frame: false;
+            }
+
+            Layer {
+                cell: root.step;
+                edge: DitherEdge.top;
+                length: root.cells(0.25);
+                color: root.light;
+                frame: false;
+            }
+
+            Layer {
+                cell: root.step;
+                edge: DitherEdge.top;
+                length: root.cells(0.6);
+                color: root.light;
+                opacity: root.hover;
+                frame: false;
+                animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+            }
+
+            Rectangle {
+                border-radius: root.radius;
+                border-width: 1px;
+                border-color: DitherEngine.mix(root.color, black, 0.3);
+            }
+        }
+
+        Rectangle {
+            border-radius: root.radius;
+            border-width: 1px;
+            border-color: root.checked ? DitherEngine.mix(root.color, black, 0.3) : root.grey.transparentize(0.62);
+        }
+
+        DitherFx {
+            cell: root.step;
+            color: root.color;
+            strength: 0.7;
+            animated: root.animated;
+            hover: DitherHover.none;
+            press: root.press-effect;
+            matrix: root.effect-matrix;
+        }
+    }
+
+    Rectangle {
+        x: root.pad + Math.round(root.position * root.travel / root.step) * root.step;
+        y: root.pad;
+        width: root.thumb;
+        height: root.thumb;
+        border-radius: root.thumb-radius;
+
+        Rectangle {
+            y: root.step;
+            border-radius: parent.border-radius;
+            background: black.transparentize(0.7);
+        }
+
+        Rectangle {
+            border-radius: parent.border-radius;
+            clip: true;
+            background: root.knob;
+
+            Layer {
+                cell: root.step;
+                length: root.thumb-cells(0.4);
+                color: root.knob-shade;
+                frame: false;
+            }
+
+            Layer {
+                cell: root.step;
+                edge: DitherEdge.top;
+                length: root.thumb-cells(0.3);
+                color: white;
+                frame: false;
+            }
+
+            Layer {
+                cell: root.step;
+                edge: DitherEdge.top;
+                length: root.thumb-cells(0.6);
+                color: white;
+                opacity: root.hover;
+                frame: false;
+                animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+            }
+
+            Layer {
+                cell: root.step;
+                edge: DitherEdge.top;
+                length: root.thumb-cells(0.5);
+                from: 0.5;
+                color: root.knob-shade;
+                opacity: root.press;
+                frame: false;
+                animate opacity { duration: 80ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+            }
+        }
+
+        Rectangle {
+            border-radius: parent.border-radius;
+            border-width: 1px;
+            border-color: black.transparentize(0.8);
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => { root.flip(); }
+    }
+
+    focus := FocusScope {
+        enabled: root.enabled;
+        focus-on-click: false;
+        key-pressed(event) => {
+            if event.text == Key.Return || event.text == " " {
+                root.flip();
+                return accept;
+            }
+            reject
+        }
+    }
+}

@@ -1,6 +1,6 @@
 [package]
 name = "dither-slint"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2024"
 description = "Dithered Slint component library"
 license = "GPL-3.0-only"
@@ -11,8 +11,12 @@ include = ["src/**", "ui/**", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
 base64 = "0.23.1"
+glam = "0.34.3"
 png = "0.18.1"
 slint = { version = "1.18.1", default-features = false, features = ["std", "compat-1-18"] }
 
 [dev-dependencies]
 slint = { version = "1.18.1", default-features = false, features = ["std", "compat-1-18", "backend-winit", "renderer-software"] }
+
+[profile.dev]
+opt-level = 3

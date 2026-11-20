@@ -1,4 +1,4 @@
-import { DitherEngine, DitherHover, DitherIdle, DitherPress } from "../engine.slint";
+import { DitherEngine, DitherHover, DitherIdle, DitherMatrix, DitherPress } from "../engine.slint";
 import { DitherMotion, DitherTheme } from "../theme.slint";
 
 component FxImage inherits Image {
@@ -22,6 +22,7 @@ export component DitherFx {
     in property <DitherHover> hover: DitherMotion.hover;
     in property <DitherPress> press: DitherMotion.press;
     in property <DitherIdle> idle: DitherMotion.idle;
+    in property <DitherMatrix> matrix: DitherMotion.matrix;
     in property <float> speed: DitherMotion.speed;
     in property <float> intensity: DitherMotion.intensity;
 
@@ -148,7 +149,7 @@ export component DitherFx {
         columns: root.columns;
         rows: root.rows;
         step: root.step;
-        source: DitherEngine.idle(root.idle, root.columns, root.rows, root.idle-t, root.amount, root.color, root.step / 1px);
+        source: DitherEngine.idle(root.idle, root.columns, root.rows, root.idle-t, root.amount, root.color, root.step / 1px, root.matrix);
     }
 
     if root.animated && (root.entering || root.level > 0): FxImage {
@@ -158,7 +159,7 @@ export component DitherFx {
         source: DitherEngine.hover(
             root.hover, root.columns, root.rows,
             root.held ? 0 : (animation-tick() - root.enter-start) * root.pace / root.hover-time,
-            root.spot-x, root.spot-y, root.level, root.amount, root.color);
+            root.spot-x, root.spot-y, root.level, root.amount, root.color, root.matrix);
     }
 
     if root.animated && root.pressing: FxImage {
@@ -168,6 +169,6 @@ export component DitherFx {
         source: DitherEngine.press(
             root.press, root.columns, root.rows,
             (animation-tick() - root.press-start) * root.pace / root.press-time,
-            root.press-x, root.press-y, root.press-seed, root.amount, root.color);
+            root.press-x, root.press-y, root.press-seed, root.amount, root.color, root.matrix);
     }
 }

@@ -1,0 +1,31 @@
+---
+title: dither-slint
+description: Dithered UI components for Slint, written in Rust.
+template: splash
+hero:
+  tagline: Dithered UI components for Slint. Buttons, badges, cards, images, motion and animated backgrounds, drawn in dots.
+  actions:
+    - text: Get started
+      link: /guides/installation/
+      icon: right-arrow
+    - text: See the components
+      link: /components/button/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+  <Card title="Components" icon="puzzle">
+    A button, badge, card, gradient and image with a lit, dithered surface.
+  </Card>
+  <Card title="Motion" icon="rocket">
+    Fourteen hover, press and idle effects, from a sweep to a burst of sparks.
+  </Card>
+  <Card title="Backgrounds" icon="star">
+    Ripples, plasma, waves and noise fields that move, on a CPU renderer in Rust.
+  </Card>
+  <Card title="Your own dither" icon="pencil">
+    Write a field in Rust that returns a tone per cell and the engine does the rest.
+  </Card>
+</CardGrid>

@@ -1,0 +1,31 @@
+---
+title: DitherGradient
+description: A gradient drawn as a dither.
+---
+
+import GradientDemo from '../../../components/GradientDemo.astro';
+
+<GradientDemo />
+
+```slint
+DitherGradient {
+    angle: 90deg;
+    matrix: DitherMatrix.blue-noise;
+}
+
+DitherGradient {
+    palette: [DitherTheme.background, DitherPalette.blue, DitherPalette.green];
+}
+```
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `angle` | `180deg` | Direction, as in CSS. 180deg runs top to bottom. |
+| `from` | `0` | Tone at the start, from 0 (paper) to 1 (ink). |
+| `to` | `1` | Tone at the end. |
+| `matrix` | `bayer4` | `bayer2`, `bayer4`, `bayer8` or `blue-noise`. |
+| `cell` | `3px` | Size of one dither cell, rounded to whole device pixels. |
+| `palette` | background, foreground | Two or more colours, from paper to ink. |
+| `levels` | `0` | Snaps the tone to this many steps. `0` keeps every tone the matrix can draw. |

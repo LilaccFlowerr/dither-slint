@@ -10,6 +10,17 @@ pub enum Method {
     SierraLite,
 }
 
+impl Method {
+    pub const ALL: [Self; 6] = [
+        Self::Bayer4,
+        Self::Bayer8,
+        Self::BlueNoise,
+        Self::FloydSteinberg,
+        Self::Atkinson,
+        Self::SierraLite,
+    ];
+}
+
 pub type PaletteColor = [f32; 3];
 
 pub struct Options {

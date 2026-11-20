@@ -1,0 +1,149 @@
+---
+interface Props {
+	title?: string;
+	glow?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top' | 'bottom';
+	reach?: number;
+	strength?: number;
+	interactive?: boolean;
+	color?: string;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	matrix?: number;
+	cell?: number;
+	rim?: boolean;
+	radius?: number;
+	width?: number;
+}
+
+const { title, glow = 'top-left', reach = 240, strength = 0.5, interactive, color = 'ink', fill = 'gradient', matrix = 1, cell = 3, rim = true, radius = 14, width = 280 } = Astro.props;
+---
+
+<div
+	class="card"
+	style={`width: ${width}px; border-radius: ${radius}px`}
+	data-glow={glow}
+	data-reach={reach}
+	data-strength={strength}
+	data-interactive={interactive ? '' : undefined}
+	data-color={color}
+	data-fill={fill}
+	data-matrix={matrix}
+	data-cell={cell}
+	data-rim={rim ? '' : undefined}
+	data-radius={radius}
+>
+	<div class="content">
+		{title && <strong>{title}</strong>}
+		<span><slot /></span>
+	</div>
+</div>
+
+<style is:global>
+	.card {
+		position: relative;
+		box-sizing: border-box;
+		min-height: 150px;
+		overflow: hidden;
+		background: color-mix(in srgb, #ebe5d9 4%, #1b1a19);
+		border: 1px solid rgba(235, 229, 217, 0.12);
+		color: #ebe5d9;
+	}
+	.card canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		image-rendering: pixelated;
+		pointer-events: none;
+	}
+	.card .content {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 24px;
+		font-size: 14px;
+		line-height: 1.4;
+	}
+	.card strong {
+		font-size: 16px;
+	}
+	.card .content span {
+		color: rgba(235, 229, 217, 0.7);
+	}
+</style>
+
+<script>
+	import { card_glow, card_sparkles } from '../engine/dither_slint_engine_web.js';
+	import { ready, rgba } from '../scripts/dither';
+	import { attachFx } from '../scripts/fx';
+
+	const glows = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'top', 'bottom'];
+	const fills = ['gradient', 'dotted', 'hatched', 'solid'];
+
+	function build(card: HTMLElement) {
+		const data = card.dataset;
+		const step = Number(data.cell);
+		const color = rgba(data.color!);
+		const color4 = new Uint8Array(color);
+		const glow = glows.indexOf(data.glow!);
+		const columns = Math.ceil(card.clientWidth / step);
+		const rows = Math.ceil(card.clientHeight / step);
+
+		const put = (canvas: HTMLCanvasElement, bytes: Uint8Array) => {
+			canvas.width = columns;
+			canvas.height = rows;
+			canvas.style.width = `${columns * step}px`;
+			canvas.style.height = `${rows * step}px`;
+			canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+		};
+		const glowCanvas = document.createElement('canvas');
+		const sparkleCanvas = document.createElement('canvas');
+		card.prepend(glowCanvas, sparkleCanvas);
+
+		let boost = 0;
+		let target = 0;
+		let last = performance.now();
+		let frame = 0;
+		let visible = false;
+		let sparkleTick = -1;
+
+		const draw = () => {
+			put(glowCanvas, card_glow(columns, rows, glow, Number(data.reach) / step, Number(data.strength), boost, data.rim !== undefined, Number(data.radius) / step, fills.indexOf(data.fill!), Number(data.matrix), color4));
+		};
+		const run = (now: number) => {
+			frame = 0;
+			const dt = now - last;
+			last = now;
+			const before = boost;
+			boost += Math.sign(target - boost) * Math.min(Math.abs(target - boost), dt / 234);
+			if (boost !== before) draw();
+			const tick = Math.floor(now / 100);
+			if (tick !== sparkleTick) {
+				sparkleTick = tick;
+				put(sparkleCanvas, card_sparkles(columns, rows, step, tick, glow, Number(data.reach), color4));
+			}
+			if (visible) frame = requestAnimationFrame(run);
+		};
+
+		draw();
+		if (data.interactive !== undefined) {
+			card.addEventListener('pointerenter', () => ((target = 1), !frame && (frame = requestAnimationFrame(run))));
+			card.addEventListener('pointerleave', () => ((target = 0), !frame && (frame = requestAnimationFrame(run))));
+		}
+		new IntersectionObserver(([entry]) => {
+			visible = entry.isIntersecting;
+			if (visible && !frame) {
+				last = performance.now();
+				frame = requestAnimationFrame(run);
+			}
+		}).observe(card);
+
+		const host = document.createElement('div');
+		host.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+		card.prepend(host);
+		attachFx(host, card, { color, strength: 0.45, cell: step });
+	}
+
+	ready.then(() => {
+		for (const card of document.querySelectorAll<HTMLElement>('.card')) build(card);
+	});
+</script>

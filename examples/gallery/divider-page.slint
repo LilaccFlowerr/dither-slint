@@ -1,0 +1,40 @@
+import { DitherDivider, DitherFill, DitherOrientation, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component DividerPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 14px;
+    alignment: start;
+
+    Heading { text: "Rule"; }
+    DitherDivider { }
+
+    Heading { text: "With a label"; }
+    DitherDivider { label: "or"; }
+
+    Heading { text: "Fills"; }
+    for fill in [DitherFill.dotted, DitherFill.hatched, DitherFill.solid]: DitherDivider {
+        fill: fill;
+    }
+
+    Heading { text: "Colours"; }
+    DitherDivider { color: DitherPalette.green; }
+    DitherDivider { color: DitherPalette.orange; thickness: 3; }
+
+    Heading { text: "Vertical"; }
+    HorizontalLayout {
+        height: 60px;
+        spacing: 24px;
+        alignment: start;
+        Text { text: "12"; color: DitherTheme.foreground; vertical-alignment: center; }
+        DitherDivider { orientation: DitherOrientation.vertical; }
+        Text { text: "340"; color: DitherTheme.foreground; vertical-alignment: center; }
+        DitherDivider { orientation: DitherOrientation.vertical; }
+        Text { text: "7"; color: DitherTheme.foreground; vertical-alignment: center; }
+    }
+}

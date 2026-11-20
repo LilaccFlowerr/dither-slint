@@ -1,0 +1,74 @@
+---
+title: DitherCard
+description: A card with a dithered glow in a corner or along an edge.
+---
+
+import Card from '../../../components/Card.astro';
+import Demo from '../../../components/Demo.astro';
+
+The glow is a stack of nine rings, each filled with a denser dither than the one under it, so it reads as one smooth falloff. A dithered rim runs along the border and is densest near the glow. Put your content inside.
+
+<Demo
+	title="Glow"
+	code={`DitherCard {
+    glow: DitherGlow.top-left;
+    Text { text: "Usage"; }
+}
+
+DitherCard {
+    glow: DitherGlow.bottom-right;
+    Text { text: "Pricing"; }
+}
+
+DitherCard {
+    glow: DitherGlow.top;
+    Text { text: "Docs"; }
+}`}
+>
+	<Card title="Usage" glow="top-left">A dithered glow, a dithered rim.</Card>
+	<Card title="Pricing" glow="bottom-right">A dithered glow, a dithered rim.</Card>
+	<Card title="Docs" glow="top">A dithered glow, a dithered rim.</Card>
+</Demo>
+
+<Demo
+	title="Fills, colour and hover"
+	code={`DitherCard {
+    fill: DitherFill.dotted;
+    Text { text: "Dotted"; }
+}
+
+DitherCard {
+    fill: DitherFill.hatched;
+    color: DitherPalette.green;
+    Text { text: "Hatched"; }
+}
+
+DitherCard {
+    interactive: true;
+    color: DitherPalette.orange;
+    Text { text: "Interactive"; }
+}`}
+>
+	<Card title="Dotted" fill="dotted">A dithered glow, a dithered rim.</Card>
+	<Card title="Hatched" fill="hatched" color="green">A dithered glow, a dithered rim.</Card>
+	<Card title="Interactive" interactive color="orange">Hover me and the glow grows.</Card>
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `glow` | `top-left` | `top-left`, `top-right`, `bottom-left`, `bottom-right`, `top` or `bottom`. |
+| `reach` | `240px` | How far the glow reaches from its origin. |
+| `strength` | `0.5` | Densest level, at the origin, 0 to 1. |
+| `interactive` | `false` | Grows the glow through the levels on hover. |
+| `color` | `DitherTheme.ink` | Colour of the glow. |
+| `fill` | `gradient` | Texture of the glow. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `3px` | Size of one dither cell. |
+| `rim` | `true` | Light the border with dither. |
+| `radius` | `14px` | Corner radius, which the rim follows. |
+| `inset` | `24px` | Space between the edge and your content. |
+| `spacing` | `16px` | Space between the children. |
+
+While the pointer is over a child such as a button, the glow does not keep growing, because Slint only reports hover to the topmost element.

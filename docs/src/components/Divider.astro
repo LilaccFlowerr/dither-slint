@@ -1,0 +1,100 @@
+---
+interface Props {
+	orientation?: 'horizontal' | 'vertical';
+	label?: string;
+	thickness?: number;
+	fade?: number;
+	strength?: number;
+	color?: string;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	matrix?: number;
+	cell?: number;
+}
+
+const { orientation = 'horizontal', label, thickness = 2, fade = 0.6, strength = 0.6, color = 'ink', fill = 'gradient', matrix = 1, cell = 2 } = Astro.props;
+const vertical = orientation === 'vertical';
+const breadth = `${Math.max(1, thickness) * cell}px`;
+---
+
+<div
+	class="divider"
+	data-vertical={vertical ? '' : undefined}
+	data-fade={fade}
+	data-strength={strength}
+	data-color={color}
+	data-fill={fill}
+	data-matrix={matrix}
+	data-cell={cell}
+	style={vertical ? `width: ${breadth}` : undefined}
+>
+	{label && !vertical ? (
+		<>
+			<canvas data-end="start" style={`height: ${breadth}`}></canvas>
+			<span>{label}</span>
+			<canvas data-end="end" style={`height: ${breadth}`}></canvas>
+		</>
+	) : (
+		<canvas data-end="both" style={vertical ? undefined : `height: ${breadth}`}></canvas>
+	)}
+</div>
+
+<style is:global>
+	.divider {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		width: 100%;
+		min-width: 0;
+	}
+	.divider[data-vertical] {
+		align-self: stretch;
+		width: auto;
+	}
+	.divider canvas {
+		flex: 1;
+		min-width: 0;
+		width: 100%;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+	.divider[data-vertical] canvas {
+		width: 100%;
+		height: 100%;
+	}
+	.divider span {
+		color: rgba(235, 229, 217, 0.6);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 1;
+	}
+</style>
+
+<script>
+	import { rule } from '../engine/dither_slint_engine_web.js';
+	import { ready, rgba, variants } from '../scripts/dither';
+
+	ready.then(() => {
+		const draw = (box: HTMLElement) => {
+			const cell = Number(box.dataset.cell);
+			const vertical = box.dataset.vertical !== undefined;
+			const amount = Math.min(1, Math.max(0, Number(box.dataset.fade)));
+			const color = new Uint8Array(rgba(box.dataset.color!));
+			for (const canvas of box.querySelectorAll('canvas')) {
+				const columns = Math.max(1, Math.ceil(canvas.clientWidth / cell));
+				const rows = Math.max(1, Math.ceil(canvas.clientHeight / cell));
+				const end = canvas.dataset.end;
+				const bytes = rule(
+					columns, rows, vertical, end !== 'end', end !== 'start',
+					end === 'both' ? amount : amount * 2, Number(box.dataset.strength),
+					variants[box.dataset.fill as keyof typeof variants], Number(box.dataset.matrix), color,
+				);
+				canvas.width = columns;
+				canvas.height = rows;
+				canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+			}
+		};
+		for (const box of document.querySelectorAll<HTMLElement>('.divider')) {
+			new ResizeObserver(() => draw(box)).observe(box);
+		}
+	});
+</script>

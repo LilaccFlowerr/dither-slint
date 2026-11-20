@@ -1,0 +1,30 @@
+import { DitherTheme } from "../../ui/lib.slint";
+export { DitherEngine, DitherTheme } from "../../ui/lib.slint";
+import { BackgroundsPage } from "backgrounds-page.slint";
+import { BadgePage } from "badge-page.slint";
+import { ButtonPage } from "button-page.slint";
+import { CardPage } from "card-page.slint";
+import { GradientPage } from "gradient-page.slint";
+import { ImagePage } from "image-page.slint";
+import { MotionPage } from "motion-page.slint";
+import { DividerPage } from "divider-page.slint";
+import { SwitchPage } from "switch-page.slint";
+
+export component Shots inherits Window {
+    in property <int> which;
+    in property <image> sample;
+
+    background: DitherTheme.background;
+
+    Rectangle {
+        if root.which == 0: GradientPage { }
+        if root.which == 1: ButtonPage { }
+        if root.which == 2: BadgePage { }
+        if root.which == 3: CardPage { }
+        if root.which == 4: ImagePage { sample: root.sample; }
+        if root.which == 5: BackgroundsPage { }
+        if root.which == 6: MotionPage { }
+        if root.which == 7: DividerPage { }
+        if root.which == 8: SwitchPage { }
+    }
+}

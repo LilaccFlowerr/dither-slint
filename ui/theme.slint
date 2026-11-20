@@ -1,4 +1,4 @@
-import { DitherHover, DitherIdle, DitherPress } from "engine.slint";
+import { DitherHover, DitherIdle, DitherMatrix, DitherPress } from "engine.slint";
 
 export global DitherTheme {
     in property <color> background: #1b1a19;
@@ -21,6 +21,7 @@ export global DitherMotion {
     in-out property <DitherHover> hover: DitherHover.sweep;
     in-out property <DitherPress> press: DitherPress.ripple;
     in-out property <DitherIdle> idle: DitherIdle.none;
+    in-out property <DitherMatrix> matrix: DitherMatrix.bayer4;
     in-out property <float> speed: 1;
     in-out property <float> intensity: 1;
 }

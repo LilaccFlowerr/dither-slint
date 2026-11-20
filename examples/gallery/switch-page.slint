@@ -1,0 +1,40 @@
+import { DitherSwitch, DitherSwitchSize, DitherBloom, DitherFill, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+component Row inherits HorizontalLayout {
+    spacing: 16px;
+    alignment: start;
+}
+
+export component SwitchPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 14px;
+    alignment: start;
+
+    Heading { text: "Sizes"; }
+    Row {
+        DitherSwitch { size: DitherSwitchSize.sm; checked: true; }
+        DitherSwitch { checked: true; }
+        DitherSwitch { size: DitherSwitchSize.lg; checked: true; }
+        DitherSwitch { }
+    }
+
+    Heading { text: "Fills"; }
+    for fill in [DitherFill.gradient, DitherFill.dotted, DitherFill.hatched, DitherFill.solid]: Row {
+        DitherSwitch { fill: fill; checked: true; }
+        DitherSwitch { fill: fill; }
+    }
+
+    Heading { text: "Colours and glow"; }
+    Row {
+        DitherSwitch { color: DitherPalette.green; checked: true; }
+        DitherSwitch { color: DitherPalette.orange; checked: true; }
+        DitherSwitch { color: DitherPalette.pink; checked: true; bloom: DitherBloom.high; }
+        DitherSwitch { enabled: false; checked: true; }
+    }
+}

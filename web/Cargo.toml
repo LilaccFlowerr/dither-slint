@@ -1,0 +1,21 @@
+[package]
+name = "dither-slint-web"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+dither-slint = { path = ".." }
+slint = "1.18.1"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["Window", "Location"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[workspace]

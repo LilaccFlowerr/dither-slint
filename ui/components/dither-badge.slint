@@ -1,0 +1,311 @@
+import { DitherBloom, DitherEdge, DitherEngine, DitherFill } from "../engine.slint";
+import { DitherHover, DitherIdle, DitherMatrix, DitherPress } from "../engine.slint";
+import { DitherMotion, DitherPalette, DitherTheme } from "../theme.slint";
+import { DitherFx } from "fx.slint";
+import { DitherLayer as Layer } from "layer.slint";
+
+export enum DitherBadgeVariant { default, secondary, destructive, outline }
+
+export enum DitherBadgeSize { sm, md, lg }
+
+export enum DitherBadgeRadius { none, sm, md, lg }
+
+component Raised {
+    in property <length> step;
+    in property <int> rows;
+    in property <DitherFill> fill;
+    in property <color> shade;
+    in property <color> bevel;
+    in property <float> bevel-from: 0.9;
+    in property <float> hover;
+
+    property <bool> textured: root.fill == DitherFill.dotted || root.fill == DitherFill.hatched;
+
+    pure function cells(share: float) -> float {
+        return max(1, Math.round(root.rows * share));
+    }
+
+    width: 100%;
+    height: 100%;
+
+    Layer {
+        cell: root.step;
+        fill: root.textured ? root.fill : DitherFill.gradient;
+        length: root.fill == DitherFill.solid ? root.cells(0.3) : root.cells(0.5);
+        from: 0.9;
+        color: root.shade;
+        opacity: root.textured ? 0.45 : 1;
+    }
+
+    Layer {
+        cell: root.step;
+        edge: DitherEdge.top;
+        length: root.cells(0.25);
+        from: root.bevel-from;
+        color: root.bevel;
+    }
+
+    Layer {
+        cell: root.step;
+        edge: DitherEdge.top;
+        length: root.cells(0.7);
+        color: root.bevel;
+        opacity: root.hover;
+        animate opacity { duration: 180ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+    }
+}
+
+component Outlined {
+    in property <length> step;
+    in property <int> rows;
+    in property <DitherFill> fill;
+    in property <color> tint;
+    in property <float> hover;
+
+    property <bool> textured: root.fill == DitherFill.dotted || root.fill == DitherFill.hatched;
+
+    pure function cells(share: float) -> float {
+        return max(1, Math.round(root.rows * share));
+    }
+
+    width: 100%;
+    height: 100%;
+
+    Layer {
+        cell: root.step;
+        fill: root.textured ? root.fill : DitherFill.gradient;
+        length: root.cells(0.55);
+        from: root.fill == DitherFill.solid ? 0.25 : 0.45;
+        color: root.tint;
+        opacity: root.textured ? 0.3 : 1;
+    }
+
+    Layer {
+        cell: root.step;
+        length: root.cells(0.9);
+        from: 0.7;
+        to: 0.05;
+        color: root.tint;
+        opacity: root.hover * 0.7;
+        animate opacity { duration: 180ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+    }
+}
+
+export component DitherBadge {
+    in property <string> text;
+    in property <DitherBadgeVariant> variant: DitherBadgeVariant.default;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherBadgeSize> size: DitherBadgeSize.md;
+    in property <DitherBadgeRadius> corners: DitherBadgeRadius.md;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <length> cell: 2px;
+    in property <bool> dot;
+    in property <color> dot-color: transparent;
+    in property <bool> removable;
+    in property <bool> interactive;
+    in property <bool> animated: DitherTheme.animated;
+    in property <DitherHover> hover-effect: DitherMotion.hover;
+    in property <DitherPress> press-effect: DitherMotion.press;
+    in property <DitherIdle> idle-effect: DitherMotion.idle;
+    in property <DitherMatrix> effect-matrix: DitherMotion.matrix;
+    callback clicked;
+    callback removed;
+
+    property <bool> small: root.size == DitherBadgeSize.sm;
+    property <bool> large: root.size == DitherBadgeSize.lg;
+    property <bool> secondary: root.variant == DitherBadgeVariant.secondary;
+    property <bool> outline: root.variant == DitherBadgeVariant.outline;
+    property <bool> filled: !root.secondary && !root.outline;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> rows: Math.ceil(root.height / root.step);
+    property <float> hover: root.interactive && (touch.has-hover || focus.has-focus) ? 1 : 0;
+
+    property <color> tint: {
+        if root.variant == DitherBadgeVariant.destructive && root.color == DitherTheme.ink {
+            return DitherPalette.red;
+        }
+        return root.color;
+    }
+    property <color> label: root.filled ? #05070f : DitherTheme.foreground;
+    property <color> surface: {
+        if root.filled { return root.tint; }
+        if root.secondary {
+            return DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.12);
+        }
+        return root.tint.transparentize(0.91);
+    }
+    property <color> border: {
+        if root.filled { return DitherEngine.mix(root.tint, black, 0.32); }
+        if root.secondary { return DitherTheme.foreground.transparentize(0.88); }
+        return root.tint.transparentize(0.45);
+    }
+    property <color> shade: root.secondary
+        ? DitherTheme.foreground.transparentize(0.6)
+        : DitherEngine.mix(root.tint, black, 0.45);
+    property <color> bevel: root.secondary
+        ? white.transparentize(0.8)
+        : DitherEngine.mix(root.tint, white, 0.4);
+    property <length> radius: {
+        if root.corners == DitherBadgeRadius.none { return 0px; }
+        if root.corners == DitherBadgeRadius.sm { return 4px; }
+        if root.corners == DitherBadgeRadius.lg { return 8px; }
+        return root.by-size(5px, 6px, 7px);
+    }
+
+    pure function by-size(small: length, medium: length, large: length) -> length {
+        if root.small { return small; }
+        if root.large { return large; }
+        return medium;
+    }
+
+    height: root.by-size(20px, 24px, 28px);
+    min-width: content.min-width;
+    preferred-width: content.preferred-width;
+    accessible-role: AccessibleRole.text;
+    accessible-label: root.text;
+
+    Rectangle {
+        transform-scale: root.interactive && touch.pressed ? 0.97 : 1;
+        animate transform-scale { duration: 150ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+
+        Rectangle {
+            border-radius: root.radius;
+            clip: true;
+            background: root.surface;
+            drop-shadow-blur: root.filled && root.bloom == DitherBloom.low ? 10px
+                : root.filled && root.bloom == DitherBloom.high ? 18px : 0px;
+            drop-shadow-color: root.tint.transparentize(
+                root.bloom == DitherBloom.high ? 0.45 : 0.7);
+
+            if !root.outline: Raised {
+                step: root.step;
+                rows: root.rows;
+                fill: root.fill;
+                shade: root.shade;
+                bevel: root.bevel;
+                bevel-from: root.secondary ? 0.6 : 0.9;
+                hover: root.hover;
+            }
+
+            if root.outline: Outlined {
+                step: root.step;
+                rows: root.rows;
+                fill: root.fill;
+                tint: root.tint;
+                hover: root.hover;
+            }
+
+            fx := DitherFx {
+                cell: root.step;
+                color: root.tint;
+                strength: 0.55;
+                animated: root.animated;
+                hover: root.hover-effect;
+                press: root.press-effect;
+                idle: root.idle-effect;
+                matrix: root.effect-matrix;
+            }
+        }
+
+        Rectangle {
+            border-radius: root.radius;
+            border-width: 1px;
+            border-color: root.border;
+        }
+
+        if !root.outline: Rectangle {
+            x: root.radius / 2 + 1px;
+            y: 1px;
+            width: root.width - root.radius - 2px;
+            height: 1px;
+            background: root.filled
+                ? DitherEngine.mix(root.tint, white, 0.55)
+                : white.transparentize(0.85);
+        }
+
+        content := HorizontalLayout {
+            padding-left: root.by-size(8px, 10px, 12px);
+            padding-right: self.padding-left;
+            spacing: root.by-size(4px, 6px, 8px);
+            alignment: center;
+
+            if root.dot: VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 3px;
+                    background: root.dot-color.alpha > 0 ? root.dot-color : root.label;
+                    opacity: 0.85;
+                }
+            }
+
+            Text {
+                text: root.text;
+                color: root.label;
+                font-size: root.by-size(11px, 12px, 13px);
+                font-weight: 500;
+                vertical-alignment: center;
+            }
+
+            if root.removable: VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 14px;
+                    height: 14px;
+                    Path {
+                        width: 8px;
+                        height: 8px;
+                        viewbox-width: 12;
+                        viewbox-height: 12;
+                        commands: "M 3 3 L 9 9 M 9 3 L 3 9";
+                        stroke: root.label;
+                        stroke-width: 1.5px;
+                        opacity: close.has-hover ? 1 : 0.7;
+                    }
+                    close := TouchArea {
+                        clicked => { root.removed(); }
+                    }
+                }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: root.interactive ? MouseCursor.pointer : MouseCursor.default;
+        changed has-hover => {
+            if self.has-hover {
+                fx.pointer-enter(self.mouse-x, self.mouse-y);
+            } else {
+                fx.pointer-leave();
+            }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                fx.pointer-down(self.mouse-x, self.mouse-y);
+            } else if event.kind == PointerEventKind.move {
+                fx.pointer-move(self.mouse-x, self.mouse-y);
+            }
+        }
+        clicked => {
+            if root.interactive {
+                root.clicked();
+            }
+        }
+    }
+
+    focus := FocusScope {
+        enabled: root.interactive;
+        focus-on-click: false;
+        key-pressed(event) => {
+            if root.interactive && (event.text == Key.Return || event.text == " ") {
+                fx.pointer-down(root.width / 2, root.height / 2);
+                root.clicked();
+                return accept;
+            }
+            reject
+        }
+    }
+}

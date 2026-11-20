@@ -1,0 +1,142 @@
+---
+const palettes = {
+	'Ink on paper': ['#1b1a19', '#ebe5d9'],
+	'Blue on dark': ['#0b1020', '#5471f5'],
+	'Green terminal': ['#07140b', '#32b364'],
+};
+const methods = ['bayer4', 'bayer8', 'blue-noise', 'floyd-steinberg', 'atkinson', 'sierra-lite'];
+---
+
+<div class="image-demo">
+	<div class="stage"><canvas></canvas></div>
+	<div class="controls">
+		<label>Method
+			<select name="method">
+				{methods.map((name, index) => <option value={index} selected={index === 3}>{name}</option>)}
+			</select>
+		</label>
+		<label>Palette
+			<select name="palette">
+				{Object.entries(palettes).map(([name, colors]) => <option value={colors.join(',')}>{name}</option>)}
+			</select>
+		</label>
+		<label><span>Threshold <output></output></span>
+			<input type="range" name="threshold" min="0" max="1" step="0.05" value="0.5" />
+		</label>
+		<label><span>Cell <output></output></span>
+			<input type="range" name="cell" min="1" max="8" step="1" value="2" />
+		</label>
+		<label><span>Your image</span>
+			<input type="file" name="file" accept="image/*" />
+		</label>
+	</div>
+</div>
+
+<style>
+	.image-demo {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		overflow: hidden;
+		margin: 1.5rem 0;
+	}
+	.stage {
+		display: grid;
+		place-items: center;
+		height: 320px;
+		padding: 1rem;
+		box-sizing: border-box;
+	}
+	canvas {
+		outline: 1px solid var(--sl-color-gray-5);
+	}
+	canvas {
+		image-rendering: pixelated;
+	}
+	.controls {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 0.75rem 1rem;
+		padding: 0.9rem 1rem;
+		border-top: 1px solid var(--sl-color-gray-5);
+		font-size: var(--sl-text-sm);
+	}
+	label {
+		display: flex;
+		justify-content: end;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+	output {
+		color: var(--sl-color-gray-3);
+		margin-left: 0.4rem;
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { picture } from '../engine/dither_slint_engine_web.js';
+
+	let width = 200;
+	let height = 130;
+
+	function scene() {
+		const image = new ImageData(width, height);
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+				const dx = (x - 100) / 48;
+				const dy = (y - 65) / 48;
+				const inside = dx * dx + dy * dy < 1;
+				const z = Math.sqrt(Math.max(0, 1 - dx * dx - dy * dy));
+				const lit = Math.max(0, -dx * 0.5 - dy * 0.55 + z * 0.65);
+				const floor = y > 98 ? 0.3 + 0.25 * ((y - 98) / 32) : 0;
+				const shadow = Math.hypot((x - 112) / 62, (y - 108) / 9) < 1 ? 0.55 : 1;
+				const back = floor ? floor * shadow : 0.25 + 0.45 * (1 - y / 98);
+				const value = (inside ? 0.12 + 0.88 * lit : back) * 255;
+				image.data.set([value, value * 0.92, value * 0.8, 255], (y * width + x) * 4);
+			}
+		}
+		return image;
+	}
+
+	ready.then(() => {
+		let pixels = new Uint8Array(scene().data.buffer);
+		for (const demo of document.querySelectorAll<HTMLElement>('.image-demo')) {
+			const canvas = demo.querySelector('canvas')!;
+			const context = canvas.getContext('2d')!;
+			const field = (name: string) => demo.querySelector<HTMLInputElement>(`[name=${name}]`)!;
+			const draw = () => {
+				const cell = Number(field('cell').value);
+				const stage = demo.querySelector<HTMLElement>('.stage')!;
+				const box = [Math.round(stage.clientWidth / cell), Math.round(stage.clientHeight / cell)];
+				const palette = new Uint8Array(field('palette').value.split(',').flatMap((hex) => rgba(hex)));
+				const scale = Math.min(box[0] / width, box[1] / height);
+				const columns = Math.max(1, Math.round(width * scale));
+				const rows = Math.max(1, Math.round(height * scale));
+				const bytes = picture(pixels, width, height, box[0], box[1], Number(field('method').value), Number(field('threshold').value), palette);
+				canvas.width = columns;
+				canvas.height = rows;
+				canvas.style.width = `${columns * cell}px`;
+				canvas.style.height = `${rows * cell}px`;
+				demo.querySelector<HTMLElement>('.stage')!.style.background = field('palette').value.split(',')[0];
+				context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+				for (const output of demo.querySelectorAll('output')) {
+					output.textContent = output.closest('label')!.querySelector('input')!.value;
+				}
+			};
+			field('file').addEventListener('change', async () => {
+				const file = field('file').files?.[0];
+				if (!file) return;
+				const bitmap = await createImageBitmap(file);
+				const scale = Math.min(1, 400 / Math.max(bitmap.width, bitmap.height));
+				const source = new OffscreenCanvas(Math.round(bitmap.width * scale), Math.round(bitmap.height * scale));
+				const painter = source.getContext('2d')!;
+				painter.drawImage(bitmap, 0, 0, source.width, source.height);
+				({ width, height } = source);
+				pixels = new Uint8Array(painter.getImageData(0, 0, width, height).data.buffer);
+				draw();
+			});
+			demo.addEventListener('input', draw);
+			draw();
+		}
+	});
+</script>

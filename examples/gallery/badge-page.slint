@@ -1,0 +1,66 @@
+import { DitherBadge, DitherBadgeRadius, DitherBadgeSize, DitherBadgeVariant, DitherBloom, DitherFill, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component BadgePage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 14px;
+    alignment: start;
+
+    in-out property <bool> tags: true;
+
+    Heading { text: "Variants"; }
+    HorizontalLayout {
+        spacing: 10px;
+        alignment: start;
+        DitherBadge { text: "Default"; }
+        DitherBadge { text: "Secondary"; variant: DitherBadgeVariant.secondary; }
+        DitherBadge { text: "Destructive"; variant: DitherBadgeVariant.destructive; }
+        DitherBadge { text: "Outline"; variant: DitherBadgeVariant.outline; }
+    }
+
+    Heading { text: "Fills"; }
+    for fill in [DitherFill.gradient, DitherFill.dotted, DitherFill.hatched, DitherFill.solid]: HorizontalLayout {
+        spacing: 10px;
+        alignment: start;
+        DitherBadge { text: "Default"; fill: fill; }
+        DitherBadge { text: "Secondary"; fill: fill; variant: DitherBadgeVariant.secondary; }
+        DitherBadge { text: "Destructive"; fill: fill; variant: DitherBadgeVariant.destructive; }
+        DitherBadge { text: "Outline"; fill: fill; variant: DitherBadgeVariant.outline; }
+    }
+
+    Heading { text: "Colours"; }
+    HorizontalLayout {
+        spacing: 10px;
+        alignment: start;
+        DitherBadge { text: "Green"; color: DitherPalette.green; }
+        DitherBadge { text: "Orange"; color: DitherPalette.orange; }
+        DitherBadge { text: "Pink"; color: DitherPalette.pink; }
+        DitherBadge { text: "Purple"; color: DitherPalette.purple; variant: DitherBadgeVariant.outline; }
+    }
+
+    Heading { text: "Sizes and corners"; }
+    HorizontalLayout {
+        spacing: 10px;
+        alignment: start;
+        DitherBadge { text: "Small"; size: DitherBadgeSize.sm; }
+        DitherBadge { text: "Medium"; }
+        DitherBadge { text: "Large"; size: DitherBadgeSize.lg; }
+        DitherBadge { text: "Square"; corners: DitherBadgeRadius.none; }
+        DitherBadge { text: "Round"; corners: DitherBadgeRadius.lg; }
+    }
+
+    Heading { text: "Dot, remove, glow, interactive"; }
+    HorizontalLayout {
+        spacing: 10px;
+        alignment: start;
+        DitherBadge { text: "Online"; dot: true; color: DitherPalette.green; }
+        DitherBadge { text: "Tag"; removable: root.tags; removed => { root.tags = false; } }
+        DitherBadge { text: "Glow"; bloom: DitherBloom.high; }
+        DitherBadge { text: "Click me"; interactive: true; }
+    }
+}

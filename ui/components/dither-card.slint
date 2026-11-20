@@ -1,0 +1,90 @@
+import { DitherEngine, DitherFill, DitherGlow, DitherHover, DitherIdle, DitherMatrix, DitherPress } from "../engine.slint";
+import { DitherMotion, DitherTheme } from "../theme.slint";
+import { DitherFx } from "fx.slint";
+
+export component DitherCard {
+    in property <DitherGlow> glow: DitherGlow.top-left;
+    in property <length> reach: 240px;
+    in property <float> strength: 0.5;
+    in property <bool> interactive;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <bool> rim: true;
+    in property <length> radius: 14px;
+    in property <length> inset: 24px;
+    in property <length> spacing: 16px;
+    in property <bool> animated: DitherTheme.animated;
+    in property <DitherHover> hover-effect: DitherMotion.hover;
+    in property <DitherPress> press-effect: DitherMotion.press;
+    in property <DitherIdle> idle-effect: DitherMotion.idle;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+    property <float> boost: root.interactive && touch.has-hover ? 1 : 0;
+    animate boost { duration: 234ms; }
+
+    Rectangle {
+        background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.04);
+        border-radius: root.radius;
+        border-width: 1px;
+        border-color: DitherTheme.foreground.transparentize(0.88);
+        clip: true;
+
+        Image {
+            x: 0;
+            y: 0;
+            width: root.columns * root.step;
+            height: root.rows * root.step;
+            image-fit: ImageFit.fill;
+            image-rendering: pixelated;
+            source: DitherEngine.card-glow(root.columns, root.rows, root.glow, root.reach / root.step, root.strength, root.boost, root.rim, root.radius / root.step, root.fill, root.matrix, root.color);
+        }
+
+        if root.animated: Image {
+            x: 0;
+            y: 0;
+            width: root.columns * root.step;
+            height: root.rows * root.step;
+            image-fit: ImageFit.fill;
+            image-rendering: pixelated;
+            source: DitherEngine.card-sparkles(root.columns, root.rows, root.step / 1px, Math.floor(animation-tick() / 100ms), root.glow, root.reach / 1px, root.color);
+        }
+
+        fx := DitherFx {
+            cell: root.step;
+            color: root.color;
+            matrix: root.matrix;
+            strength: 0.45;
+            animated: root.animated;
+            hover: root.hover-effect;
+            press: root.press-effect;
+            idle: root.idle-effect;
+        }
+
+        touch := TouchArea {
+            changed has-hover => {
+                if self.has-hover {
+                    fx.pointer-enter(self.mouse-x, self.mouse-y);
+                } else {
+                    fx.pointer-leave();
+                }
+            }
+            pointer-event(event) => {
+                if event.kind == PointerEventKind.down {
+                    fx.pointer-down(self.mouse-x, self.mouse-y);
+                } else if event.kind == PointerEventKind.move {
+                    fx.pointer-move(self.mouse-x, self.mouse-y);
+                }
+            }
+        }
+    }
+
+    VerticalLayout {
+        padding: root.inset;
+        spacing: root.spacing;
+        @children
+    }
+}

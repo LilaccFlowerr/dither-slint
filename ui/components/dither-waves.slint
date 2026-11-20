@@ -1,0 +1,42 @@
+import { DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export enum DitherWavesVariant { ocean, lines }
+
+export component DitherWaves {
+    in property <DitherWavesVariant> variant: DitherWavesVariant.ocean;
+    in property <float> horizon: 0.62;
+    in property <float> layers: 6;
+    in property <float> amplitude: 1;
+    in property <[color]> palette: [
+        DitherTheme.background,
+        DitherEngine.mix(DitherTheme.background, DitherTheme.ink, 0.35),
+        DitherTheme.ink,
+        DitherEngine.mix(DitherTheme.foreground, DitherTheme.ink, 0.45),
+    ];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 0;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "waves";
+        params: [
+            root.variant == DitherWavesVariant.lines ? 1 : 0,
+            root.variant == DitherWavesVariant.lines ? 0.5 : root.horizon,
+            root.layers,
+            root.amplitude,
+        ];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

@@ -63,6 +63,8 @@ static BLUE_NOISE_64: LazyLock<ThresholdMap> = LazyLock::new(|| {
 });
 
 impl Matrix {
+    pub const ALL: [Self; 4] = [Self::Bayer2, Self::Bayer4, Self::Bayer8, Self::BlueNoise];
+
     pub fn map(self) -> &'static ThresholdMap {
         match self {
             Matrix::Bayer2 => &BAYER_2,
@@ -83,6 +85,21 @@ impl Matrix {
     pub fn is_inked(self, x: i32, y: i32, tone: f32) -> bool {
         tone > self.threshold_at(x, y)
     }
+
+    pub fn palette_index(self, x: i32, y: i32, tone: f32, colors: usize) -> usize {
+        let scaled = tone.clamp(0.0, 1.0) * (colors - 1) as f32;
+        let index = scaled.floor();
+        let up = scaled - index > self.threshold_at(x, y);
+        (index as usize + up as usize).min(colors - 1)
+    }
+}
+
+pub fn quantize(tone: f32, levels: u32) -> f32 {
+    if levels < 2 {
+        return tone;
+    }
+    let steps = (levels - 1) as f32;
+    (tone * steps + 0.5).floor() / steps
 }
 
 #[cfg(test)]
@@ -146,5 +163,32 @@ mod tests {
             Matrix::Bayer4.threshold_at(-1, -1),
             Matrix::Bayer4.threshold_at(3, 3)
         );
+    }
+
+    #[test]
+    fn two_colours_pick_like_ink_and_paper() {
+        for tone in [0.0, 0.2, 0.5, 0.9, 1.0] {
+            for (x, y) in [(0, 0), (1, 2), (3, 1)] {
+                let picked = Matrix::Bayer4.palette_index(x, y, tone, 2) == 1;
+                assert_eq!(picked, Matrix::Bayer4.is_inked(x, y, tone));
+            }
+        }
+    }
+
+    #[test]
+    fn three_colours_use_the_middle_one_around_half() {
+        let middle = (0..4)
+            .flat_map(|y| (0..4).map(move |x| (x, y)))
+            .filter(|&(x, y)| Matrix::Bayer4.palette_index(x, y, 0.25, 3) == 1)
+            .count();
+        assert_eq!(middle, 8);
+    }
+
+    #[test]
+    fn levels_snap_the_tone() {
+        assert_eq!(quantize(0.4, 2), 0.0);
+        assert_eq!(quantize(0.6, 2), 1.0);
+        assert_eq!(quantize(0.4, 0), 0.4);
+        assert_eq!(quantize(0.3, 5), 0.25);
     }
 }

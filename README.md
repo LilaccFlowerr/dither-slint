@@ -10,10 +10,10 @@ Dithered UI components for [Slint](https://slint.dev), based on the dither work 
 
 ```toml
 [dependencies]
-dither-slint = "0.1"
+dither-slint = "0.3"
 
 [build-dependencies]
-dither-slint = "0.1"
+dither-slint = "0.3"
 slint-build = "1.18"
 ```
 
@@ -64,16 +64,27 @@ Run the gallery with `cargo run --example gallery`.
 | `to` | `1` | Tone at the end. |
 | `matrix` | `bayer4` | `bayer2`, `bayer4`, `bayer8` or `blue-noise`. |
 | `cell` | `3px` | Size of one dither cell, rounded to whole device pixels. |
-| `ink` | `DitherTheme.foreground` | Colour of the dots. |
-| `paper` | `DitherTheme.background` | Colour behind them. |
+| `palette` | background, foreground | Two or more colours, from paper (tone 0) to ink (tone 1). The tone is spread over the list and each cell is dithered between two neighbours. |
+| `levels` | `0` | Snaps the tone to this many steps for a posterised look. `0` keeps every tone the matrix can draw. |
 
 ### DitherButton
 
 A button with a lit, dithered surface: a highlight dithered down from the top and a shade dithered up from the bottom. Hover brightens it, press shades it from the top.
 
 ```slint
-DitherButton { text: "Deploy"; bloom: DitherBloom.low; clicked => { deploy(); } }
-DitherButton { text: "View logs"; variant: DitherButtonVariant.outline; fill: DitherFill.dotted; }
+DitherButton {
+    text: "Deploy";
+    bloom: DitherBloom.low;
+    clicked => {
+        debug("clicked");
+    }
+}
+
+DitherButton {
+    text: "View logs";
+    variant: DitherButtonVariant.outline;
+    fill: DitherFill.dotted;
+}
 ```
 
 | Property | Default | |
