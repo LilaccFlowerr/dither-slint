@@ -5,10 +5,13 @@ interface Control {
 	min: number;
 	max: number;
 	step: number;
+	prop: string;
+	values?: string[];
 }
 
 interface Props {
 	field: string;
+	name: string;
 	params: number[];
 	palette: string[];
 	matrix?: number;
@@ -17,10 +20,10 @@ interface Props {
 	controls?: Control[];
 }
 
-const { field, params, palette, matrix = 1, cell = 3, still = 0, controls = [] } = Astro.props;
+const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls = [] } = Astro.props;
 ---
 
-<div class="background" data-field={field} data-params={JSON.stringify(params)} data-palette={palette.join(' ')} data-still={still}>
+<div class="background" data-field={field} data-name={name} data-params={JSON.stringify(params)} data-palette={palette.join(' ')} data-still={still}>
 	<canvas></canvas>
 	<div class="controls">
 		<label>Matrix
@@ -36,10 +39,14 @@ const { field, params, palette, matrix = 1, cell = 3, still = 0, controls = [] }
 		</label>
 		{controls.map((control) => (
 			<label><span>{control.label} <output></output></span>
-				<input type="range" data-index={control.index} min={control.min} max={control.max} step={control.step} value={params[control.index]} />
+				<input type="range" data-index={control.index} data-prop={control.prop} data-values={control.values?.join(" ")} min={control.min} max={control.max} step={control.step} value={params[control.index]} />
 			</label>
 		))}
 	</div>
+	<details>
+		<summary>Code</summary>
+		<pre><code></code></pre>
+	</details>
 </div>
 
 <style>
@@ -62,6 +69,22 @@ const { field, params, palette, matrix = 1, cell = 3, still = 0, controls = [] }
 		padding: 0.9rem 1rem;
 		border-top: 1px solid var(--sl-color-gray-5);
 		font-size: var(--sl-text-sm);
+	}
+	details {
+		border-top: 1px solid var(--sl-color-gray-5);
+	}
+	summary {
+		padding: 0.5rem 1rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+		cursor: pointer;
+	}
+	pre {
+		margin: 0;
+		padding: 0.75rem 1rem 1rem;
+		background: var(--sl-color-gray-6);
+		font-size: var(--sl-text-sm);
+		overflow-x: auto;
 	}
 	label {
 		display: flex;
@@ -96,7 +119,26 @@ const { field, params, palette, matrix = 1, cell = 3, still = 0, controls = [] }
 			let time = 0;
 			let last = 0;
 
+			const initial = [...params];
+			const initialMatrix = input('matrix').value;
+			const matrixNames = ['bayer2', 'bayer4', 'bayer8', 'blue-noise'];
+			const code = () => {
+				const lines: string[] = [];
+				if (input('matrix').value !== initialMatrix) lines.push(`matrix: DitherMatrix.${matrixNames[Number(input('matrix').value)]};`);
+				if (input('cell').value !== '3') lines.push(`cell: ${input('cell').value}px;`);
+				if (input('speed').value !== '1') lines.push(`speed: ${input('speed').value};`);
+				for (const control of demo.querySelectorAll<HTMLInputElement>('[data-index]')) {
+					const index = Number(control.dataset.index);
+					if (params[index] === initial[index]) continue;
+					const names = control.dataset.values?.split(' ');
+					lines.push(`${control.dataset.prop}: ${names ? names[params[index]] : params[index]};`);
+				}
+				const body = lines.map((line) => `    ${line}\n`).join('');
+				demo.querySelector('code')!.textContent = `${demo.dataset.name} {${lines.length ? '\n' + body : ' '}}`;
+			};
+
 			const show = () => {
+				code();
 				const cell = Number(input('cell').value);
 				const columns = Math.max(1, Math.round(canvas.clientWidth / cell));
 				const rows = Math.max(1, Math.round(canvas.clientHeight / cell));
@@ -123,6 +165,7 @@ const { field, params, palette, matrix = 1, cell = 3, still = 0, controls = [] }
 				if (target.dataset.index) params[Number(target.dataset.index)] = Number(target.value);
 				show();
 			});
+			code();
 			new IntersectionObserver(([entry]) => {
 				visible = entry.isIntersecting;
 				if (visible && !frame) {
