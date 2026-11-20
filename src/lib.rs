@@ -1,14 +1,18 @@
+pub mod backgrounds;
 pub mod color;
 pub mod diffuse;
 pub mod export;
+pub mod field;
 pub mod glow;
 pub mod lively;
 pub mod matrix;
+pub mod noise;
 pub mod render;
 pub mod style;
 
 mod blue_noise;
 
+pub use glam;
 pub use matrix::Matrix;
 #[doc(hidden)]
 pub use slint;
@@ -68,6 +72,22 @@ macro_rules! install {
         engine.on_card_sparkles(|columns, rows, cell, tick, glow, reach, color| {
             let layer = Layer::new(columns, rows, 1.0, color, Matrix::Bayer4);
             $crate::lively::glow_sparkles(&layer, cell, tick, Glow::ALL[glow as usize], reach)
+        });
+        engine.on_shader(|field, columns, rows, time, params, palette, matrix, levels| {
+            let Some(field) = $crate::field::lookup(&field) else {
+                return $crate::slint::Image::default();
+            };
+            let (params, palette): (Vec<f32>, Vec<_>) = (params.iter().collect(), palette.iter().collect());
+            $crate::field::render(&$crate::field::Shader {
+                field: field.as_ref(),
+                columns: cells(columns),
+                rows: cells(rows),
+                time,
+                params: &params,
+                palette: &palette,
+                matrix: Matrix::ALL[matrix as usize],
+                levels: cells(levels),
+            })
         });
         engine.on_mix(render::mix);
         engine.on_hover(|kind, columns, rows, t, x, y, level, strength, color, matrix| {

@@ -1,0 +1,42 @@
+import { DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export component DitherShader {
+    in property <string> field;
+    in property <[float]> params;
+    in property <[color]> palette: [DitherTheme.background, DitherTheme.foreground];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <int> levels;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <int> fps: 30;
+    in property <float> still-time: 0;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+    property <float> elapsed;
+    property <float> time: root.animated ? root.elapsed * root.speed : root.still-time;
+
+    width: 100%;
+    height: 100%;
+
+    Timer {
+        interval: 1000ms / root.fps;
+        running: root.animated;
+        triggered => {
+            root.elapsed = animation-tick() / 1s;
+        }
+    }
+
+    Image {
+        x: 0;
+        y: 0;
+        width: root.columns * root.step;
+        height: root.rows * root.step;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: DitherEngine.shader(root.field, root.columns, root.rows, root.time, root.params, root.palette, root.matrix, root.levels);
+    }
+}

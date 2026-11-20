@@ -1,3 +1,6 @@
+use dither_slint::field::{self, Cell};
+use dither_slint::glam::Vec2;
+use dither_slint::noise::fbm;
 use slint::{Image, Rgba8Pixel, SharedPixelBuffer};
 
 slint::slint! {
@@ -23,7 +26,20 @@ fn sample() -> Image {
     Image::from_rgba8(buffer)
 }
 
+fn register_fields() {
+    field::register("rings", |cell: &Cell| {
+        let aspect = cell.resolution.x / cell.resolution.y;
+        let p = Vec2::new(cell.uv.x * aspect, cell.uv.y);
+        let drop = Vec2::new(cell.params[0] * aspect, 1.0 - cell.params[1]);
+        let wobble = fbm(p * 2.2 + Vec2::new(cell.time * 0.03, 0.0)) - 0.5;
+        let d = p.distance(drop) + wobble * 0.08;
+        let rings = 0.5 + 0.5 * (d * cell.params[2] - cell.time * 0.9).cos();
+        cell.params[3] * rings * (-d * 2.6).exp()
+    });
+}
+
 fn main() -> Result<(), slint::PlatformError> {
+    register_fields();
     let gallery = Gallery::new()?;
     dither_slint::install!(gallery);
     gallery.set_sample(sample());

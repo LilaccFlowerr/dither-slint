@@ -1,0 +1,93 @@
+import { ScrollView } from "std-widgets.slint";
+import { DitherNoiseField, DitherNoiseMask, DitherNoiseVariant, DitherPalette } from "../../ui/lib.slint";
+import { DitherPlasma, DitherRipples, DitherShader, DitherTheme } from "../../ui/lib.slint";
+import { DitherWaves, DitherWavesVariant } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+component Box inherits Rectangle {
+    width: 250px;
+    height: 150px;
+    clip: true;
+}
+
+export component BackgroundsPage inherits ScrollView {
+    VerticalLayout {
+        padding: 24px;
+        spacing: 12px;
+        alignment: start;
+
+        Heading { text: "Ripples"; }
+        Rectangle {
+            width: 520px;
+            height: 240px;
+            clip: true;
+            DitherRipples { }
+        }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box {
+                DitherRipples {
+                    sources: [0.5, 0.5];
+                    rings: 5;
+                    palette: [DitherTheme.background, DitherPalette.green];
+                }
+            }
+            Box {
+                DitherRipples {
+                    sources: [0.2, 0.3, 0.8, 0.3, 0.5, 0.8];
+                    rings: 7;
+                    palette: [DitherTheme.background, DitherPalette.pink, DitherPalette.orange];
+                }
+            }
+        }
+
+        Heading { text: "Plasma and waves"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherPlasma { } }
+            Box { DitherWaves { } }
+            Box { DitherWaves { variant: DitherWavesVariant.lines; } }
+        }
+
+        Heading { text: "Noise field"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherNoiseField { } }
+            Box { DitherNoiseField { variant: DitherNoiseVariant.ridges; } }
+            Box { DitherNoiseField { variant: DitherNoiseVariant.contours; } }
+        }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherNoiseField { variant: DitherNoiseVariant.marble; } }
+            Box { DitherNoiseField { mask: DitherNoiseMask.center; mask-size: 0.7; } }
+            Box {
+                DitherNoiseField {
+                    color: DitherPalette.purple;
+                    highlight: DitherPalette.pink;
+                }
+            }
+        }
+
+        Heading { text: "Your own field, written in Rust"; }
+        Rectangle {
+            width: 340px;
+            height: 150px;
+            clip: true;
+            DitherShader {
+                field: "rings";
+                params: [0.5, 0.42, 46, 0.85];
+                palette: [DitherTheme.background, DitherPalette.blue];
+                still-time: 4;
+            }
+        }
+    }
+}

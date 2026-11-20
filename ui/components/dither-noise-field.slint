@@ -1,0 +1,63 @@
+import { DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export enum DitherNoiseVariant { smoke, ridges, contours, marble }
+
+export enum DitherNoiseMask { none, center, top, bottom, edges }
+
+export component DitherNoiseField {
+    in property <color> color: DitherTheme.ink;
+    in property <color> highlight: transparent;
+    in property <color> background: DitherTheme.background;
+    in property <DitherNoiseVariant> variant: DitherNoiseVariant.smoke;
+    in property <float> scale: 1.3;
+    in property <float> warp: 1.7;
+    in property <int> detail: 4;
+    in property <float> contrast: 1.2;
+    in property <float> coverage: 0;
+    in property <float> intensity: 0.9;
+    in property <float> bands: 8;
+    in property <angle> angle: 90deg;
+    in property <float> flow: 1;
+    in property <bool> invert;
+    in property <DitherNoiseMask> mask: DitherNoiseMask.none;
+    in property <float> mask-size: 0.5;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer8;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 0;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <[color]> colors: {
+        if root.highlight.alpha > 0 {
+            return [root.background, root.color, root.highlight];
+        }
+        return [root.background, root.color];
+    }
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "noise-field";
+        params: [
+            root.angle / 1rad, root.bands, root.contrast, root.coverage, root.detail, root.flow,
+            root.intensity, root.invert ? 1 : 0, root.mask == DitherNoiseMask.center ? 1
+                : root.mask == DitherNoiseMask.top ? 2
+                : root.mask == DitherNoiseMask.bottom ? 3
+                : root.mask == DitherNoiseMask.edges ? 4 : 0,
+            root.mask-size, root.scale,
+            root.variant == DitherNoiseVariant.ridges ? 1
+                : root.variant == DitherNoiseVariant.contours ? 2
+                : root.variant == DitherNoiseVariant.marble ? 3 : 0,
+            root.warp,
+        ];
+        palette: root.colors;
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}
