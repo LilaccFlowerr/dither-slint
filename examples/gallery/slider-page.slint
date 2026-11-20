@@ -1,4 +1,5 @@
-import { DitherBloom, DitherPalette, DitherSlider, DitherSliderSize, DitherTheme } from "../../ui/lib.slint";
+import { Slider } from "std-widgets.slint";
+import { DitherBloom, DitherFill, DitherPalette, DitherSlider, DitherSliderSize, DitherSliderVariant, DitherSwitch, DitherSwitchSize, DitherTheme } from "../../ui/lib.slint";
 
 component Heading inherits Text {
     color: DitherTheme.foreground;
@@ -6,33 +7,321 @@ component Heading inherits Text {
     font-weight: 600;
 }
 
-component Value inherits Text {
-    color: DitherTheme.foreground.with-alpha(0.6);
-    font-size: 13px;
+component SegmentButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> active;
+    callback clicked;
+
+    height: 28px;
+    border-radius: 6px;
+    background: root.active ? DitherTheme.foreground.with-alpha(0.15) : transparent;
+
+    Text {
+        text: root.text;
+        color: root.active ? DitherTheme.foreground : DitherTheme.foreground.with-alpha(0.5);
+        font-size: 12px;
+        font-weight: root.active ? 600 : 400;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
 }
 
 export component SliderPage inherits VerticalLayout {
     padding: 24px;
-    spacing: 16px;
+    spacing: 20px;
     alignment: start;
 
-    in-out property <float> volume: 35;
+    property <DitherSliderVariant> current-variant: DitherSliderVariant.thumb;
+    property <DitherFill> current-fill: DitherFill.gradient;
+    property <color> current-color: DitherPalette.blue;
+    property <DitherSliderSize> current-size: DitherSliderSize.md;
+    property <DitherBloom> current-bloom: DitherBloom.low;
+    property <int> current-segments: 0;
+    property <bool> current-ticks: false;
+    property <float> current-cell: 2;
+    property <bool> current-disabled: false;
 
-    Heading { text: "Value"; }
-    HorizontalLayout {
-        spacing: 16px;
-        DitherSlider { value <=> root.volume; }
-        Value { text: root.volume; width: 40px; }
+    property <float> cpu-val: 64;
+    property <float> memory-val: 32;
+    property <float> gain-val: 7;
+
+    Heading { text: "Interactive Telemetry Demo"; }
+
+    // Card matching dither-sdk demo
+    Rectangle {
+        width: 440px;
+        border-radius: 12px;
+        background: DitherTheme.foreground.with-alpha(0.04);
+        border-width: 1px;
+        border-color: DitherTheme.foreground.with-alpha(0.12);
+
+        VerticalLayout {
+            padding: 20px;
+            spacing: 16px;
+
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "System Telemetry";
+                    color: DitherTheme.foreground;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                Text {
+                    text: root.current-variant == DitherSliderVariant.bar ? "Direct bar drag" : "Bayer notched thumb";
+                    color: DitherTheme.foreground.with-alpha(0.45);
+                    font-size: 12px;
+                    font-family: "monospace";
+                }
+            }
+
+            Rectangle {
+                height: 1px;
+                background: DitherTheme.foreground.with-alpha(0.08);
+            }
+
+            // Slider 1: CPU Load
+            DitherSlider {
+                label: "Target CPU";
+                unit: "%";
+                value <=> root.cpu-val;
+                minimum: 0;
+                maximum: 100;
+                step: 1;
+                variant: root.current-variant;
+                fill: root.current-fill;
+                color: root.current-color;
+                size: root.current-size;
+                bloom: root.current-bloom;
+                segments: root.current-segments;
+                ticks: root.current-ticks;
+                cell: Math.round(root.current-cell) * 1px;
+                enabled: !root.current-disabled;
+            }
+
+            // Slider 2: Memory buffer
+            DitherSlider {
+                label: "Memory Allocation";
+                unit: " GB";
+                value <=> root.memory-val;
+                minimum: 0;
+                maximum: 64;
+                step: 4;
+                variant: root.current-variant;
+                fill: root.current-fill;
+                color: root.current-color;
+                size: root.current-size;
+                bloom: root.current-bloom;
+                segments: root.current-segments;
+                ticks: root.current-ticks;
+                cell: Math.round(root.current-cell) * 1px;
+                enabled: !root.current-disabled;
+            }
+
+            // Slider 3: Stepped Gain with range
+            DitherSlider {
+                label: "Sensitivity Threshold";
+                unit: " dB";
+                value <=> root.gain-val;
+                minimum: 0;
+                maximum: 10;
+                step: 1;
+                show-range: true;
+                variant: root.current-variant;
+                fill: root.current-fill;
+                color: root.current-color;
+                size: root.current-size;
+                bloom: root.current-bloom;
+                segments: root.current-segments > 0 ? root.current-segments : 10;
+                ticks: true;
+                cell: Math.round(root.current-cell) * 1px;
+                enabled: !root.current-disabled;
+            }
+        }
     }
 
-    Heading { text: "Sizes"; }
-    DitherSlider { size: DitherSliderSize.sm; value: 25; }
-    DitherSlider { value: 50; }
-    DitherSlider { size: DitherSliderSize.lg; value: 75; }
+    // Controls Tray matching dither-sdk style
+    Heading { text: "CONTROLS"; font-size: 12px; }
 
-    Heading { text: "Colours, glow and steps"; }
-    DitherSlider { color: DitherPalette.green; value: 60; }
-    DitherSlider { color: DitherPalette.pink; value: 40; bloom: DitherBloom.high; }
-    DitherSlider { value: 30; step: 10; }
-    DitherSlider { value: 50; enabled: false; }
+    VerticalLayout {
+        spacing: 12px;
+        width: 440px;
+
+        // Variant & Fill
+        HorizontalLayout {
+            spacing: 16px;
+
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "VARIANT"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                Rectangle {
+                    height: 32px;
+                    border-radius: 8px;
+                    background: DitherTheme.foreground.with-alpha(0.06);
+
+                    HorizontalLayout {
+                        padding: 2px;
+                        spacing: 2px;
+                        SegmentButton { text: "thumb"; active: root.current-variant == DitherSliderVariant.thumb; clicked => { root.current-variant = DitherSliderVariant.thumb; } }
+                        SegmentButton { text: "bar"; active: root.current-variant == DitherSliderVariant.bar; clicked => { root.current-variant = DitherSliderVariant.bar; } }
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "FILL"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                Rectangle {
+                    height: 32px;
+                    border-radius: 8px;
+                    background: DitherTheme.foreground.with-alpha(0.06);
+
+                    HorizontalLayout {
+                        padding: 2px;
+                        spacing: 2px;
+                        SegmentButton { text: "gradient"; active: root.current-fill == DitherFill.gradient; clicked => { root.current-fill = DitherFill.gradient; } }
+                        SegmentButton { text: "dotted"; active: root.current-fill == DitherFill.dotted; clicked => { root.current-fill = DitherFill.dotted; } }
+                        SegmentButton { text: "hatched"; active: root.current-fill == DitherFill.hatched; clicked => { root.current-fill = DitherFill.hatched; } }
+                        SegmentButton { text: "solid"; active: root.current-fill == DitherFill.solid; clicked => { root.current-fill = DitherFill.solid; } }
+                    }
+                }
+            }
+        }
+
+        // Colour
+        VerticalLayout {
+            spacing: 6px;
+            Text { text: "COLOUR"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+            HorizontalLayout {
+                spacing: 8px;
+                for col in [
+                    DitherPalette.blue,
+                    #05b5e6, // cyan
+                    DitherPalette.purple,
+                    DitherPalette.green,
+                    DitherPalette.pink,
+                    DitherPalette.orange,
+                    DitherPalette.red,
+                    DitherPalette.grey,
+                ]: Rectangle {
+                    width: 22px;
+                    height: 22px;
+                    border-radius: 11px;
+                    background: col;
+                    border-width: root.current-color == col ? 2px : 0px;
+                    border-color: DitherTheme.foreground;
+
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => { root.current-color = col; }
+                    }
+                }
+            }
+        }
+
+        // Size & Bloom
+        HorizontalLayout {
+            spacing: 16px;
+
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "SIZE"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                Rectangle {
+                    height: 32px;
+                    border-radius: 8px;
+                    background: DitherTheme.foreground.with-alpha(0.06);
+
+                    HorizontalLayout {
+                        padding: 2px;
+                        spacing: 2px;
+                        SegmentButton { text: "sm"; active: root.current-size == DitherSliderSize.sm; clicked => { root.current-size = DitherSliderSize.sm; } }
+                        SegmentButton { text: "md"; active: root.current-size == DitherSliderSize.md; clicked => { root.current-size = DitherSliderSize.md; } }
+                        SegmentButton { text: "lg"; active: root.current-size == DitherSliderSize.lg; clicked => { root.current-size = DitherSliderSize.lg; } }
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "BLOOM"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                Rectangle {
+                    height: 32px;
+                    border-radius: 8px;
+                    background: DitherTheme.foreground.with-alpha(0.06);
+
+                    HorizontalLayout {
+                        padding: 2px;
+                        spacing: 2px;
+                        SegmentButton { text: "off"; active: root.current-bloom == DitherBloom.off; clicked => { root.current-bloom = DitherBloom.off; } }
+                        SegmentButton { text: "low"; active: root.current-bloom == DitherBloom.low; clicked => { root.current-bloom = DitherBloom.low; } }
+                        SegmentButton { text: "high"; active: root.current-bloom == DitherBloom.high; clicked => { root.current-bloom = DitherBloom.high; } }
+                    }
+                }
+            }
+        }
+
+        // Segments
+        VerticalLayout {
+            spacing: 4px;
+            Text { text: "SEGMENTS"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+            Rectangle {
+                height: 32px;
+                border-radius: 8px;
+                background: DitherTheme.foreground.with-alpha(0.06);
+
+                HorizontalLayout {
+                    padding: 2px;
+                    spacing: 2px;
+                    SegmentButton { text: "off"; active: root.current-segments == 0; clicked => { root.current-segments = 0; } }
+                    SegmentButton { text: "6"; active: root.current-segments == 6; clicked => { root.current-segments = 6; } }
+                    SegmentButton { text: "10"; active: root.current-segments == 10; clicked => { root.current-segments = 10; } }
+                    SegmentButton { text: "14"; active: root.current-segments == 14; clicked => { root.current-segments = 14; } }
+                }
+            }
+        }
+
+        // Cell & Disabled & Ticks
+        HorizontalLayout {
+            spacing: 16px;
+            alignment: space-between;
+
+            VerticalLayout {
+                spacing: 4px;
+                HorizontalLayout {
+                    spacing: 8px;
+                    Text { text: "CELL"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                    Text { text: Math.round(root.current-cell) + "px"; color: DitherTheme.foreground; font-size: 11px; }
+                }
+                Slider {
+                    width: 180px;
+                    minimum: 1;
+                    maximum: 4;
+                    value <=> root.current-cell;
+                }
+            }
+
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "TICKS"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                DitherSwitch {
+                    size: DitherSwitchSize.sm;
+                    checked <=> root.current-ticks;
+                }
+            }
+
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "DISABLED"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                DitherSwitch {
+                    size: DitherSwitchSize.sm;
+                    checked <=> root.current-disabled;
+                }
+            }
+        }
+    }
 }

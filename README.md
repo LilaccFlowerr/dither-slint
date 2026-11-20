@@ -129,6 +129,45 @@ DitherTabs {
 | `animated` | `DitherTheme.animated` | Glides the indicator between tabs over 260ms. Arrow keys step without lag. |
 | `enabled` | `true` | Allows mouse and keyboard navigation. |
 
+### DitherSlider
+
+A range slider whose fill is a Bayer ramp that gets denser towards the thumb and ends in a solid edge. Supports both a lit, notched thumb and a direct draggable progress-bar style with segment steps, tick marks, and range boundaries.
+
+```slint
+DitherSlider {
+    label: "CPU Load";
+    value: 64;
+    unit: "%";
+    variant: DitherSliderVariant.thumb;
+    color: DitherPalette.blue;
+    bloom: DitherBloom.low;
+    changed(val) => {
+        debug("slider:", val);
+    }
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `value` | `0` | The current value. |
+| `minimum` | `0` | Lowest value. |
+| `maximum` | `100` | Highest value. |
+| `step` | `1` | Snapping interval from `minimum`. |
+| `variant` | `thumb` | `thumb` for lit notched Bayer thumb; `bar` for seamless draggable meter bar. |
+| `fill` | `gradient` | Texture of the track fill: `gradient`, `dotted`, `hatched` or `solid`. |
+| `segments` | `0` | When > 1, divides the track into discrete blocks with 1-cell gaps. |
+| `ticks` | `false` | When true, marks steps under the track lit in the active range. |
+| `label` | `""` | Label text displayed above the track. |
+| `unit` | `""` | Unit suffix for the value readout (e.g. `"%"`). |
+| `show-value`| `true` | Shows live numeric readout next to the label. |
+| `show-range`| `false`| Shows `minimum` and `maximum` values at the ends. |
+| `color` | `DitherTheme.ink` | Colour of the fill and the thumb. |
+| `size` | `md` | `sm`, `md` or `lg`: tracks of 6, 8 and 12px; thumbs 20, 24 and 30px tall. |
+| `bloom` | `off` | `low` or `high` adds a glow in the slider's colour. |
+| `matrix` | `bayer4` | The dither pattern of the fill. |
+| `cell` | `2px` | Size of one dither cell. |
+| `enabled` | `true` | Drops to 45% opacity and ignores clicks and keys when `false`. |
+
 ## What is a dither
 
 A dither draws a smooth tone using only a few colours. Dots of ink are placed at a density that matches the tone, so your eye blends them into a gradient. It started as a workaround for limited screens and printers and now reads as a deliberate texture, a bit like risograph print.

@@ -8,6 +8,7 @@ pub mod lively;
 pub mod matrix;
 pub mod noise;
 pub mod render;
+pub mod slider;
 pub mod style;
 pub mod tabs;
 

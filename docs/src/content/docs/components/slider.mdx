@@ -1,20 +1,61 @@
 ---
 title: DitherSlider
-description: A slider whose filled track thins out into dither behind the thumb.
+description: A range slider whose fill thins out into dither behind the thumb, supporting both notched thumb and direct bar drag variants.
 ---
 
 import Slider from '../../../components/Slider.astro';
 import Demo from '../../../components/Demo.astro';
 
-The filled part of the track is a dither ramp worked out cell by cell: sparse far from the thumb, denser towards it, and solid for the last two cells before a one-cell gap at the thumb. Hover, keyboard focus and drag fade in a longer, denser ramp. The thumb is a notched cap lit like the button, brighter on hover and pressed in while you drag. Drag it, or use the arrow keys, Page Up, Page Down, Home and End.
+The filled part of the track is a dither ramp worked out cell by cell: sparse far from the thumb, denser towards it, and solid for the last two cells before a one-cell gap at the thumb. Hover, keyboard focus and drag fade in a longer, denser ramp.
+
+The slider supports two distinct variants:
+- **`thumb`** (default): An upstream notched cap lit like the button with highlights, shade bevels, and a central grip line.
+- **`bar`**: A seamless draggable progress-bar slider with a 1-cell leading edge cap and optional segment breaks.
 
 <Demo
 	title="Basic"
 	code={`DitherSlider {
     value: 35;
+    label: "Volume";
+    unit: "%";
 }`}
 >
 	<Slider value={35} label="Volume" />
+</Demo>
+
+<Demo
+	title="Variants: Thumb and Bar"
+	code={`DitherSlider {
+    variant: DitherSliderVariant.thumb;
+    value: 65;
+    label: "Thumb variant";
+}
+
+DitherSlider {
+    variant: DitherSliderVariant.bar;
+    value: 45;
+    label: "Bar variant";
+}`}
+>
+	<Slider value={65} label="Thumb variant" />
+	<Slider value={45} label="Bar variant" />
+</Demo>
+
+<Demo
+	title="Fills and Segments"
+	code={`DitherSlider {
+    fill: DitherFill.hatched;
+    value: 70;
+}
+
+DitherSlider {
+    variant: DitherSliderVariant.bar;
+    segments: 10;
+    value: 60;
+}`}
+>
+	<Slider value={70} label="Hatched fill" />
+	<Slider value={60} label="Segmented bar" />
 </Demo>
 
 <Demo
@@ -40,7 +81,7 @@ DitherSlider {
 </Demo>
 
 <Demo
-	title="Colours, glow and steps"
+	title="Colours, glow, ticks and range"
 	code={`DitherSlider {
     color: DitherPalette.green;
     value: 60;
@@ -53,8 +94,12 @@ DitherSlider {
 }
 
 DitherSlider {
-    step: 10;
-    value: 30;
+    step: 1;
+    minimum: 0;
+    maximum: 10;
+    value: 7;
+    ticks: true;
+    show-range: true;
 }
 
 DitherSlider {
@@ -76,6 +121,14 @@ DitherSlider {
 | `minimum` | `0` | Lowest value. |
 | `maximum` | `100` | Highest value. |
 | `step` | `1` | The value snaps to multiples of this from `minimum`. `0` is smooth. |
+| `variant` | `thumb` | `thumb` for notched lit thumb; `bar` for seamless draggable meter bar. |
+| `fill` | `gradient` | `gradient` (Bayer ramp), `dotted`, `hatched` or `solid`. |
+| `segments` | `0` | When > 1, divides the track into discrete blocks with 1-cell gaps. |
+| `ticks` | `false` | When true, renders step tick marks under the track lit within active range. |
+| `label` | `""` | Label text displayed above the track. |
+| `unit` | `""` | Unit suffix displayed beside the readout (e.g. `"%"` or `" dB"`). |
+| `show-value`| `true` | Shows live numeric readout next to the label. |
+| `show-range`| `false`| Shows `minimum` and `maximum` values under the track edges. |
 | `color` | `DitherTheme.ink` | Colour of the fill and the thumb. |
 | `size` | `md` | `sm`, `md` or `lg`: tracks of 6, 8 and 12 pixels with thumbs 20, 24 and 30 pixels tall. |
 | `bloom` | `off` | `low` or `high` adds a glow in the slider's colour. |
@@ -83,7 +136,7 @@ DitherSlider {
 | `cell` | `2px` | Size of one dither cell. |
 | `enabled` | `true` | Drops to 45% opacity and ignores the pointer and keys when `false`. |
 
-`changed(float)` is called with the new value whenever you move it.
+`changed(float)` is called with the new value whenever you move it. Arrow keys, Page Up/Down, Home and End are supported for keyboard navigation.
 
 ```slint
 DitherSlider {
