@@ -23,6 +23,7 @@ export global DitherEngine {
     pure callback fill(columns: int, rows: int, fill: DitherFill, edge: DitherEdge, length: float, from: float, to: float, matrix: DitherMatrix, color: color, frame: bool) -> image;
     pure callback rule(columns: int, rows: int, vertical: bool, fade-start: bool, fade-end: bool, fade: float, strength: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback slider-fill(columns: int, rows: int, end: int, hot: bool, matrix: DitherMatrix, color: color) -> image;
+    pure callback slider-range-fill(columns: int, rows: int, start: int, end: int, both: bool, hot: bool, matrix: DitherMatrix, color: color) -> image;
     pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;
     pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;

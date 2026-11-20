@@ -117,7 +117,9 @@ DitherSlider {
 
 | Property | Default | |
 | --- | --- | --- |
-| `value` | `0` | The current value. |
+| `value` | `0` | The current value (or lower value in range mode). |
+| `value-high` | `100` | The upper value in two-thumb range mode. |
+| `is-range` | `false` | When `true`, displays two lit notched thumbs and fills between them. |
 | `minimum` | `0` | Lowest value. |
 | `maximum` | `100` | Highest value. |
 | `step` | `1` | The value snaps to multiples of this from `minimum`. `0` is smooth. |
@@ -126,7 +128,9 @@ DitherSlider {
 | `segments` | `0` | When > 1, divides the track into discrete blocks with 1-cell gaps. |
 | `ticks` | `false` | When true, renders step tick marks under the track lit within active range. |
 | `label` | `""` | Label text displayed above the track. |
+| `hide-label`| `false`| Hides the label title while keeping the value readout. |
 | `unit` | `""` | Unit suffix displayed beside the readout (e.g. `"%"` or `" dB"`). |
+| `value-text`| `""` | Custom readout override string (e.g. `"5 / 10"`). |
 | `show-value`| `true` | Shows live numeric readout next to the label. |
 | `show-range`| `false`| Shows `minimum` and `maximum` values under the track edges. |
 | `color` | `DitherTheme.ink` | Colour of the fill and the thumb. |
@@ -134,6 +138,7 @@ DitherSlider {
 | `bloom` | `off` | `low` or `high` adds a glow in the slider's colour. |
 | `matrix` | `bayer4` | The dither pattern of the fill. |
 | `cell` | `2px` | Size of one dither cell. |
+| `animated` | `DitherTheme.animated` | Enables smooth 180ms ease-out glide on clicks, steps, and value changes, with 0ms drag latency. |
 | `enabled` | `true` | Drops to 45% opacity and ignores the pointer and keys when `false`. |
 
 `changed(float)` is called with the new value whenever you move it. Arrow keys, Page Up/Down, Home and End are supported for keyboard navigation.

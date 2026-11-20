@@ -93,6 +93,20 @@ pub fn is_tick_active(tick_val: f32, current_val: f32, tolerance: f32) -> bool {
     tick_val <= current_val + tolerance
 }
 
+pub fn is_range_tick_active(tick_val: f32, low_val: f32, high_val: f32, tolerance: f32) -> bool {
+    tick_val >= low_val - tolerance && tick_val <= high_val + tolerance
+}
+
+pub fn range_run_columns(first_center: f32, last_center: f32, thumb_w: f32, cell: f32, gap: i32) -> (i32, i32) {
+    let cell = cell.max(1.0);
+    let half = (thumb_w / 2.0 / cell).round() as i32;
+    let first = (first_center / cell).round() as i32;
+    let last = (last_center / cell).round() as i32;
+    let start = first + half + gap;
+    let end = last - half - gap;
+    (start, end)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,5 +165,15 @@ mod tests {
         assert!(is_tick_active(5.0, 5.0, 1e-4));
         assert!(is_tick_active(4.0, 5.0, 1e-4));
         assert!(!is_tick_active(6.0, 5.0, 1e-4));
+
+        assert!(is_range_tick_active(5.0, 3.0, 7.0, 1e-4));
+        assert!(is_range_tick_active(3.0, 3.0, 7.0, 1e-4));
+        assert!(is_range_tick_active(7.0, 3.0, 7.0, 1e-4));
+        assert!(!is_range_tick_active(2.0, 3.0, 7.0, 1e-4));
+        assert!(!is_range_tick_active(8.0, 3.0, 7.0, 1e-4));
+
+        let (start, end) = range_run_columns(30.0, 170.0, 18.0, 2.0, 1);
+        assert_eq!(start, 15 + 5 + 1); // 21
+        assert_eq!(end, 85 - 5 - 1);   // 79
     }
 }

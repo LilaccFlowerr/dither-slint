@@ -5,8 +5,100 @@ import { DitherLayer as Layer } from "layer.slint";
 export enum DitherSliderSize { sm, md, lg }
 export enum DitherSliderVariant { thumb, bar }
 
+component SliderThumb inherits Rectangle {
+    in property <length> step-px;
+    in property <color> thumb-color;
+    in property <color> light;
+    in property <color> dark;
+    in property <int> tall;
+    in property <DitherBloom> bloom;
+    in property <bool> has-focus;
+    in property <bool> dragging;
+    in property <bool> hover;
+
+    pure function thumb-cells(share: float) -> float {
+        return max(2, Math.round(root.tall * share));
+    }
+
+    // Focus outline ring
+    Rectangle {
+        x: -3px;
+        y: -3px;
+        width: parent.width + 6px;
+        height: parent.height + 6px;
+        border-radius: root.step-px + 3px;
+        border-width: 2px;
+        border-color: DitherTheme.foreground;
+        visible: root.has-focus && !root.dragging;
+    }
+
+    // Base thumb shape with bloom glow
+    Rectangle {
+        border-radius: root.step-px;
+        background: DitherEngine.mix(root.thumb-color, black, 0.3);
+        drop-shadow-blur: root.bloom == DitherBloom.off ? 0px : (root.bloom == DitherBloom.high ? 18px : 10px);
+        drop-shadow-color: root.thumb-color.transparentize(root.bloom == DitherBloom.high ? 0.45 : 0.7);
+    }
+
+    // Lit bevel & grip surface
+    Rectangle {
+        x: 1px;
+        y: 1px;
+        width: parent.width - 2px;
+        height: parent.height - 2px;
+        border-radius: root.step-px;
+        clip: true;
+        background: root.thumb-color;
+
+        Layer {
+            cell: root.step-px;
+            length: root.thumb-cells(0.5);
+            color: root.dark;
+            frame: false;
+        }
+
+        Layer {
+            cell: root.step-px;
+            edge: DitherEdge.top;
+            length: root.thumb-cells(0.22);
+            color: root.light;
+            frame: false;
+        }
+
+        Layer {
+            cell: root.step-px;
+            edge: DitherEdge.top;
+            length: root.thumb-cells(0.7);
+            color: root.light;
+            opacity: root.hover && !root.dragging ? 1 : 0;
+            frame: false;
+            animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        }
+
+        Layer {
+            cell: root.step-px;
+            edge: DitherEdge.top;
+            length: root.thumb-cells(0.45);
+            from: 0.5;
+            color: root.dark;
+            opacity: root.dragging ? 1 : 0;
+            frame: false;
+            animate opacity { duration: 80ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        }
+
+        // Center grip line
+        Rectangle {
+            width: root.step-px;
+            height: Math.round(root.tall / 3) * root.step-px;
+            background: root.dark;
+        }
+    }
+}
+
 export component DitherSlider {
     in-out property <float> value: 0;
+    in-out property <float> value-high: 100;
+    in property <bool> is-range: false;
     in property <float> minimum: 0;
     in property <float> maximum: 100;
     in property <float> step: 1;
@@ -19,11 +111,16 @@ export component DitherSlider {
     in property <int> segments: 0;
     in property <bool> ticks: false;
     in property <string> label: "";
+    in property <bool> hide-label: false;
     in property <string> unit: "";
+    in property <string> value-text: "";
+    in property <string> range-start-text: "";
+    in property <string> range-end-text: "";
     in property <bool> show-value: true;
     in property <bool> show-range: false;
     in property <length> cell: 2px;
     in property <bool> enabled: true;
+    in property <bool> animated: DitherTheme.animated;
 
     out property <bool> has-focus: focus.has-focus;
     out property <bool> dragging: touch.pressed;
@@ -46,26 +143,51 @@ export component DitherSlider {
     property <length> track-h: root.rows * root.step-px;
     property <int> columns: Math.floor(track-box.width / root.step-px);
 
-    property <float> ratio: root.maximum > root.minimum ? Math.min(1, Math.max(0, (root.value - root.minimum) / (root.maximum - root.minimum))) : 0;
+    // Position ratios with smooth drag glide transition
+    property <float> raw-ratio: root.maximum > root.minimum ? Math.min(1, Math.max(0, (root.value - root.minimum) / (root.maximum - root.minimum))) : 0;
+    property <float> raw-ratio-high: root.maximum > root.minimum ? Math.min(1, Math.max(0, (root.value-high - root.minimum) / (root.maximum - root.minimum))) : 0;
+
+    property <float> ratio: root.raw-ratio;
+    property <float> ratio-high: root.raw-ratio-high;
+
+    animate ratio, ratio-high {
+        duration: root.animated ? 140ms : 0ms;
+        easing: cubic-bezier(0, 0, 0.2, 1);
+    }
+
     property <int> total-steps: root.step > 0 ? Math.round((root.maximum - root.minimum) / root.step) : 0;
     property <length> travel: root.is-bar ? track-box.width : (track-box.width - root.thumb-w);
     property <length> centre: root.is-bar ? (root.ratio * track-box.width) : (root.thumb-w / 2 + root.ratio * root.travel);
-    property <int> end: root.is-bar ? Math.round(root.centre / root.step-px) : Math.round(root.centre / root.step-px - root.thumb-w / 2 / root.step-px) - 1;
+    property <length> centre-high: root.thumb-w / 2 + root.ratio-high * root.travel;
+
+    property <int> start-col: root.is-range ? Math.max(0, Math.round((root.centre + root.thumb-w / 2) / root.step-px) + 1) : 0;
+    property <int> end-col: root.is-bar ? Math.round(root.centre / root.step-px) : (root.is-range ? Math.round((root.centre-high - root.thumb-w / 2) / root.step-px) - 1 : Math.round(root.centre / root.step-px - root.thumb-w / 2 / root.step-px) - 1);
     property <float> hot: root.enabled && (touch.has-hover || root.has-focus || root.dragging) ? 1 : 0;
 
     property <color> light: DitherEngine.mix(root.color, white, 0.42);
     property <color> dark: DitherEngine.mix(root.color, black, 0.48);
 
-    pure function thumb-cells(share: float) -> float {
-        return max(2, Math.round(root.tall * share));
-    }
+    property <int> active-thumb: 0;
 
-    function set(next: float) {
+    function set-low(next: float) {
         if root.enabled {
             let snapped = root.step > 0 ? root.minimum + Math.round((next - root.minimum) / root.step) * root.step : next;
-            let clamped = Math.min(root.maximum, Math.max(root.minimum, snapped));
+            let upper = root.is-range ? root.value-high - root.step : root.maximum;
+            let clamped = Math.min(upper, Math.max(root.minimum, snapped));
             if clamped != root.value {
                 root.value = clamped;
+                root.changed(clamped);
+            }
+        }
+    }
+
+    function set-high(next: float) {
+        if root.enabled && root.is-range {
+            let snapped = root.step > 0 ? root.minimum + Math.round((next - root.minimum) / root.step) * root.step : next;
+            let lower = root.value + root.step;
+            let clamped = Math.min(root.maximum, Math.max(lower, snapped));
+            if clamped != root.value-high {
+                root.value-high = clamped;
                 root.changed(clamped);
             }
         }
@@ -74,17 +196,30 @@ export component DitherSlider {
     function from-pointer(x: length) {
         if root.is-bar {
             if track-box.width > 0 {
-                root.set(root.minimum + (x / track-box.width) * (root.maximum - root.minimum));
+                root.set-low(root.minimum + (x / track-box.width) * (root.maximum - root.minimum));
+            }
+        } else if root.is-range {
+            if root.travel > 0 {
+                let val = root.minimum + (x - root.thumb-w / 2) / root.travel * (root.maximum - root.minimum);
+                if root.active-thumb == 0 {
+                    root.set-low(val);
+                } else {
+                    root.set-high(val);
+                }
             }
         } else {
             if root.travel > 0 {
-                root.set(root.minimum + (x - root.thumb-w / 2) / root.travel * (root.maximum - root.minimum));
+                root.set-low(root.minimum + (x - root.thumb-w / 2) / root.travel * (root.maximum - root.minimum));
             }
         }
     }
 
     function nudge(amount: float) {
-        root.set(root.value + amount * (root.step > 0 ? root.step : (root.maximum - root.minimum) / 100));
+        if root.active-thumb == 1 && root.is-range {
+            root.set-high(root.value-high + amount * (root.step > 0 ? root.step : (root.maximum - root.minimum) / 100));
+        } else {
+            root.set-low(root.value + amount * (root.step > 0 ? root.step : (root.maximum - root.minimum) / 100));
+        }
     }
 
     min-width: 120px;
@@ -103,17 +238,18 @@ export component DitherSlider {
         alignment: start;
 
         // Header: Label & Value readout
-        if root.label != "" : HorizontalLayout {
+        if (root.label != "" && !root.hide-label) || root.show-value : HorizontalLayout {
             alignment: space-between;
-            Text {
+            if root.label != "" && !root.hide-label : Text {
                 text: root.label;
                 font-size: 13px;
                 font-weight: 500;
                 color: DitherTheme.foreground;
             }
             if root.show-value : Text {
-                text: Math.round(root.value) + root.unit;
+                text: root.value-text != "" ? root.value-text : (root.is-range ? (Math.round(root.value) + root.unit + " – " + Math.round(root.value-high) + root.unit) : (Math.round(root.value) + root.unit));
                 font-size: 13px;
+                font-family: "monospace";
                 color: DitherTheme.foreground.with-alpha(0.6);
             }
         }
@@ -142,7 +278,7 @@ export component DitherSlider {
                     height: root.rows * root.step-px;
                     image-fit: ImageFit.fill;
                     image-rendering: pixelated;
-                    source: DitherEngine.slider-fill(root.columns, root.rows, root.end, false, root.matrix, root.color);
+                    source: DitherEngine.slider-range-fill(root.columns, root.rows, root.start-col, root.end-col, root.is-range, false, root.matrix, root.color);
                 }
 
                 // Hot Bayer ramp overlay
@@ -155,14 +291,14 @@ export component DitherSlider {
                     image-rendering: pixelated;
                     opacity: root.hot;
                     animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
-                    source: DitherEngine.slider-fill(root.columns, root.rows, root.end, true, root.matrix, root.color);
+                    source: DitherEngine.slider-range-fill(root.columns, root.rows, root.start-col, root.end-col, root.is-range, true, root.matrix, root.color);
                 }
 
                 // Custom textures: dotted, hatched, solid
                 if root.fill != DitherFill.gradient : Rectangle {
-                    x: 0;
+                    x: root.is-range ? root.centre : 0;
                     y: 0;
-                    width: root.is-bar ? (root.ratio * parent.width) : root.centre;
+                    width: root.is-range ? Math.max(0px, root.centre-high - root.centre) : (root.is-bar ? (root.ratio * parent.width) : root.centre);
                     height: parent.height;
                     clip: true;
 
@@ -193,85 +329,36 @@ export component DitherSlider {
                 }
             }
 
-            // Protruding lit notched thumb (only when variant == thumb)
-            if !root.is-bar : Rectangle {
+            // Low Thumb (or single thumb)
+            if !root.is-bar : SliderThumb {
                 x: root.ratio * root.travel;
                 width: root.thumb-w;
                 height: root.thumb-h;
+                step-px: root.step-px;
+                thumb-color: root.color;
+                light: root.light;
+                dark: root.dark;
+                tall: root.tall;
+                bloom: root.bloom;
+                has-focus: root.has-focus && root.active-thumb == 0;
+                dragging: root.dragging && root.active-thumb == 0;
+                hover: touch.has-hover;
+            }
 
-                // Focus outline ring
-                Rectangle {
-                    x: -3px;
-                    y: -3px;
-                    width: parent.width + 6px;
-                    height: parent.height + 6px;
-                    border-radius: root.step-px + 3px;
-                    border-width: 2px;
-                    border-color: DitherTheme.foreground;
-                    visible: root.has-focus && !root.dragging;
-                }
-
-                // Base thumb shape with bloom glow
-                Rectangle {
-                    border-radius: root.step-px;
-                    background: DitherEngine.mix(root.color, black, 0.3);
-                    drop-shadow-blur: root.bloom == DitherBloom.off ? 0px : (root.bloom == DitherBloom.high ? 18px : 10px);
-                    drop-shadow-color: root.color.transparentize(root.bloom == DitherBloom.high ? 0.45 : 0.7);
-                }
-
-                // Lit bevel & grip surface
-                Rectangle {
-                    x: 1px;
-                    y: 1px;
-                    width: parent.width - 2px;
-                    height: parent.height - 2px;
-                    border-radius: root.step-px;
-                    clip: true;
-                    background: root.color;
-
-                    Layer {
-                        cell: root.step-px;
-                        length: root.thumb-cells(0.5);
-                        color: root.dark;
-                        frame: false;
-                    }
-
-                    Layer {
-                        cell: root.step-px;
-                        edge: DitherEdge.top;
-                        length: root.thumb-cells(0.22);
-                        color: root.light;
-                        frame: false;
-                    }
-
-                    Layer {
-                        cell: root.step-px;
-                        edge: DitherEdge.top;
-                        length: root.thumb-cells(0.7);
-                        color: root.light;
-                        opacity: touch.has-hover && !root.dragging ? 1 : 0;
-                        frame: false;
-                        animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
-                    }
-
-                    Layer {
-                        cell: root.step-px;
-                        edge: DitherEdge.top;
-                        length: root.thumb-cells(0.45);
-                        from: 0.5;
-                        color: root.dark;
-                        opacity: root.dragging ? 1 : 0;
-                        frame: false;
-                        animate opacity { duration: 80ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
-                    }
-
-                    // Center grip line
-                    Rectangle {
-                        width: root.step-px;
-                        height: Math.round(root.tall / 3) * root.step-px;
-                        background: root.dark;
-                    }
-                }
+            // High Thumb (only in range mode)
+            if !root.is-bar && root.is-range : SliderThumb {
+                x: root.ratio-high * root.travel;
+                width: root.thumb-w;
+                height: root.thumb-h;
+                step-px: root.step-px;
+                thumb-color: root.color;
+                light: root.light;
+                dark: root.dark;
+                tall: root.tall;
+                bloom: root.bloom;
+                has-focus: root.has-focus && root.active-thumb == 1;
+                dragging: root.dragging && root.active-thumb == 1;
+                hover: touch.has-hover;
             }
 
             // Pointer interaction
@@ -280,6 +367,15 @@ export component DitherSlider {
                 mouse-cursor: MouseCursor.pointer;
                 pointer-event(event) => {
                     if event.kind == PointerEventKind.down {
+                        if root.is-range {
+                            let low-x = root.ratio * root.travel + root.thumb-w / 2;
+                            let high-x = root.ratio-high * root.travel + root.thumb-w / 2;
+                            if Math.abs(self.mouse-x - low-x) <= Math.abs(self.mouse-x - high-x) {
+                                root.active-thumb = 0;
+                            } else {
+                                root.active-thumb = 1;
+                            }
+                        }
                         root.from-pointer(self.mouse-x);
                     }
                 }
@@ -295,13 +391,14 @@ export component DitherSlider {
             for idx in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]: Rectangle {
                 property <bool> is-valid: root.total-steps > 0 && root.total-steps <= 20 && idx <= root.total-steps;
                 property <float> tick-val: root.minimum + idx * root.step;
-                property <bool> on: tick-val <= root.value + 0.001;
+                property <bool> on: root.is-range ? (tick-val >= root.value - 0.001 && tick-val <= root.value-high + 0.001) : (tick-val <= root.value + 0.001);
 
                 visible: is-valid;
                 x: root.total-steps > 0 ? (Math.round(((root.thumb-w / 2 + (idx / root.total-steps) * root.travel - root.step-px / 2) / root.step-px)) * root.step-px) : 0px;
                 width: root.step-px;
                 height: root.step-px * 2;
                 background: on ? root.color : root.color.transparentize(0.72);
+                animate background { duration: 120ms; easing: ease-out; }
             }
         }
 
@@ -309,12 +406,12 @@ export component DitherSlider {
         if root.show-range : HorizontalLayout {
             alignment: space-between;
             Text {
-                text: root.minimum + root.unit;
+                text: root.range-start-text != "" ? root.range-start-text : (root.minimum + root.unit);
                 font-size: 11px;
                 color: DitherTheme.foreground.with-alpha(0.4);
             }
             Text {
-                text: root.maximum + root.unit;
+                text: root.range-end-text != "" ? root.range-end-text : (root.maximum + root.unit);
                 font-size: 11px;
                 color: DitherTheme.foreground.with-alpha(0.4);
             }
@@ -325,6 +422,12 @@ export component DitherSlider {
         enabled: root.enabled;
         focus-on-click: false;
         key-pressed(event) => {
+            if event.text == Key.Tab {
+                if root.is-range {
+                    root.active-thumb = root.active-thumb == 0 ? 1 : 0;
+                    return accept;
+                }
+            }
             if event.text == Key.RightArrow || event.text == Key.UpArrow {
                 root.nudge(1);
                 return accept;
@@ -342,11 +445,21 @@ export component DitherSlider {
                 return accept;
             }
             if event.text == Key.Home {
-                root.set(root.minimum);
+                if root.active-thumb == 1 && root.is-range {
+                    root.set-high(root.value + root.step);
+                } else {
+                    root.set-low(root.minimum);
+                }
                 return accept;
             }
             if event.text == Key.End {
-                root.set(root.maximum);
+                if root.active-thumb == 0 && root.is-range {
+                    root.set-low(root.value-high - root.step);
+                } else if root.is-range {
+                    root.set-high(root.maximum);
+                } else {
+                    root.set-low(root.maximum);
+                }
                 return accept;
             }
             reject
