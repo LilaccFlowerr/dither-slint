@@ -1,0 +1,52 @@
+import { DitherButton, DitherButtonVariant, DitherDropdownMenu, DitherMenuContainer, DitherMenuItem, DitherMenuItemVariant, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component DropdownPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 14px;
+    alignment: start;
+
+    in-out property <string> chosen: "Nothing yet";
+    property <[DitherMenuItem]> actions: [
+        { text: "Duplicate", shortcut: "Ctrl+D", group: "File actions" },
+        { text: "Rename", shortcut: "F2" },
+        { text: "Move to trash", shortcut: "Del", destructive: true, divider: true },
+    ];
+
+    Heading { text: "Menu"; }
+    HorizontalLayout {
+        spacing: 16px;
+        alignment: start;
+        DitherDropdownMenu {
+            items: root.actions;
+            selected(index) => { root.chosen = root.actions[index].text; }
+            DitherButton { text: "Actions"; variant: DitherButtonVariant.outline; }
+        }
+        Text { text: root.chosen; color: DitherTheme.foreground.with-alpha(0.6); vertical-alignment: center; }
+    }
+
+    Heading { text: "Highlights"; }
+    HorizontalLayout {
+        spacing: 12px;
+        alignment: start;
+        for variant[i] in [DitherMenuItemVariant.dither, DitherMenuItemVariant.glow, DitherMenuItemVariant.hatched, DitherMenuItemVariant.dotted, DitherMenuItemVariant.outline]: DitherDropdownMenu {
+            items: root.actions;
+            variant: variant;
+            DitherButton { text: ["Dither", "Glow", "Hatched", "Dotted", "Outline"][i]; variant: DitherButtonVariant.outline; }
+        }
+    }
+
+    Heading { text: "Containers"; }
+    HorizontalLayout {
+        spacing: 12px;
+        alignment: start;
+        DitherDropdownMenu { items: root.actions; menu: DitherMenuContainer.glow; color: DitherPalette.green; DitherButton { text: "Glow"; variant: DitherButtonVariant.outline; } }
+        DitherDropdownMenu { items: root.actions; menu: DitherMenuContainer.pixel; DitherButton { text: "Pixel"; variant: DitherButtonVariant.outline; } }
+        DitherDropdownMenu { items: root.actions; menu: DitherMenuContainer.solid; DitherButton { text: "Solid"; variant: DitherButtonVariant.outline; } }
+    }
+}

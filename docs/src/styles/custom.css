@@ -19,6 +19,7 @@
 .divider *,
 .input *,
 .input .layer,
-.tabs * {
+.tabs *,
+.dmenu * {
 	margin-top: 0 !important;
 }

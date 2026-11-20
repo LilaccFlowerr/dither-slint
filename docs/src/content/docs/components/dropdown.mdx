@@ -1,0 +1,104 @@
+---
+title: DitherDropdownMenu
+description: A floating menu with dithered item highlights and a dithered corner glow.
+---
+
+import Dropdown from '../../../components/Dropdown.astro';
+import Demo from '../../../components/Demo.astro';
+
+Put any component inside the menu and it becomes the trigger. Clicking it opens the menu below. The items are an array, so a menu is data: text, an optional shortcut, and flags for destructive and disabled rows. An item can also start a group with a heading, or have a line above it. Move through the items with the pointer or the arrow keys, press Enter to choose and Escape to close.
+
+<Demo
+	title="Menu"
+	code={`DitherDropdownMenu {
+    items: [
+        { text: "Duplicate", shortcut: "Ctrl+D", group: "File actions" },
+        { text: "Rename", shortcut: "F2" },
+        { text: "Move to trash", shortcut: "Del", destructive: true, divider: true },
+    ];
+    selected(index) => {
+        debug(index);
+    }
+
+    DitherButton {
+        text: "Actions";
+        variant: DitherButtonVariant.outline;
+    }
+}`}
+>
+	<Dropdown
+		label="Actions"
+		items={[
+			{ text: 'Duplicate', shortcut: 'Ctrl+D', group: 'File actions' },
+			{ text: 'Rename', shortcut: 'F2' },
+			{ text: 'Move to trash', shortcut: 'Del', destructive: true, divider: true },
+		]}
+	/>
+</Demo>
+
+<Demo
+	title="Item highlights"
+	code={`DitherDropdownMenu {
+    variant: DitherMenuItemVariant.dither;
+}
+
+DitherDropdownMenu {
+    variant: DitherMenuItemVariant.glow;
+}
+
+DitherDropdownMenu {
+    variant: DitherMenuItemVariant.hatched;
+}
+
+DitherDropdownMenu {
+    variant: DitherMenuItemVariant.dotted;
+}
+
+DitherDropdownMenu {
+    variant: DitherMenuItemVariant.outline;
+}`}
+>
+	{['dither', 'glow', 'hatched', 'dotted', 'outline'].map((variant) => (
+		<Dropdown
+			label={variant}
+			variant={variant}
+			items={[{ text: 'Duplicate', shortcut: 'Ctrl+D' }, { text: 'Rename', shortcut: 'F2' }, { text: 'Delete', destructive: true }]}
+		/>
+	))}
+</Demo>
+
+<Demo
+	title="Containers"
+	code={`DitherDropdownMenu {
+    menu: DitherMenuContainer.glow;
+    color: DitherPalette.green;
+}
+
+DitherDropdownMenu {
+    menu: DitherMenuContainer.pixel;
+}
+
+DitherDropdownMenu {
+    menu: DitherMenuContainer.solid;
+}`}
+>
+	<Dropdown label="glow" menu="glow" color="green" items={[{ text: 'Duplicate' }, { text: 'Rename' }]} />
+	<Dropdown label="pixel" menu="pixel" items={[{ text: 'Duplicate' }, { text: 'Rename' }]} />
+	<Dropdown label="solid" menu="solid" items={[{ text: 'Duplicate' }, { text: 'Rename' }]} />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `items` | | The rows. Each has `text`, `shortcut`, `destructive`, `disabled`, `group` (a heading above the item) and `divider` (a line above the item). |
+| `variant` | `pill` | Highlight of the active item: `pill`, `dither`, `glow`, `hatched`, `dotted` or `outline`. |
+| `menu` | `card` | The container: `card` with a dithered corner glow, `glow`, `pixel` or `solid`. |
+| `color` | `DitherTheme.ink` | Colour of the highlights and the glow. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `bloom` | `off` | `low` or `high` strengthens the textured highlights. |
+| `cell` | `2px` | Size of one dither cell. |
+| `menu-width` | `208px` | Width of the menu. |
+| `enabled` | `true` | Ignores clicks when `false`. |
+
+`selected(int)` is called with the index of the chosen item. `open()` and `close()` open and close the menu from code, and `is-open` tells you whether it is open.
