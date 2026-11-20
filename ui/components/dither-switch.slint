@@ -10,12 +10,13 @@ component Wave {
     in property <int> index;
     in property <float> steps;
     in property <length> full;
+    in property <bool> animated: true;
 
     property <float> progress: root.on ? 1 : 0;
     animate progress {
-        duration: 180ms;
-        delay: root.on ? root.index * 20ms : (4 - root.index) * 20ms;
-        easing: cubic-bezier(0.23, 1, 0.32, 1);
+        duration: root.animated ? 130ms : 0ms;
+        delay: root.animated ? (root.on ? root.index * 10ms : (4 - root.index) * 10ms) : 0ms;
+        easing: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     width: 100%;
@@ -81,7 +82,10 @@ export component DitherSwitch {
     property <float> hover: root.enabled && (touch.has-hover || focus.has-focus) ? 1 : 0;
     property <float> press: root.enabled && touch.pressed ? 1 : 0;
     property <float> position: root.checked ? 1 : 0;
-    animate position { duration: 180ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+    animate position {
+        duration: root.animated ? 140ms : 0ms;
+        easing: cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
     pure function cells(share: float) -> float {
         return max(2, Math.round(root.rows * share));
@@ -148,6 +152,7 @@ export component DitherSwitch {
             index: index;
             steps: root.travel / root.step + 2;
             full: root.track-w;
+            animated: root.animated;
 
             Layer {
                 cell: root.step;
@@ -164,6 +169,7 @@ export component DitherSwitch {
             index: 4;
             steps: root.travel / root.step + 2;
             full: root.track-w;
+            animated: root.animated;
 
             Rectangle { background: root.color; }
 
