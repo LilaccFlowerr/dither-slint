@@ -1,0 +1,102 @@
+---
+const palettes = {
+	'Ink on paper': ['#1b1a19', '#e8e4dc'],
+	'Blue to green': ['#0b1020', '#5471f5', '#6fd6a0'],
+	'Sunset': ['#1a0f1f', '#c2410c', '#fcd34d'],
+};
+---
+
+<div class="demo">
+	<canvas></canvas>
+	<div class="controls">
+		<label>Matrix
+			<select name="matrix">
+				<option value="0">bayer2</option>
+				<option value="1" selected>bayer4</option>
+				<option value="2">bayer8</option>
+				<option value="3">blue-noise</option>
+			</select>
+		</label>
+		<label>Palette
+			<select name="palette">
+				{Object.entries(palettes).map(([name, colors]) => <option value={colors.join(',')}>{name}</option>)}
+			</select>
+		</label>
+		<label><span>Angle <output></output></span>
+			<input type="range" name="angle" min="0" max="360" step="5" value="180" />
+		</label>
+		<label><span>Cell <output></output></span>
+			<input type="range" name="cell" min="1" max="12" step="1" value="3" />
+		</label>
+		<label><span>Levels <output></output></span>
+			<input type="range" name="levels" min="0" max="12" step="1" value="0" />
+		</label>
+	</div>
+</div>
+
+<style>
+	.demo {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		overflow: hidden;
+		margin: 1.5rem 0;
+	}
+	canvas {
+		display: block;
+		width: 100%;
+		height: 260px;
+		image-rendering: pixelated;
+	}
+	.controls {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 0.75rem 1rem;
+		padding: 0.9rem 1rem;
+		border-top: 1px solid var(--sl-color-gray-5);
+		font-size: var(--sl-text-sm);
+	}
+	label {
+		display: flex;
+		justify-content: end;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+	output {
+		color: var(--sl-color-gray-3);
+		margin-left: 0.4rem;
+	}
+</style>
+
+<script>
+	import init, { gradient } from '../engine/dither_slint_engine_web.js';
+
+	const rgba = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).concat(255);
+
+	for (const demo of document.querySelectorAll<HTMLElement>('.demo')) {
+		const canvas = demo.querySelector('canvas')!;
+		const context = canvas.getContext('2d')!;
+		const field = (name: string) => demo.querySelector<HTMLInputElement>(`[name=${name}]`)!;
+
+		init().then(() => {
+			const draw = () => {
+				const cell = Number(field('cell').value);
+				const columns = Math.max(1, Math.round(canvas.clientWidth / cell));
+				const rows = Math.max(1, Math.round(canvas.clientHeight / cell));
+				const palette = new Uint8Array(field('palette').value.split(',').flatMap(rgba));
+				const bytes = gradient(
+					columns, rows, Number(field('angle').value), 0, 1,
+					Number(field('matrix').value), palette, Number(field('levels').value),
+				);
+				canvas.width = columns;
+				canvas.height = rows;
+				context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+				for (const output of demo.querySelectorAll('output')) {
+					output.textContent = output.closest('label')!.querySelector('input')!.value;
+				}
+			};
+			demo.addEventListener('input', draw);
+			new ResizeObserver(draw).observe(canvas);
+			draw();
+		});
+	}
+</script>

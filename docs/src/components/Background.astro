@@ -1,0 +1,135 @@
+---
+interface Control {
+	label: string;
+	index: number;
+	min: number;
+	max: number;
+	step: number;
+}
+
+interface Props {
+	field: string;
+	params: number[];
+	palette: string[];
+	matrix?: number;
+	cell?: number;
+	still?: number;
+	controls?: Control[];
+}
+
+const { field, params, palette, matrix = 1, cell = 3, still = 0, controls = [] } = Astro.props;
+---
+
+<div class="background" data-field={field} data-params={JSON.stringify(params)} data-palette={palette.join(' ')} data-still={still}>
+	<canvas></canvas>
+	<div class="controls">
+		<label>Matrix
+			<select name="matrix">
+				{['bayer2', 'bayer4', 'bayer8', 'blue-noise'].map((name, index) => <option value={index} selected={index === matrix}>{name}</option>)}
+			</select>
+		</label>
+		<label><span>Cell <output></output></span>
+			<input type="range" name="cell" min="2" max="10" step="1" value={cell} />
+		</label>
+		<label><span>Speed <output></output></span>
+			<input type="range" name="speed" min="0" max="3" step="0.1" value="1" />
+		</label>
+		{controls.map((control) => (
+			<label><span>{control.label} <output></output></span>
+				<input type="range" data-index={control.index} min={control.min} max={control.max} step={control.step} value={params[control.index]} />
+			</label>
+		))}
+	</div>
+</div>
+
+<style>
+	.background {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		overflow: hidden;
+		margin: 1.5rem 0;
+	}
+	canvas {
+		display: block;
+		width: 100%;
+		height: 280px;
+		image-rendering: pixelated;
+	}
+	.controls {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 0.75rem 1rem;
+		padding: 0.9rem 1rem;
+		border-top: 1px solid var(--sl-color-gray-5);
+		font-size: var(--sl-text-sm);
+	}
+	label {
+		display: flex;
+		justify-content: end;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+	output {
+		color: var(--sl-color-gray-3);
+		margin-left: 0.4rem;
+	}
+</style>
+
+<script>
+	import { blend, ready, rgba, type Rgba } from '../scripts/dither';
+	import { shader } from '../engine/dither_slint_engine_web.js';
+
+	function color(spec: string): Rgba {
+		const [kind, a, b, amount] = spec.split(':');
+		return kind === 'mix' ? blend(rgba(a), rgba(b), Number(amount)) : rgba(spec);
+	}
+
+	ready.then(() => {
+		for (const demo of document.querySelectorAll<HTMLElement>('.background')) {
+			const canvas = demo.querySelector('canvas')!;
+			const context = canvas.getContext('2d')!;
+			const params = JSON.parse(demo.dataset.params!) as number[];
+			const palette = new Uint8Array(demo.dataset.palette!.split(' ').flatMap(color));
+			const input = (name: string) => demo.querySelector<HTMLInputElement>(`[name=${name}]`)!;
+			let visible = false;
+			let frame = 0;
+			let time = 0;
+			let last = 0;
+
+			const show = () => {
+				const cell = Number(input('cell').value);
+				const columns = Math.max(1, Math.round(canvas.clientWidth / cell));
+				const rows = Math.max(1, Math.round(canvas.clientHeight / cell));
+				const at = Number(input('speed').value) === 0 ? Number(demo.dataset.still) : time;
+				const bytes = shader(demo.dataset.field!, columns, rows, at, new Float32Array(params), palette, Number(input('matrix').value), 0);
+				canvas.width = columns;
+				canvas.height = rows;
+				context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+				for (const output of demo.querySelectorAll('output')) {
+					output.textContent = output.closest('label')!.querySelector('input')!.value;
+				}
+			};
+
+			const run = (now: number) => {
+				frame = 0;
+				time += ((now - last) / 1000) * Number(input('speed').value);
+				last = now;
+				show();
+				if (visible) frame = requestAnimationFrame(run);
+			};
+
+			demo.addEventListener('input', (event) => {
+				const target = event.target as HTMLInputElement;
+				if (target.dataset.index) params[Number(target.dataset.index)] = Number(target.value);
+				show();
+			});
+			new IntersectionObserver(([entry]) => {
+				visible = entry.isIntersecting;
+				if (visible && !frame) {
+					last = performance.now();
+					frame = requestAnimationFrame(run);
+				}
+			}).observe(demo);
+		}
+	});
+</script>

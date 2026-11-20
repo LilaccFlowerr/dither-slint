@@ -133,17 +133,24 @@ pub fn render(shader: &Shader) -> Image {
 
     let threads = std::thread::available_parallelism().map_or(1, |n| n.get()).min(8);
     let band = rows.div_ceil(threads);
-    std::thread::scope(|scope| {
-        for (index, chunk) in buffer.make_mut_slice().chunks_mut(band * columns).enumerate() {
-            let (shader, palette) = (&shader, &palette);
-            scope.spawn(move || {
-                for (offset, pixel) in chunk.iter_mut().enumerate() {
-                    let (x, y) = ((offset % columns) as u32, (index * band + offset / columns) as u32);
-                    *pixel = shade(shader, palette, steps, x, y);
-                }
-            });
+    let fill = |index: usize, chunk: &mut [Rgba8Pixel]| {
+        for (offset, pixel) in chunk.iter_mut().enumerate() {
+            let (x, y) = ((offset % columns) as u32, (index * band + offset / columns) as u32);
+            *pixel = shade(&shader, &palette, steps, x, y);
         }
-    });
+    };
+
+    let chunks = buffer.make_mut_slice().chunks_mut(band * columns);
+    if threads == 1 {
+        chunks.enumerate().for_each(|(index, chunk)| fill(index, chunk));
+    } else {
+        std::thread::scope(|scope| {
+            for (index, chunk) in chunks.enumerate() {
+                let fill = &fill;
+                scope.spawn(move || fill(index, chunk));
+            }
+        });
+    }
     Image::from_rgba8(buffer)
 }
 

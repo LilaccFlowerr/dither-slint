@@ -1,0 +1,205 @@
+---
+interface Props {
+	text: string;
+	variant?: 'default' | 'secondary' | 'destructive' | 'outline';
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	color?: string;
+	size?: 'sm' | 'md' | 'lg';
+	corners?: 'none' | 'sm' | 'md' | 'lg';
+	bloom?: 'off' | 'low' | 'high';
+	dot?: boolean;
+	dotColor?: string;
+	removable?: boolean;
+	interactive?: boolean;
+}
+
+const { text, variant = 'default', fill = 'gradient', color = 'ink', size = 'md', corners = 'md', bloom = 'off', dot, dotColor, removable, interactive } = Astro.props;
+---
+
+<span
+	class="badge"
+	data-variant={variant}
+	data-fill={fill}
+	data-color={color}
+	data-size={size}
+	data-corners={corners}
+	data-bloom={bloom}
+	data-dot-color={dotColor}
+	data-interactive={interactive ? '' : undefined}
+>
+	{dot && <i class="dot"></i>}
+	<span class="text">{text}</span>
+	{removable && <button class="remove" aria-label="Remove"><svg viewBox="0 0 12 12" width="8" height="8"><path d="M3 3 L9 9 M9 3 L3 9" /></svg></button>}
+</span>
+
+<style is:global>
+	.badge {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		flex: none;
+		font-weight: 500;
+		line-height: 1;
+		white-space: nowrap;
+		user-select: none;
+		transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.badge[data-interactive] {
+		cursor: pointer;
+	}
+	.badge[data-interactive]:active {
+		transform: scale(0.97);
+	}
+	.badge .surface,
+	.badge .frame {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.badge .surface {
+		overflow: hidden;
+	}
+	.badge .layer {
+		position: absolute;
+		top: 0;
+		left: 0;
+		image-rendering: pixelated;
+		opacity: var(--opacity);
+	}
+	.badge .layer.hover {
+		opacity: 0;
+		transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.badge[data-interactive]:hover .layer.hover {
+		opacity: var(--opacity);
+	}
+	.badge .frame {
+		border: 1px solid var(--border);
+	}
+	.badge .shine {
+		position: absolute;
+		top: 1px;
+		height: 1px;
+		pointer-events: none;
+	}
+	.badge .text,
+	.badge .dot,
+	.badge .remove {
+		position: relative;
+	}
+	.badge .dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		opacity: 0.85;
+	}
+	.badge .remove {
+		display: grid;
+		place-items: center;
+		width: 14px;
+		height: 14px;
+		padding: 0;
+		border: 0;
+		background: none;
+		cursor: pointer;
+		opacity: 0.7;
+	}
+	.badge .remove:hover {
+		opacity: 1;
+	}
+	.badge .remove path {
+		fill: none;
+		stroke: var(--label);
+		stroke-width: 1.5;
+	}
+</style>
+
+<script>
+	import { blend, css, layer, ready, rgba, type Layer } from '../scripts/dither';
+	import { attachFx } from '../scripts/fx';
+
+	const sizes = { sm: [20, 8, 4, 11], md: [24, 10, 6, 12], lg: [28, 12, 8, 13] } as const;
+	const radii = { none: 0, sm: 4, lg: 8 } as const;
+	const step = 2;
+
+	function build(badge: HTMLElement) {
+		const { variant, fill, size, corners, bloom } = badge.dataset as Record<string, string>;
+		const [height, pad, gap, font] = sizes[size as keyof typeof sizes];
+		const secondary = variant === 'secondary';
+		const outline = variant === 'outline';
+		const filled = !secondary && !outline;
+		const textured = fill === 'dotted' || fill === 'hatched';
+		const solid = fill === 'solid';
+
+		const white = rgba('white');
+		const black = rgba('black');
+		const foreground = rgba('foreground');
+		let tint = rgba(badge.dataset.color!);
+		if (variant === 'destructive' && badge.dataset.color === 'ink') tint = rgba('red');
+		const label = filled ? rgba('#05070f') : foreground;
+
+		const surface = filled
+			? tint
+			: secondary
+				? blend(rgba('background'), foreground, 0.12)
+				: rgba(badge.dataset.color!, 0.09);
+		const border = filled ? blend(tint, black, 0.32) : secondary ? rgba('foreground', 0.12) : ([...tint.slice(0, 3), 140] as typeof tint);
+		const shade = secondary ? rgba('foreground', 0.4) : blend(tint, black, 0.45);
+		const bevel = secondary ? rgba('white', 0.2) : blend(tint, white, 0.4);
+		const rounded = corners === 'md' ? ({ sm: 5, md: 6, lg: 7 } as const)[size as 'sm' | 'md' | 'lg'] : radii[corners as keyof typeof radii];
+
+		badge.style.height = `${height}px`;
+		badge.style.padding = `0 ${pad}px`;
+		badge.style.gap = `${gap}px`;
+		badge.style.fontSize = `${font}px`;
+		badge.style.borderRadius = `${rounded}px`;
+		badge.style.color = css(label);
+		badge.style.setProperty('--border', css(border));
+		badge.style.setProperty('--label', css(label));
+		badge.style.boxShadow =
+			filled && bloom !== 'off' ? `0 0 ${bloom === 'high' ? 18 : 10}px ${css([...tint.slice(0, 3), bloom === 'high' ? 140 : 77] as typeof tint)}` : '';
+
+		const dot = badge.querySelector<HTMLElement>('.dot');
+		if (dot) dot.style.background = css(badge.dataset.dotColor ? rgba(badge.dataset.dotColor) : label);
+
+		const box = document.createElement('span');
+		box.className = 'surface';
+		box.style.background = css(surface);
+		box.style.borderRadius = `${rounded}px`;
+		const frame = document.createElement('span');
+		frame.className = 'frame';
+		frame.style.borderRadius = `${rounded}px`;
+		badge.prepend(box, frame);
+
+		const rows = Math.ceil(height / step);
+		const cells = (share: number) => Math.max(1, Math.round(rows * share));
+		const layers: Layer[] = outline
+			? [
+					{ variant: textured ? (fill as Layer['variant']) : 'gradient', length: cells(0.55), from: solid ? 0.25 : 0.45, color: tint, opacity: textured ? 0.3 : 1 },
+					{ length: cells(0.9), from: 0.7, to: 0.05, color: tint, opacity: 0.7, hover: true },
+				]
+			: [
+					{ variant: textured ? (fill as Layer['variant']) : 'gradient', length: solid ? cells(0.3) : cells(0.5), from: 0.9, color: shade, opacity: textured ? 0.45 : 1 },
+					{ edge: 'top', length: cells(0.25), from: secondary ? 0.6 : 0.9, color: bevel },
+					{ edge: 'top', length: cells(0.7), color: bevel, hover: true },
+				];
+		for (const options of layers) layer(box, step, options);
+
+		attachFx(box, badge, { color: tint, strength: 0.55 });
+
+		if (!outline) {
+			const shine = document.createElement('span');
+			shine.className = 'shine';
+			shine.style.left = `${rounded / 2 + 1}px`;
+			shine.style.width = `${badge.offsetWidth - rounded - 2}px`;
+			shine.style.background = filled ? css(blend(tint, white, 0.55)) : css(rgba('white', 0.15));
+			badge.append(shine);
+		}
+	}
+
+	ready.then(() => {
+		for (const badge of document.querySelectorAll<HTMLElement>('.badge')) build(badge);
+	});
+</script>

@@ -72,8 +72,17 @@ Run the gallery with `cargo run --example gallery`.
 A button with a lit, dithered surface: a highlight dithered down from the top and a shade dithered up from the bottom. Hover brightens it, press shades it from the top.
 
 ```slint
-DitherButton { text: "Deploy"; bloom: DitherBloom.low; clicked => { deploy(); } }
-DitherButton { text: "View logs"; variant: DitherButtonVariant.outline; fill: DitherFill.dotted; }
+DitherButton {
+    text: "Deploy";
+    bloom: DitherBloom.low;
+    clicked => { deploy(); }
+}
+
+DitherButton {
+    text: "View logs";
+    variant: DitherButtonVariant.outline;
+    fill: DitherFill.dotted;
+}
 ```
 
 | Property | Default | |

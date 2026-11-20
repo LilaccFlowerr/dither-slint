@@ -1,0 +1,131 @@
+---
+title: DitherButton
+description: A button with a lit, dithered surface.
+---
+
+import Button from '../../../components/Button.astro';
+import Demo from '../../../components/Demo.astro';
+
+A highlight is dithered down from the top and a shade is dithered up from the bottom. Hover brightens it and a press shades it from the top.
+
+<Demo
+	title="Variants"
+	code={`DitherButton {
+    text: "Deploy";
+}
+
+DitherButton {
+    text: "View logs";
+    variant: DitherButtonVariant.outline;
+}`}
+>
+	<Button text="Deploy" />
+	<Button text="View logs" variant="outline" />
+</Demo>
+
+<Demo
+	title="Fills"
+	code={`DitherButton {
+    text: "Gradient";
+    fill: DitherFill.gradient;
+}
+
+DitherButton {
+    text: "Dotted";
+    fill: DitherFill.dotted;
+}
+
+DitherButton {
+    text: "Hatched";
+    fill: DitherFill.hatched;
+}
+
+DitherButton {
+    text: "Solid";
+    fill: DitherFill.solid;
+}`}
+>
+	<Button text="Gradient" />
+	<Button text="Dotted" fill="dotted" />
+	<Button text="Hatched" fill="hatched" />
+	<Button text="Solid" fill="solid" />
+</Demo>
+
+<Demo
+	title="Sizes"
+	code={`DitherButton {
+    text: "Small";
+    size: DitherButtonSize.sm;
+}
+
+DitherButton {
+    text: "Large";
+    size: DitherButtonSize.lg;
+}
+
+DitherButton {
+    size: DitherButtonSize.icon;
+    icon: @image-url("plus.svg");
+}`}
+>
+	<Button text="Small" size="sm" />
+	<Button text="Medium" />
+	<Button text="Large" size="lg" />
+	<Button size="icon" />
+</Demo>
+
+<Demo
+	title="Colours and bloom"
+	code={`DitherButton {
+    text: "Success";
+    color: DitherPalette.green;
+}
+
+DitherButton {
+    text: "Danger";
+    color: DitherPalette.red;
+}
+
+DitherButton {
+    text: "Glow";
+    bloom: DitherBloom.high;
+}`}
+>
+	<Button text="Success" color="green" />
+	<Button text="Danger" color="red" />
+	<Button text="Glow" bloom="high" />
+</Demo>
+
+<Demo
+	title="Loading and disabled"
+	code={`DitherButton {
+    text: "Saving";
+    loading: true;
+}
+
+DitherButton {
+    text: "Disabled";
+    enabled: false;
+}`}
+>
+	<Button text="Saving" loading />
+	<Button text="Disabled" disabled />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `text` | | The label. |
+| `icon` | | An image shown before the label, tinted like the text. |
+| `variant` | `filled` | `filled` is the lit colour surface, `outline` a faint tint that fills in on hover. |
+| `fill` | `gradient` | Texture of the shade: `gradient`, `dotted`, `hatched` or `solid`. |
+| `color` | `DitherTheme.ink` | Any colour, or one from `DitherPalette`. |
+| `size` | `md` | `sm`, `md` and `lg` are 32, 36 and 44px high. `icon` is a 36px square. |
+| `bloom` | `off` | `low` or `high` adds a glow in the button's colour. |
+| `cell` | `2px` | Size of one dither cell. |
+| `loading` | `false` | Steps three cells before the label and ignores clicks. |
+| `enabled` | `true` | |
+| `animated` | `DitherTheme.animated` | A dithered sweep on hover and a ripple from where you press. |
+
+Turn the motion off everywhere with `DitherTheme.animated = false`, or per button with `animated: false`. `DitherFx` is the layer behind it, so other components can use the same sweep and ripple.

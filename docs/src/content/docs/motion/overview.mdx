@@ -1,0 +1,74 @@
+---
+title: Motion
+description: Hover, press and idle effects.
+---
+
+import MotionDemo from '../../../components/MotionDemo.astro';
+
+<MotionDemo />
+
+
+Every dither component plays small effects drawn in dots. `DitherFx` is the layer behind them, and the button, badge and card use it. You can put it inside any box:
+
+```slint
+Rectangle {
+    fx := DitherFx {
+        hover: DitherHover.spotlight;
+        press: DitherPress.burst;
+    }
+    TouchArea {
+        changed has-hover => {
+            if self.has-hover { fx.pointer-enter(self.mouse-x, self.mouse-y); }
+            else { fx.pointer-leave(); }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down { fx.pointer-down(self.mouse-x, self.mouse-y); }
+            else if event.kind == PointerEventKind.move { fx.pointer-move(self.mouse-x, self.mouse-y); }
+        }
+    }
+}
+```
+
+## Hover
+
+| Effect | |
+| --- | --- |
+| `sweep` | A soft diagonal band crosses from left to right. |
+| `spotlight` | A glow that follows the pointer. |
+| `scan` | A bright line drops down the box and leaves a trail. |
+| `trace` | A comet runs once around the edge. |
+| `rise` | The bottom lights up. |
+| `noise` | Random cells flicker like static. |
+
+## Press
+
+| Effect | |
+| --- | --- |
+| `ripple` | A ring grows from where you pressed. |
+| `burst` | Sparks fly out and blink away. |
+| `flash` | The whole box lights up, brightest at the press. |
+| `pulse` | Two square rings follow each other. |
+| `glitch` | Bars of the box tear sideways. |
+
+## Idle
+
+| Effect | |
+| --- | --- |
+| `shimmer` | A fainter sweep every few seconds. |
+| `breathe` | The edge glows in and out. |
+| `twinkle` | Stars that wink. |
+
+## Choosing the defaults
+
+`DitherMotion` is a global with the defaults for every component:
+
+```slint
+DitherMotion.hover = DitherHover.spotlight;
+DitherMotion.press = DitherPress.burst;
+DitherMotion.idle = DitherIdle.breathe;
+DitherMotion.speed = 1.5;
+DitherMotion.intensity = 0.8;
+DitherMotion.matrix = DitherMatrix.bayer8;
+```
+
+A component's own `hover`, `press` or `idle` property wins. `DitherTheme.animated = false` turns all of it off.

@@ -1,0 +1,108 @@
+---
+title: Backgrounds
+description: Animated dithered backgrounds.
+---
+
+import Background from '../../../components/Background.astro';
+
+
+
+A background is a *field*: a function that returns a tone for every cell. The engine turns the tones into dots, picks the colours from your palette and animates the time. Put one in any box:
+
+```slint
+Rectangle {
+    clip: true;
+    DitherRipples { }
+}
+```
+
+All of them share these properties:
+
+| Property | Default | |
+| --- | --- | --- |
+| `palette` | depends | Two or more colours, from paper to ink. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `3px` | Size of one dither cell. |
+| `speed` | `1` | Time multiplier. |
+| `still-time` | depends | The moment shown when `animated` is `false`. |
+| `animated` | `DitherTheme.animated` | |
+
+The backgrounds are drawn on the CPU. A 1440 by 700 box with 3px cells is 480 by 234 cells and takes a few milliseconds per frame in a release build. Run in release, or set `opt-level = 3` for your dependencies.
+
+## Ripples
+
+<Background
+	field="ripples"
+	params={[2, 12, 1, 1, 0.28, 0.38, 0.74, 0.66]}
+	palette={['background', 'mix:background:ink:0.45', 'ink']}
+	controls={[{ label: 'Rings', index: 1, min: 3, max: 30, step: 1 }, { label: 'Decay', index: 2, min: 0, max: 3, step: 0.1 }]}
+/>
+
+Concentric rings from one to four points that cross like drops on still water.
+
+| Property | Default | |
+| --- | --- | --- |
+| `sources` | `[0.28, 0.38, 0.74, 0.66]` | x and y pairs as fractions of the box, up to four. |
+| `rings` | `12` | How many rings fit in the height. |
+| `decay` | `1` | How quickly the rings fade. |
+| `intensity` | `1` | Brightest tone, 0 to 1. |
+
+## Plasma
+
+<Background
+	field="plasma"
+	params={[1, 0.3, 1.5, 1]}
+	palette={['background', 'purple', 'ink']}
+	still={9}
+	controls={[{ label: 'Scale', index: 0, min: 0.3, max: 3, step: 0.1 }, { label: 'Warp', index: 1, min: 0, max: 1, step: 0.05 }, { label: 'Bands', index: 2, min: 0.5, max: 6, step: 0.1 }]}
+/>
+
+Overlapping sine waves that flow into each other.
+
+| Property | Default | |
+| --- | --- | --- |
+| `scale` | `1` | Size of the blobs. |
+| `warp` | `0.3` | How far slow noise bends the pattern. |
+| `bands` | `1.5` | How many times the colours cycle. |
+| `intensity` | `1` | Brightest tone. |
+
+## Waves
+
+<Background
+	field="waves"
+	params={[0, 0.62, 6, 1]}
+	palette={['background', 'mix:background:ink:0.35', 'ink', 'mix:foreground:ink:0.45']}
+	controls={[{ label: 'Lines', index: 0, min: 0, max: 1, step: 1 }, { label: 'Layers', index: 2, min: 2, max: 8, step: 1 }, { label: 'Amplitude', index: 3, min: 0.2, max: 2, step: 0.1 }]}
+/>
+
+Layered swells under a glowing horizon, or thin lines like a sound wave.
+
+| Property | Default | |
+| --- | --- | --- |
+| `variant` | `ocean` | `ocean` or `lines`. |
+| `horizon` | `0.62` | Height of the horizon, for `ocean`. |
+| `layers` | `6` | How many waves, 2 to 8. |
+| `amplitude` | `1` | Height of the waves. |
+
+## Noise field
+
+<Background
+	field="noise-field"
+	params={[1.5708, 8, 1.2, 0, 4, 1, 0.9, 0, 0, 0.5, 1.3, 0, 1.7]}
+	palette={['background', 'ink']}
+	matrix={2}
+	controls={[{ label: 'Variant', index: 11, min: 0, max: 3, step: 1 }, { label: 'Scale', index: 10, min: 0.5, max: 3, step: 0.1 }, { label: 'Warp', index: 12, min: 0, max: 3, step: 0.1 }]}
+/>
+
+A slow, folding noise texture, with four shapes.
+
+| Property | Default | |
+| --- | --- | --- |
+| `variant` | `smoke` | `smoke`, `ridges`, `contours` or `marble`. |
+| `color`, `highlight`, `background` | ink, none, paper | `highlight` adds a third colour for the peaks. |
+| `scale`, `warp`, `detail` | `1.3`, `1.7`, `4` | Size, folding and octaves of the noise. |
+| `contrast`, `coverage`, `intensity` | `1.2`, `0`, `0.9` | |
+| `bands` | `8` | Lines for `contours`, stripes for `marble`. |
+| `angle`, `flow` | `90deg`, `1` | Direction and speed of the drift. |
+| `invert` | `false` | Swap paper and ink. |
+| `mask`, `mask-size` | `none`, `0.5` | Clear space for text: `center`, `top`, `bottom` or `edges`. |

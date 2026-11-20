@@ -1,0 +1,200 @@
+---
+interface Props {
+	text?: string;
+	variant?: 'filled' | 'outline';
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	color?: string;
+	size?: 'sm' | 'md' | 'lg' | 'icon';
+	bloom?: 'off' | 'low' | 'high';
+	loading?: boolean;
+	disabled?: boolean;
+}
+
+const { text, variant = 'filled', fill = 'gradient', color = 'ink', size = 'md', bloom = 'off', loading, disabled } = Astro.props;
+---
+
+<button
+	class="btn"
+	data-variant={variant}
+	data-fill={fill}
+	data-color={color}
+	data-size={size}
+	data-bloom={bloom}
+	disabled={disabled || loading}
+	data-loading={loading ? '' : undefined}
+	data-disabled={disabled ? '' : undefined}
+>
+	{loading && <span class="busy"><i></i><i></i><i></i></span>}
+	{size === 'icon' ? <svg viewBox="0 0 16 16" width="16" height="16"><path d="M8 3 V13 M3 8 H13" /></svg> : <span class="text">{text}</span>}
+</button>
+
+<style is:global>
+	.btn {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		flex: none;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-weight: 500;
+		line-height: 1;
+		white-space: nowrap;
+		cursor: pointer;
+		transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.btn:active:not(:disabled) {
+		transform: scale(0.97);
+	}
+	.btn:disabled {
+		cursor: default;
+	}
+	.btn[data-disabled] {
+		opacity: 0.45;
+	}
+	.btn[data-loading] {
+		cursor: progress;
+	}
+	.btn:focus-visible {
+		outline: 2px solid var(--sl-color-white);
+		outline-offset: 4px;
+	}
+	.btn .surface,
+	.btn .frame {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.btn .surface {
+		overflow: hidden;
+	}
+	.btn .layer {
+		position: absolute;
+		top: 0;
+		left: 0;
+		image-rendering: pixelated;
+		opacity: var(--opacity);
+	}
+	.btn .layer.hover,
+	.btn .layer.press {
+		opacity: 0;
+		transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.btn:hover:not(:disabled) .layer.hover,
+	.btn:focus-visible .layer.hover {
+		opacity: var(--opacity);
+	}
+	.btn:active:not(:disabled) .layer.press {
+		opacity: var(--opacity);
+		transition-duration: 80ms;
+	}
+	.btn .frame {
+		border: 1px solid var(--border);
+	}
+	.btn .text,
+	.btn svg,
+	.btn .busy {
+		position: relative;
+	}
+	.btn svg path {
+		fill: none;
+		stroke: var(--label);
+		stroke-width: 1.5;
+	}
+	.btn .busy {
+		display: inline-flex;
+		gap: 3px;
+		margin-right: 8px;
+	}
+	.btn .busy i {
+		width: 3px;
+		height: 3px;
+		background: var(--label);
+		animation: busy 900ms infinite;
+	}
+	.btn .busy i:nth-child(2) {
+		animation-delay: 300ms;
+	}
+	.btn .busy i:nth-child(3) {
+		animation-delay: 600ms;
+	}
+	@keyframes busy {
+		0%, 32% { opacity: 0.25; }
+		33%, 100% { opacity: 1; }
+	}
+</style>
+
+<script>
+	import { blend, css, layer, ready, rgba, type Layer } from '../scripts/dither';
+	import { attachFx } from '../scripts/fx';
+
+	const heights = { sm: 32, md: 36, lg: 44, icon: 36 } as const;
+	const radii = { sm: 8, md: 9, lg: 11, icon: 9 } as const;
+	const padding = { sm: 12, md: 16, lg: 20, icon: 0 } as const;
+	const fonts = { sm: 13, md: 14, lg: 15, icon: 14 } as const;
+	const step = 2;
+
+	function build(button: HTMLElement) {
+		const { variant, fill, size: name, bloom } = button.dataset as Record<string, string>;
+		const size = name as keyof typeof heights;
+		const filled = variant === 'filled';
+		const textured = fill === 'dotted' || fill === 'hatched';
+		const solid = fill === 'solid';
+		const height = heights[size];
+		const radius = radii[size];
+
+		const white = rgba('white');
+		const black = rgba('black');
+		const color = rgba(button.dataset.color!);
+		const light = blend(color, white, 0.42);
+		const dark = blend(color, black, 0.48);
+		const label = filled ? rgba('#05070f') : rgba('foreground');
+		const border = filled ? blend(color, black, 0.3) : ([...color.slice(0, 3), 140] as typeof color);
+
+		button.style.height = `${height}px`;
+		button.style.width = size === 'icon' ? `${height}px` : '';
+		button.style.padding = `0 ${padding[size]}px`;
+		button.style.fontSize = `${fonts[size]}px`;
+		button.style.borderRadius = `${radius}px`;
+		button.style.color = css(label);
+		button.style.setProperty('--border', css(border));
+		button.style.setProperty('--label', css(label));
+		button.style.boxShadow =
+			filled && bloom !== 'off' ? `0 0 ${bloom === 'high' ? 18 : 10}px ${css([...color.slice(0, 3), bloom === 'high' ? 140 : 77] as typeof color)}` : '';
+
+		const box = document.createElement('span');
+		box.className = 'surface';
+		box.style.background = filled ? css(color) : css(rgba(button.dataset.color!, 0.09));
+		box.style.borderRadius = `${radius}px`;
+		const frame = document.createElement('span');
+		frame.className = 'frame';
+		frame.style.borderRadius = `${radius}px`;
+		button.prepend(box, frame);
+
+		const rows = Math.ceil(height / step);
+		const cells = (share: number) => Math.max(2, Math.round(rows * share));
+		const texture = textured ? (fill as Layer['variant']) : 'gradient';
+		const layers: Layer[] = filled
+			? [
+					{ variant: texture, length: solid ? 3 : cells(0.5), color: dark, opacity: textured ? 0.5 : 1 },
+					{ edge: 'top', length: cells(0.2), color: light },
+					{ edge: 'top', length: cells(0.72), color: light, hover: true },
+					{ edge: 'top', length: cells(0.4), from: 0.5, color: dark, press: true },
+				]
+			: [
+					{ variant: texture, length: cells(0.55), from: solid ? 0.25 : 0.5, color, opacity: textured ? 0.32 : 1 },
+					{ length: cells(0.9), from: 0.75, to: 0.0625, color, opacity: 0.7, hover: true },
+					{ length: rows, from: 0.75, to: 0.125, color, opacity: 0.5, press: true },
+				];
+		for (const options of layers) layer(box, step, options);
+
+		attachFx(box, button, { color: filled ? light : color, strength: filled ? 0.85 : 0.6 });
+	}
+
+	ready.then(() => {
+		for (const button of document.querySelectorAll<HTMLElement>('.btn')) build(button);
+	});
+</script>

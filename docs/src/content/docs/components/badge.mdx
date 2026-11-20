@@ -1,0 +1,170 @@
+---
+title: DitherBadge
+description: A compact badge with a lit, dithered surface.
+---
+
+import Badge from '../../../components/Badge.astro';
+import Demo from '../../../components/Demo.astro';
+
+<Demo
+	title="Variants"
+	code={`DitherBadge {
+    text: "Default";
+}
+
+DitherBadge {
+    text: "Secondary";
+    variant: DitherBadgeVariant.secondary;
+}
+
+DitherBadge {
+    text: "Destructive";
+    variant: DitherBadgeVariant.destructive;
+}
+
+DitherBadge {
+    text: "Outline";
+    variant: DitherBadgeVariant.outline;
+}`}
+>
+	<Badge text="Default" />
+	<Badge text="Secondary" variant="secondary" />
+	<Badge text="Destructive" variant="destructive" />
+	<Badge text="Outline" variant="outline" />
+</Demo>
+
+<Demo
+	title="Fills"
+	code={`DitherBadge {
+    text: "Gradient";
+    fill: DitherFill.gradient;
+}
+
+DitherBadge {
+    text: "Dotted";
+    fill: DitherFill.dotted;
+}
+
+DitherBadge {
+    text: "Hatched";
+    fill: DitherFill.hatched;
+}
+
+DitherBadge {
+    text: "Solid";
+    fill: DitherFill.solid;
+}`}
+>
+	<Badge text="Gradient" fill="gradient" />
+	<Badge text="Dotted" fill="dotted" />
+	<Badge text="Hatched" fill="hatched" />
+	<Badge text="Solid" fill="solid" />
+</Demo>
+
+<Demo
+	title="Colours"
+	code={`DitherBadge {
+    text: "Green";
+    color: DitherPalette.green;
+}
+
+DitherBadge {
+    text: "Orange";
+    color: DitherPalette.orange;
+}
+
+DitherBadge {
+    text: "Pink";
+    color: DitherPalette.pink;
+}
+
+DitherBadge {
+    text: "Purple";
+    color: DitherPalette.purple;
+}`}
+>
+	<Badge text="Green" color="green" />
+	<Badge text="Orange" color="orange" />
+	<Badge text="Pink" color="pink" />
+	<Badge text="Purple" color="purple" />
+</Demo>
+
+<Demo
+	title="Sizes and corners"
+	code={`DitherBadge {
+    text: "Small";
+    size: DitherBadgeSize.sm;
+}
+
+DitherBadge {
+    text: "Large";
+    size: DitherBadgeSize.lg;
+}
+
+DitherBadge {
+    text: "Square";
+    corners: DitherBadgeRadius.none;
+}
+
+DitherBadge {
+    text: "Round";
+    corners: DitherBadgeRadius.lg;
+}`}
+>
+	<Badge text="Small" size="sm" />
+	<Badge text="Large" size="lg" />
+	<Badge text="Square" corners="none" />
+	<Badge text="Round" corners="lg" />
+</Demo>
+
+<Demo
+	title="Dot, remove, glow, interactive"
+	code={`DitherBadge {
+    text: "Online";
+    dot: true;
+    color: DitherPalette.green;
+}
+
+
+DitherBadge {
+    text: "Tag";
+    removable: true;
+    removed => { drop-tag(); }
+}
+
+
+DitherBadge {
+    text: "Glow";
+    bloom: DitherBloom.high;
+}
+
+
+DitherBadge {
+    text: "Click me";
+    interactive: true;
+    clicked => { open(); }
+}`}
+>
+	<Badge text="Online" dot color="green" />
+	<Badge text="Tag" removable />
+	<Badge text="Glow" bloom="high" />
+	<Badge text="Click me" interactive />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `text` | | The label. |
+| `variant` | `default` | `default`, `secondary`, `destructive` or `outline`. Destructive turns red unless you set a colour. |
+| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `color` | `DitherTheme.ink` | Any colour, or one from `DitherPalette`. |
+| `size` | `md` | `sm`, `md` or `lg`, 20, 24 and 28px high. |
+| `corners` | `md` | `none`, `sm`, `md` or `lg`. |
+| `bloom` | `off` | `low` or `high`, for the filled variants. |
+| `cell` | `2px` | Size of one dither cell. |
+| `dot` | `false` | Shows a status dot. `dot-color` sets its colour. |
+| `removable` | `false` | Shows a small cross. Clicking it calls `removed`. |
+| `interactive` | `false` | Brightens on hover and calls `clicked`. |
+
+Callbacks: `clicked` and `removed`.

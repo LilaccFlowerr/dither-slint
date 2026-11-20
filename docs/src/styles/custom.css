@@ -1,0 +1,18 @@
+:root {
+	--sl-color-accent-low: #1c2250;
+	--sl-color-accent: #5471f5;
+	--sl-color-accent-high: #b7c4ff;
+}
+
+.demo .preview > *,
+.demo canvas,
+.card canvas,
+.card .content,
+.badge *,
+.btn *,
+.tile *,
+.motion canvas,
+.background canvas,
+.image-demo canvas {
+	margin-top: 0 !important;
+}
