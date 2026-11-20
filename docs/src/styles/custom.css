@@ -18,6 +18,7 @@
 .switch *,
 .divider *,
 .input *,
-.input .layer {
+.input .layer,
+.tabs * {
 	margin-top: 0 !important;
 }

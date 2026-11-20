@@ -8,6 +8,8 @@ export enum DitherBloom { off, low, high }
 
 export enum DitherGlow { top-left, top-right, bottom-left, bottom-right, top, bottom }
 
+export enum DitherTabsVariant { pill, underline }
+
 export enum DitherMethod { bayer4, bayer8, blue-noise, floyd-steinberg, atkinson, sierra-lite }
 
 export enum DitherHover { sweep, spotlight, scan, trace, rise, noise, none }
@@ -29,4 +31,5 @@ export global DitherEngine {
     pure callback hover(kind: DitherHover, columns: int, rows: int, t: float, x: float, y: float, level: float, strength: float, color: color, matrix: DitherMatrix) -> image;
     pure callback press(kind: DitherPress, columns: int, rows: int, t: float, x: float, y: float, seed: int, strength: float, color: color, matrix: DitherMatrix) -> image;
     pure callback idle(kind: DitherIdle, columns: int, rows: int, t: float, strength: float, color: color, cell: float, matrix: DitherMatrix) -> image;
+    pure callback tabs-indicator(columns: int, rows: int, cell: float, variant: DitherTabsVariant, matrix: DitherMatrix, color: color, from-x: float, from-y: float, from-w: float, from-h: float, to-x: float, to-y: float, to-w: float, to-h: float, progress: float) -> image;
 }

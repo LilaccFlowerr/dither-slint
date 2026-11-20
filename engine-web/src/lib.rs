@@ -150,3 +150,21 @@ pub fn slider_fill(columns: u32, rows: u32, end: i32, hot: bool, matrix: usize, 
     let options = render::SliderOptions { end, hot, matrix: Matrix::ALL[matrix], color: colors(color)[0] };
     bytes(render::slider_fill(columns, rows, &options))
 }
+
+#[wasm_bindgen]
+pub fn tabs_indicator(
+    columns: u32,
+    rows: u32,
+    cell: f32,
+    variant: usize,
+    matrix: usize,
+    color: &[u8],
+    from: &[f32],
+    to: &[f32],
+    progress: f32,
+) -> Vec<u8> {
+    use dither_slint::tabs::{BoxRect, TabsVariant, tabs_indicator};
+    let variant = if variant == 0 { TabsVariant::Pill } else { TabsVariant::Underline };
+    let rect = |b: &[f32]| BoxRect::new(b[0], b[1], b[2], b[3]);
+    bytes(tabs_indicator(columns, rows, cell, variant, Matrix::ALL[matrix], colors(color)[0], rect(from), rect(to), progress))
+}

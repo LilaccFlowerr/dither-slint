@@ -9,6 +9,7 @@ pub mod matrix;
 pub mod noise;
 pub mod render;
 pub mod style;
+pub mod tabs;
 
 mod blue_noise;
 
@@ -118,6 +119,25 @@ macro_rules! install {
         engine.on_idle(|kind, columns, rows, t, strength, color, cell, matrix| {
             let layer = Layer::new(columns, rows, strength, color, Matrix::ALL[matrix as usize]);
             $crate::lively::idle(Idle::ALL[kind as usize], &layer, t, cell)
+        });
+        engine.on_tabs_indicator(|columns, rows, cell, variant, kind, color, fx, fy, fw, fh, tx, ty, tw, th, progress| {
+            let variant = match variant {
+                DitherTabsVariant::Pill => $crate::tabs::TabsVariant::Pill,
+                DitherTabsVariant::Underline => $crate::tabs::TabsVariant::Underline,
+            };
+            let from = $crate::tabs::BoxRect { x: fx, y: fy, w: fw, h: fh };
+            let to = $crate::tabs::BoxRect { x: tx, y: ty, w: tw, h: th };
+            $crate::tabs::tabs_indicator(
+                cells(columns),
+                cells(rows),
+                cell,
+                variant,
+                Matrix::ALL[kind as usize],
+                color,
+                from,
+                to,
+                progress,
+            )
         });
     }};
 }

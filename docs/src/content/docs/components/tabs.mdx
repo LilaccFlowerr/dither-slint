@@ -1,0 +1,77 @@
+---
+title: DitherTabs
+description: Tabs whose active indicator is a dithered pill or underline that glides to the chosen tab.
+---
+
+import Tabs from '../../../components/Tabs.astro';
+import Demo from '../../../components/Demo.astro';
+
+The indicator is drawn cell by cell behind the tabs. Choosing a tab moves it in three overlapping parts: the old tab's indicator thins out in place, a body glides across with its leading edge ahead of its trailing edge, and the new tab's indicator fills in underneath. Every cell switches on or off at its threshold in the matrix, so the move reads as a dissolve rather than a slide. Click a tab, or use the arrow keys, Home and End. Keys jump without a glide.
+
+<Demo
+	title="Pill"
+	code={`DitherTabs {
+    tabs: ["Overview", "Deploys", "Settings"];
+    variant: DitherTabsVariant.pill;
+}`}
+>
+	<Tabs tabs={['Overview', 'Deploys', 'Settings']} />
+</Demo>
+
+<Demo
+	title="Underline"
+	code={`DitherTabs {
+    tabs: ["Code", "Issues", "Pull Requests", "Actions"];
+    variant: DitherTabsVariant.underline;
+}`}
+>
+	<Tabs tabs={['Code', 'Issues', 'Pull Requests', 'Actions']} variant="underline" />
+</Demo>
+
+<Demo
+	title="Colours, matrix and glow"
+	code={`DitherTabs {
+    tabs: ["Monthly", "Yearly"];
+    color: DitherPalette.green;
+}
+
+DitherTabs {
+    tabs: ["Day", "Week", "Month"];
+    variant: DitherTabsVariant.underline;
+    color: DitherPalette.pink;
+    matrix: DitherMatrix.blue-noise;
+}
+
+DitherTabs {
+    tabs: ["Glow", "Glow more"];
+    bloom: DitherBloom.high;
+}`}
+>
+	<Tabs tabs={['Monthly', 'Yearly']} color="green" />
+	<Tabs tabs={['Day', 'Week', 'Month']} variant="underline" color="pink" matrix={3} />
+	<Tabs tabs={['Glow', 'Glow more']} bloom="high" />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `tabs` | `["Overview", "Deploys", "Settings"]` | The tab labels. |
+| `current` | `0` | Index of the active tab. |
+| `variant` | `pill` | `pill` lights a dithered surface behind the label. `underline` draws a dithered bar with a rising glow. |
+| `color` | `DitherTheme.ink` | Indicator colour, such as one from `DitherPalette`. |
+| `matrix` | `bayer4` | `bayer2`, `bayer4`, `bayer8` or `blue-noise`. |
+| `bloom` | `off` | `low` or `high` adds a soft glow in the indicator's colour. |
+| `cell` | `2px` | Size of one dither cell. |
+| `animated` | `DitherTheme.animated` | Glides the indicator between tabs over 260 ms. |
+| `enabled` | `true` | Allows mouse and keyboard navigation. |
+
+`changed(int)` is called with the index of the new tab.
+
+```slint
+DitherTabs {
+    changed(index) => {
+        debug(index);
+    }
+}
+```

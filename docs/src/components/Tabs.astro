@@ -1,0 +1,193 @@
+---
+interface Props {
+	tabs: string[];
+	current?: number;
+	variant?: 'pill' | 'underline';
+	color?: string;
+	matrix?: number;
+	bloom?: 'off' | 'low' | 'high';
+}
+
+const { tabs, current = 0, variant = 'pill', color = 'ink', matrix = 1, bloom = 'off' } = Astro.props;
+---
+
+<div class="tabs" role="tablist" data-variant={variant} data-color={color} data-matrix={matrix} data-bloom={bloom} data-current={current}>
+	<canvas></canvas>
+	{tabs.map((label, index) => <button type="button" role="tab" aria-selected={index === current ? 'true' : 'false'} tabindex={index === current ? 0 : -1}>{label}</button>)}
+</div>
+
+<style is:global>
+	.tabs {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		isolation: isolate;
+		height: 40px;
+		max-width: 100%;
+		color: #8a857d;
+		font-size: 14px;
+		font-weight: 500;
+	}
+	.tabs[data-variant='pill'] {
+		padding: 4px;
+		gap: 4px;
+		border-radius: 12px;
+		background: #22201d;
+	}
+	.tabs[data-variant='underline'] {
+		box-shadow: inset 0 -1px 0 #33312e;
+	}
+	.tabs canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: -1;
+		image-rendering: pixelated;
+		pointer-events: none;
+		margin: 0 !important;
+	}
+	.tabs button {
+		position: relative;
+		flex: none;
+		border: 0;
+		background: none;
+		color: inherit;
+		font: inherit;
+		white-space: nowrap;
+		cursor: pointer;
+		transition: color 150ms;
+		margin: 0 !important;
+	}
+	.tabs[data-variant='pill'] button {
+		height: 32px;
+		padding: 0 14px;
+		border-radius: 8px;
+	}
+	.tabs[data-variant='underline'] button {
+		height: 40px;
+		padding: 0 12px;
+	}
+	.tabs button:hover {
+		color: #ebe5d9;
+	}
+	.tabs button[aria-selected='true'] {
+		color: #ebe5d9;
+	}
+	.tabs[data-variant='pill'] button[aria-selected='true'] {
+		color: #05070f;
+	}
+	.tabs button:focus-visible {
+		outline: 2px solid var(--sl-color-white);
+		outline-offset: 2px;
+	}
+	.tabs button::before {
+		content: '';
+		position: absolute;
+		z-index: -1;
+		background: var(--tint);
+		opacity: 0;
+		transition: opacity 200ms;
+	}
+	.tabs[data-variant='pill'] button::before {
+		inset: 0;
+		border-radius: 8px;
+	}
+	.tabs[data-variant='underline'] button::before {
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 4px;
+	}
+	.tabs button:hover:not([aria-selected='true'])::before {
+		opacity: 1;
+	}
+</style>
+
+<script>
+	import { tabs_indicator } from '../engine/dither_slint_engine_web.js';
+	import { css, ready, rgba } from '../scripts/dither';
+
+	const duration = 260;
+	const cell = 2;
+
+	function build(list: HTMLElement) {
+		const variant = list.dataset.variant === 'pill' ? 0 : 1;
+		const color = rgba(list.dataset.color!);
+		const color4 = new Uint8Array(color);
+		const matrix = Number(list.dataset.matrix);
+		const canvas = list.querySelector('canvas')!;
+		const context = canvas.getContext('2d')!;
+		const buttons = [...list.querySelectorAll<HTMLElement>('button')];
+		let current = Number(list.dataset.current);
+		let from: number[] | null = null;
+		let start = 0;
+		let frame = 0;
+
+		list.style.setProperty('--tint', css([color[0], color[1], color[2], 77]));
+		const bloom = list.dataset.bloom;
+		if (bloom !== 'off') canvas.style.filter = `drop-shadow(0 0 ${bloom === 'high' ? 9 : 5}px ${css([color[0], color[1], color[2], bloom === 'high' ? 140 : 90])})`;
+
+		const box = (button: HTMLElement) => [button.offsetLeft, button.offsetTop, button.offsetWidth, button.offsetHeight];
+
+		const draw = (progress: number) => {
+			const columns = Math.max(1, Math.ceil(list.clientWidth / cell));
+			const rows = Math.max(1, Math.ceil(list.clientHeight / cell));
+			const to = box(buttons[current]);
+			const bytes = tabs_indicator(columns, rows, cell, variant, matrix, color4, new Float32Array(from ?? to), new Float32Array(to), progress);
+			canvas.width = columns;
+			canvas.height = rows;
+			canvas.style.width = `${columns * cell}px`;
+			canvas.style.height = `${rows * cell}px`;
+			context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+		};
+
+		const run = (now: number) => {
+			const progress = (now - start) / duration;
+			if (progress >= 1) {
+				from = null;
+				frame = 0;
+				draw(1);
+				return;
+			}
+			draw(progress);
+			frame = requestAnimationFrame(run);
+		};
+
+		const select = (index: number, glide: boolean) => {
+			if (index === current) return;
+			const previous = box(buttons[current]);
+			buttons[current].setAttribute('aria-selected', 'false');
+			buttons[current].tabIndex = -1;
+			current = index;
+			buttons[current].setAttribute('aria-selected', 'true');
+			buttons[current].tabIndex = 0;
+			cancelAnimationFrame(frame);
+			list.dispatchEvent(new CustomEvent('change', { detail: index, bubbles: true }));
+			if (glide) {
+				from = previous;
+				start = performance.now();
+				frame = requestAnimationFrame(run);
+			} else {
+				from = null;
+				draw(1);
+			}
+		};
+
+		buttons.forEach((button, index) => button.addEventListener('click', () => select(index, true)));
+		list.addEventListener('keydown', (event) => {
+			const last = buttons.length - 1;
+			const target = { ArrowLeft: current - 1, ArrowRight: current + 1, Home: 0, End: last }[event.key];
+			if (target === undefined) return;
+			event.preventDefault();
+			select(Math.min(last, Math.max(0, target)), false);
+			buttons[current].focus();
+		});
+
+		new ResizeObserver(() => !frame && draw(1)).observe(list);
+		draw(1);
+	}
+
+	ready.then(() => {
+		for (const list of document.querySelectorAll<HTMLElement>('.tabs')) build(list);
+	});
+</script>

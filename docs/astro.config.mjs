@@ -32,6 +32,7 @@ export default defineConfig({
 						{ label: 'DitherInput', slug: 'components/input' },
 						{ label: 'DitherSlider', slug: 'components/slider' },
 						{ label: 'DitherSwitch', slug: 'components/switch' },
+						{ label: 'DitherTabs', slug: 'components/tabs' },
 					],
 				},
 				{ label: 'Motion', items: [{ label: 'Overview', slug: 'motion/overview' }] },

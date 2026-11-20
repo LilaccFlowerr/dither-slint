@@ -103,6 +103,32 @@ DitherButton {
 
 Turn the motion off everywhere with `DitherTheme.animated = false`, or per button with `animated: false`. `DitherFx` is the layer behind it, so other components can use the same sweep and ripple.
 
+### DitherTabs
+
+Tabs whose active indicator is a dithered pill or underline that glides to the chosen tab, dissolving out of the old one and in at the new one through Bayer matrix levels.
+
+```slint
+DitherTabs {
+    tabs: ["Overview", "Deploys", "Settings"];
+    current: 0;
+    variant: DitherTabsVariant.pill;
+    color: DitherPalette.blue;
+    bloom: DitherBloom.low;
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `tabs` | `["Overview", "Deploys", "Settings"]` | Array of tab labels. |
+| `current` | `0` | Index of the active tab. |
+| `variant` | `pill` | `pill` lights a dithered surface behind the label; `underline` draws a dithered bar with a rising glow. |
+| `color` | `DitherTheme.ink` | Indicator colour, e.g. from `DitherPalette`. |
+| `matrix` | `bayer4` | `bayer2`, `bayer4`, `bayer8` or `blue-noise`. |
+| `bloom` | `off` | `off`, `low` or `high` adds a soft glow in the indicator's colour. |
+| `cell` | `2px` | Size of one dither cell. |
+| `animated` | `DitherTheme.animated` | Glides the indicator between tabs over 260ms. Arrow keys step without lag. |
+| `enabled` | `true` | Allows mouse and keyboard navigation. |
+
 ## What is a dither
 
 A dither draws a smooth tone using only a few colours. Dots of ink are placed at a density that matches the tone, so your eye blends them into a gradient. It started as a workaround for limited screens and printers and now reads as a deliberate texture, a bit like risograph print.
