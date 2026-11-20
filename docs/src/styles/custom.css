@@ -13,6 +13,12 @@
 .tile *,
 .motion canvas,
 .background canvas,
-.image-demo canvas {
+.image-demo canvas,
+.slider *,
+.switch *,
+.divider *,
+.input *,
+.input .layer,
+.tabs * {
 	margin-top: 0 !important;
 }

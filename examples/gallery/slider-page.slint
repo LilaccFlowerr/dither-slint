@@ -1,0 +1,38 @@
+import { DitherBloom, DitherPalette, DitherSlider, DitherSliderSize, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+component Value inherits Text {
+    color: DitherTheme.foreground.with-alpha(0.6);
+    font-size: 13px;
+}
+
+export component SliderPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    in-out property <float> volume: 35;
+
+    Heading { text: "Value"; }
+    HorizontalLayout {
+        spacing: 16px;
+        DitherSlider { value <=> root.volume; }
+        Value { text: root.volume; width: 40px; }
+    }
+
+    Heading { text: "Sizes"; }
+    DitherSlider { size: DitherSliderSize.sm; value: 25; }
+    DitherSlider { value: 50; }
+    DitherSlider { size: DitherSliderSize.lg; value: 75; }
+
+    Heading { text: "Colours, glow and steps"; }
+    DitherSlider { color: DitherPalette.green; value: 60; }
+    DitherSlider { color: DitherPalette.pink; value: 40; bloom: DitherBloom.high; }
+    DitherSlider { value: 30; step: 10; }
+    DitherSlider { value: 50; enabled: false; }
+}

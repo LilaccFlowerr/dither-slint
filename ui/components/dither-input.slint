@@ -1,0 +1,277 @@
+import { DitherBloom, DitherEdge, DitherEngine, DitherFill, DitherHover, DitherMatrix, DitherPress } from "../engine.slint";
+import { DitherMotion, DitherPalette, DitherTheme } from "../theme.slint";
+import { DitherFx } from "fx.slint";
+import { DitherLayer as Layer } from "layer.slint";
+
+export enum DitherInputSize { sm, md, lg }
+
+export component DitherInput {
+    in-out property <string> text;
+    in property <string> placeholder;
+    in property <string> label;
+    in property <string> description;
+    in property <string> error;
+    in property <image> icon;
+    in property <bool> password;
+    in property <bool> clearable;
+    in property <bool> enabled: true;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <DitherInputSize> size: DitherInputSize.md;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <length> cell: 2px;
+    in property <bool> animated: DitherTheme.animated;
+    in property <DitherHover> hover-effect: DitherMotion.hover;
+    in property <DitherPress> press-effect: DitherMotion.press;
+    out property <bool> has-focus: input.has-focus;
+    callback edited(string);
+    callback accepted(string);
+    callback cleared;
+
+    property <bool> invalid: root.error != "";
+    property <color> ink: root.invalid ? DitherPalette.red : root.color;
+    property <bool> textured: root.fill == DitherFill.dotted || root.fill == DitherFill.hatched;
+    property <bool> revealed;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    pure function by-size(small: length, medium: length, large: length) -> length {
+        if root.size == DitherInputSize.sm { return small; }
+        if root.size == DitherInputSize.lg { return large; }
+        return medium;
+    }
+    property <length> field-h: root.by-size(32px, 40px, 44px);
+    property <length> radius: root.by-size(8px, 10px, 11px);
+    property <int> rows: Math.round(root.field-h / root.step);
+    property <float> hover: root.enabled && touch.has-hover && !input.has-focus ? 1 : 0;
+    property <float> active: input.has-focus || root.invalid ? 1 : 0;
+    property <bool> show-clear: root.clearable && root.text != "" && root.enabled;
+
+    pure function cells(share: float) -> float {
+        return max(2, Math.round(root.rows * share));
+    }
+
+    function clear() {
+        root.text = "";
+        root.edited("");
+        root.cleared();
+        input.focus();
+    }
+
+    opacity: root.enabled ? 1 : 0.45;
+
+    VerticalLayout {
+        spacing: 6px;
+
+        if root.label != "": Text {
+            text: root.label;
+            color: DitherTheme.foreground;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        Rectangle {
+            height: root.field-h;
+            border-radius: root.radius;
+            clip: true;
+            background: root.ink.transparentize(0.94);
+            drop-shadow-blur: root.bloom != DitherBloom.off && input.has-focus ? (root.bloom == DitherBloom.high ? 18px : 10px) : 0px;
+            drop-shadow-color: root.ink.transparentize(root.bloom == DitherBloom.high ? 0.45 : 0.7);
+
+            Rectangle {
+                y: parent.height * 0.62;
+                height: parent.height * 0.38;
+                clip: true;
+
+                Rectangle {
+                    y: -parent.y;
+                    height: root.field-h;
+
+                    Layer {
+                        cell: root.step;
+                        fill: root.textured ? root.fill : DitherFill.gradient;
+                        length: root.fill == DitherFill.solid ? 2 : root.cells(0.34);
+                        from: root.fill == DitherFill.solid ? 1 : 0.5;
+                        color: root.ink;
+                        opacity: root.textured ? 0.45 : 1;
+                        frame: false;
+                    }
+
+                    Layer {
+                        cell: root.step;
+                        length: root.cells(0.5);
+                        from: 0.6;
+                        color: root.ink;
+                        opacity: root.hover;
+                        frame: false;
+                        animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                    }
+
+                    Layer {
+                        cell: root.step;
+                        length: root.cells(0.7);
+                        from: 0.85;
+                        color: root.ink;
+                        opacity: root.active * 0.9;
+                        frame: false;
+                        animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                    }
+                }
+            }
+
+            fx := DitherFx {
+                cell: root.step;
+                color: root.ink;
+                matrix: root.matrix;
+                strength: 0.55;
+                animated: root.animated;
+                hover: root.hover-effect;
+                press: root.press-effect;
+            }
+
+            touch := TouchArea {
+                enabled: root.enabled;
+                mouse-cursor: MouseCursor.text;
+                changed has-hover => {
+                    if self.has-hover {
+                        fx.pointer-enter(self.mouse-x, self.mouse-y);
+                    } else {
+                        fx.pointer-leave();
+                    }
+                }
+                pointer-event(event) => {
+                    if event.kind == PointerEventKind.down {
+                        fx.pointer-down(self.mouse-x, self.mouse-y);
+                        input.focus();
+                    } else if event.kind == PointerEventKind.move {
+                        fx.pointer-move(self.mouse-x, self.mouse-y);
+                    }
+                }
+            }
+
+            Rectangle {
+                border-radius: root.radius;
+                border-width: 1px;
+                border-color: root.active > 0 ? root.ink.transparentize(0.38)
+                    : touch.has-hover ? DitherTheme.foreground.transparentize(0.76)
+                    : DitherTheme.foreground.transparentize(0.87);
+                animate border-color { duration: 220ms; }
+            }
+
+            HorizontalLayout {
+                padding-left: root.by-size(10px, 12px, 14px);
+                padding-right: self.padding-left;
+                spacing: root.by-size(6px, 8px, 10px);
+
+                if root.icon.width > 0: VerticalLayout {
+                    alignment: center;
+                    Image {
+                        source: root.icon;
+                        width: root.by-size(14px, 16px, 18px);
+                        height: self.width;
+                        colorize: input.has-focus ? DitherTheme.foreground : DitherTheme.foreground.transparentize(0.4);
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+
+                    if root.text == "" && root.placeholder != "": Text {
+                        x: 0;
+                        width: 100%;
+                        text: root.placeholder;
+                        color: DitherTheme.foreground.transparentize(0.55);
+                        font-size: root.by-size(13px, 14px, 15px);
+                        vertical-alignment: center;
+                    }
+
+                    FocusScope {
+                        capture-key-pressed(event) => {
+                            if event.text == Key.Escape && root.clearable && root.text != "" {
+                                root.clear();
+                                return accept;
+                            }
+                            reject
+                        }
+
+                        input := TextInput {
+                            text <=> root.text;
+                            enabled: root.enabled;
+                            color: DitherTheme.foreground;
+                            font-size: root.by-size(13px, 14px, 15px);
+                            vertical-alignment: center;
+                            single-line: true;
+                            accessible-label: root.label != "" ? root.label : root.placeholder;
+                            accessible-description: root.invalid ? root.error : root.description;
+                            input-type: root.password && !root.revealed ? InputType.password : InputType.text;
+                            selection-background-color: root.ink.transparentize(0.7);
+                            selection-foreground-color: DitherTheme.foreground;
+                            edited => { root.edited(self.text); }
+                            accepted => { root.accepted(self.text); }
+                        }
+                    }
+                }
+
+                if root.show-clear: VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 22px;
+                        height: 22px;
+                        border-radius: 5px;
+                        background: close.has-hover ? DitherTheme.foreground.transparentize(0.92) : transparent;
+                        Path {
+                            width: 10px;
+                            height: 10px;
+                            viewbox-width: 12;
+                            viewbox-height: 12;
+                            commands: "M 2 2 L 10 10 M 10 2 L 2 10";
+                            stroke: DitherTheme.foreground.transparentize(close.has-hover ? 0 : 0.4);
+                            stroke-width: 1.5px;
+                        }
+                        close := TouchArea {
+                            mouse-cursor: MouseCursor.pointer;
+                            clicked => { root.clear(); }
+                        }
+                    }
+                }
+
+                if root.password: VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 22px;
+                        height: 22px;
+                        border-radius: 5px;
+                        background: eye.has-hover ? DitherTheme.foreground.transparentize(0.92) : transparent;
+                        Path {
+                            width: 14px;
+                            height: 14px;
+                            viewbox-width: 16;
+                            viewbox-height: 16;
+                            commands: root.revealed ? "M 1.5 8 C 1.5 8 4 3.5 8 3.5 C 12 3.5 14.5 8 14.5 8 C 14.5 8 12 12.5 8 12.5 C 4 12.5 1.5 8 1.5 8 Z M 2.5 13.5 L 13.5 2.5" : "M 1.5 8 C 1.5 8 4 3.5 8 3.5 C 12 3.5 14.5 8 14.5 8 C 14.5 8 12 12.5 8 12.5 C 4 12.5 1.5 8 1.5 8 Z";
+                            stroke: DitherTheme.foreground.transparentize(eye.has-hover ? 0 : 0.4);
+                            stroke-width: 1.5px;
+                        }
+                        eye := TouchArea {
+                            mouse-cursor: MouseCursor.pointer;
+                            clicked => { root.revealed = !root.revealed; }
+                        }
+                    }
+                }
+            }
+        }
+
+        if root.invalid: Text {
+            text: root.error;
+            color: DitherPalette.red;
+            font-size: 12px;
+            wrap: word-wrap;
+        }
+
+        if !root.invalid && root.description != "": Text {
+            text: root.description;
+            color: DitherTheme.foreground.transparentize(0.4);
+            font-size: 12px;
+            wrap: word-wrap;
+        }
+    }
+}

@@ -1,0 +1,45 @@
+import { DitherBloom, DitherFill, DitherInput, DitherInputSize, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component InputPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 14px;
+    alignment: start;
+
+    Heading { text: "Field"; }
+    DitherInput {
+        label: "Email";
+        placeholder: "you@example.com";
+        description: "We only use it to sign you in.";
+        max-width: 340px;
+    }
+
+    Heading { text: "Clear, password, error"; }
+    DitherInput {
+        text: "dither";
+        clearable: true;
+        max-width: 340px;
+    }
+    DitherInput {
+        label: "Password";
+        password: true;
+        text: "hunter2";
+        max-width: 340px;
+    }
+    DitherInput {
+        label: "Username";
+        text: "ab";
+        error: "Use at least three characters.";
+        max-width: 340px;
+    }
+
+    Heading { text: "Sizes and fills"; }
+    DitherInput { size: DitherInputSize.sm; placeholder: "Small"; max-width: 340px; }
+    DitherInput { size: DitherInputSize.lg; placeholder: "Large"; fill: DitherFill.dotted; max-width: 340px; }
+    DitherInput { placeholder: "Disabled"; enabled: false; max-width: 340px; }
+}

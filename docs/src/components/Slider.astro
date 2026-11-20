@@ -1,0 +1,249 @@
+---
+interface Props {
+	value?: number;
+	min?: number;
+	max?: number;
+	step?: number;
+	color?: string;
+	size?: 'sm' | 'md' | 'lg';
+	bloom?: 'off' | 'low' | 'high';
+	disabled?: boolean;
+	label?: string;
+}
+
+const { value = 50, min = 0, max = 100, step = 1, color = 'ink', size = 'md', bloom = 'off', disabled, label } = Astro.props;
+---
+
+<div
+	class="slider"
+	role="slider"
+	tabindex={disabled ? -1 : 0}
+	aria-label={label}
+	aria-valuemin={min}
+	aria-valuemax={max}
+	aria-valuenow={value}
+	aria-disabled={disabled ? 'true' : undefined}
+	data-value={value}
+	data-min={min}
+	data-max={max}
+	data-step={step}
+	data-color={color}
+	data-size={size}
+	data-bloom={bloom}
+>
+</div>
+
+<style is:global>
+	.slider {
+		position: relative;
+		flex: 1 1 200px;
+		min-width: 120px;
+		max-width: 100%;
+		cursor: pointer;
+		touch-action: none;
+		user-select: none;
+	}
+	.slider[aria-disabled='true'] {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+	.slider:focus-visible {
+		outline: none;
+	}
+	.slider .track,
+	.slider .thumb {
+		position: absolute;
+		pointer-events: none;
+	}
+	.slider .track {
+		left: 0;
+		right: 0;
+		overflow: hidden;
+	}
+	.slider .track canvas,
+	.slider .thumb .part {
+		position: absolute;
+		top: 0;
+		left: 0;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+	.slider .hot {
+		opacity: 0;
+		transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.slider:not([aria-disabled='true']):hover .hot,
+	.slider:focus-visible .hot,
+	.slider[data-dragging] .hot {
+		opacity: 1;
+	}
+	.slider .thumb .part {
+		inset: 0;
+	}
+	.slider .thumb .lit,
+	.slider .thumb .press {
+		opacity: 0;
+		transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.slider:not([aria-disabled='true']):hover:not([data-dragging]) .thumb .lit {
+		opacity: 1;
+	}
+	.slider[data-dragging] .thumb .press {
+		opacity: 1;
+		transition-duration: 80ms;
+	}
+	.slider .ring {
+		position: absolute;
+		inset: -3px;
+		border: 2px solid var(--sl-color-white);
+		pointer-events: none;
+		opacity: 0;
+	}
+	.slider:focus-visible:not([data-dragging]) .ring {
+		opacity: 1;
+	}
+</style>
+
+<script>
+	import { slider_fill } from '../engine/dither_slint_engine_web.js';
+	import { blend, css, layer, ready, rgba, type Layer } from '../scripts/dither';
+
+	const sizes = { sm: [6, 14, 20], md: [8, 18, 24], lg: [12, 22, 30] } as const;
+	const step = 2;
+
+	function build(root: HTMLElement) {
+		const data = root.dataset as Record<string, string>;
+		const [trackSpec, acrossSpec, tallSpec] = sizes[data.size as keyof typeof sizes];
+		const rows = Math.max(2, Math.round(trackSpec / step));
+		const across = Math.max(3, Math.round(acrossSpec / step));
+		const tall = Math.max(rows + 4, Math.round(tallSpec / step));
+		const thumbWidth = (across % 2 === 0 ? across + 1 : across) * step;
+		const thumbHeight = tall * step;
+		const trackHeight = rows * step;
+		const min = Number(data.min);
+		const max = Number(data.max);
+		const stepValue = Number(data.step);
+		let value = Number(data.value);
+
+		const color = rgba(data.color);
+		const color4 = new Uint8Array(color);
+		const light = blend(color, rgba('white'), 0.42);
+		const dark = blend(color, rgba('black'), 0.48);
+		const bloom = data.bloom === 'off' ? 'none' : `0 0 ${data.bloom === 'high' ? 18 : 10}px ${css([color[0], color[1], color[2], data.bloom === 'high' ? 140 : 77])}`;
+
+		root.style.height = `${thumbHeight}px`;
+
+		const track = document.createElement('div');
+		track.className = 'track';
+		Object.assign(track.style, { top: `${(thumbHeight - trackHeight) / 2}px`, height: `${trackHeight}px`, borderRadius: `${step}px`, background: css([color[0], color[1], color[2], 38]) });
+		const rest = document.createElement('canvas');
+		const hot = document.createElement('canvas');
+		hot.className = 'hot';
+		track.style.boxShadow = bloom;
+		track.append(rest, hot);
+
+		const thumb = document.createElement('div');
+		thumb.className = 'thumb';
+		Object.assign(thumb.style, { width: `${thumbWidth}px`, height: `${thumbHeight}px`, top: '0' });
+		const part = (parent: HTMLElement, style: Partial<CSSStyleDeclaration>, className = 'part') => {
+			const element = document.createElement('div');
+			element.className = className;
+			Object.assign(element.style, { position: 'absolute', ...style });
+			parent.append(element);
+			return element;
+		};
+		const ring = document.createElement('div');
+		ring.className = 'ring';
+		ring.style.borderRadius = `${step + 3}px`;
+		thumb.append(ring);
+		part(thumb, { inset: '0', borderRadius: `${step}px`, background: css(blend(color, rgba('black'), 0.3)) });
+		const face = part(thumb, { inset: '1px', borderRadius: `${step}px`, overflow: 'hidden', background: css(color) });
+		const cells = (share: number) => Math.max(2, Math.round(tall * share));
+		const faceLayers: Layer[] = [
+			{ length: cells(0.5), color: dark, frame: false },
+			{ edge: 'top', length: cells(0.22), color: light, frame: false },
+			{ edge: 'top', length: cells(0.7), color: light, hover: true, frame: false },
+			{ edge: 'top', length: cells(0.45), from: 0.5, color: dark, press: true, frame: false },
+		];
+		root.append(track, thumb);
+		for (const options of faceLayers) layer(face, step, options);
+		for (const canvas of face.querySelectorAll('canvas')) {
+			canvas.classList.remove('hover', 'press');
+			if (canvas.style.getPropertyValue('--opacity') === '1' && canvas === face.querySelectorAll('canvas')[2]) canvas.classList.add('lit');
+			if (canvas === face.querySelectorAll('canvas')[3]) canvas.classList.add('press');
+		}
+		part(face, { left: `${(thumbWidth - 2 - step) / 2}px`, top: `${(thumbHeight - 2 - Math.round(tall / 3) * step) / 2}px`, width: `${step}px`, height: `${Math.round(tall / 3) * step}px`, background: css(dark) });
+
+		const ratio = () => (max > min ? Math.min(1, Math.max(0, (value - min) / (max - min))) : 0);
+
+		const draw = () => {
+			const width = root.clientWidth;
+			const columns = Math.max(1, Math.floor(width / step));
+			const travel = width - thumbWidth;
+			const centre = thumbWidth / 2 + ratio() * travel;
+			const end = Math.round(centre / step - thumbWidth / 2 / step) - 1;
+			for (const [canvas, isHot] of [[rest, false], [hot, true]] as const) {
+				const bytes = slider_fill(columns, rows, end, isHot, 1, color4);
+				canvas.width = columns;
+				canvas.height = rows;
+				canvas.style.width = `${columns * step}px`;
+				canvas.style.height = `${rows * step}px`;
+				canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+			}
+			thumb.style.left = `${ratio() * travel}px`;
+			root.setAttribute('aria-valuenow', String(value));
+		};
+
+		const set = (next: number) => {
+			const snapped = stepValue > 0 ? min + Math.round((next - min) / stepValue) * stepValue : next;
+			const clamped = Math.min(max, Math.max(min, snapped));
+			if (clamped === value) return;
+			value = clamped;
+			draw();
+			root.dispatchEvent(new CustomEvent('change', { detail: value, bubbles: true }));
+		};
+		const fromPointer = (event: PointerEvent) => {
+			const box = root.getBoundingClientRect();
+			const travel = box.width - thumbWidth;
+			if (travel > 0) set(min + ((event.clientX - box.left - thumbWidth / 2) / travel) * (max - min));
+		};
+
+		if (root.getAttribute('aria-disabled') !== 'true') {
+			root.addEventListener('pointerdown', (event) => {
+				root.setPointerCapture(event.pointerId);
+				root.dataset.dragging = '';
+				fromPointer(event);
+			});
+			root.addEventListener('pointermove', (event) => {
+				if (root.dataset.dragging !== undefined) fromPointer(event);
+			});
+			const end = () => delete root.dataset.dragging;
+			root.addEventListener('pointerup', end);
+			root.addEventListener('pointercancel', end);
+			root.addEventListener('keydown', (event) => {
+				const unit = stepValue > 0 ? stepValue : (max - min) / 100;
+				const moves: Record<string, () => void> = {
+					ArrowRight: () => set(value + unit),
+					ArrowUp: () => set(value + unit),
+					ArrowLeft: () => set(value - unit),
+					ArrowDown: () => set(value - unit),
+					PageUp: () => set(value + unit * 10),
+					PageDown: () => set(value - unit * 10),
+					Home: () => set(min),
+					End: () => set(max),
+				};
+				if (event.key in moves) {
+					event.preventDefault();
+					moves[event.key]();
+				}
+			});
+		}
+
+		new ResizeObserver(draw).observe(root);
+		draw();
+	}
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.slider')) build(root);
+	});
+</script>

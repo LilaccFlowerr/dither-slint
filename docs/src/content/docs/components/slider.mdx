@@ -1,0 +1,94 @@
+---
+title: DitherSlider
+description: A slider whose filled track thins out into dither behind the thumb.
+---
+
+import Slider from '../../../components/Slider.astro';
+import Demo from '../../../components/Demo.astro';
+
+The filled part of the track is a dither ramp worked out cell by cell: sparse far from the thumb, denser towards it, and solid for the last two cells before a one-cell gap at the thumb. Hover, keyboard focus and drag fade in a longer, denser ramp. The thumb is a notched cap lit like the button, brighter on hover and pressed in while you drag. Drag it, or use the arrow keys, Page Up, Page Down, Home and End.
+
+<Demo
+	title="Basic"
+	code={`DitherSlider {
+    value: 35;
+}`}
+>
+	<Slider value={35} label="Volume" />
+</Demo>
+
+<Demo
+	title="Sizes"
+	code={`DitherSlider {
+    size: DitherSliderSize.sm;
+    value: 25;
+}
+
+DitherSlider {
+    size: DitherSliderSize.md;
+    value: 50;
+}
+
+DitherSlider {
+    size: DitherSliderSize.lg;
+    value: 75;
+}`}
+>
+	<Slider size="sm" value={25} label="Small" />
+	<Slider size="md" value={50} label="Medium" />
+	<Slider size="lg" value={75} label="Large" />
+</Demo>
+
+<Demo
+	title="Colours, glow and steps"
+	code={`DitherSlider {
+    color: DitherPalette.green;
+    value: 60;
+}
+
+DitherSlider {
+    color: DitherPalette.pink;
+    bloom: DitherBloom.high;
+    value: 40;
+}
+
+DitherSlider {
+    step: 10;
+    value: 30;
+}
+
+DitherSlider {
+    enabled: false;
+    value: 50;
+}`}
+>
+	<Slider color="green" value={60} label="Green" />
+	<Slider color="pink" bloom="high" value={40} label="Pink glow" />
+	<Slider step={10} value={30} label="Steps of ten" />
+	<Slider disabled value={50} label="Disabled" />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `value` | `0` | The current value. |
+| `minimum` | `0` | Lowest value. |
+| `maximum` | `100` | Highest value. |
+| `step` | `1` | The value snaps to multiples of this from `minimum`. `0` is smooth. |
+| `color` | `DitherTheme.ink` | Colour of the fill and the thumb. |
+| `size` | `md` | `sm`, `md` or `lg`: tracks of 6, 8 and 12 pixels with thumbs 20, 24 and 30 pixels tall. |
+| `bloom` | `off` | `low` or `high` adds a glow in the slider's colour. |
+| `matrix` | `bayer4` | The dither pattern of the fill. |
+| `cell` | `2px` | Size of one dither cell. |
+| `enabled` | `true` | Drops to 45% opacity and ignores the pointer and keys when `false`. |
+
+`changed(float)` is called with the new value whenever you move it.
+
+```slint
+DitherSlider {
+    changed(value) => {
+        debug(value);
+    }
+}
+```
