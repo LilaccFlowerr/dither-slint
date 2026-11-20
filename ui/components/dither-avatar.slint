@@ -1,0 +1,126 @@
+import { DitherBloom, DitherEngine, DitherFill } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+
+export enum DitherAvatarShape { circle, square }
+
+export enum DitherAvatarStatus { none, online, away, busy, offline }
+
+export component DitherAvatar {
+    in property <string> name;
+    in property <length> size: 40px;
+    in property <color> color: transparent;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <DitherAvatarShape> shape: DitherAvatarShape.circle;
+    in property <bool> ring;
+    in property <DitherAvatarStatus> status: DitherAvatarStatus.none;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <color> outline: DitherTheme.background;
+    in property <length> outline-width: 0px;
+
+    property <[color]> hues: [DitherPalette.blue, DitherPalette.purple, DitherPalette.green, DitherPalette.pink, DitherPalette.orange, DitherPalette.red];
+    property <color> ink: root.color.alpha > 0 ? root.color : root.hues[DitherEngine.avatar-hue(root.name)];
+    property <length> radius: root.shape == DitherAvatarShape.circle ? root.size / 2 : root.size * 0.22;
+    property <length> dot: Math.min(16px, Math.max(8px, root.size * 0.22));
+    property <color> status-color: root.status == DitherAvatarStatus.online ? DitherPalette.green
+        : root.status == DitherAvatarStatus.away ? DitherPalette.orange
+        : root.status == DitherAvatarStatus.busy ? DitherPalette.red
+        : #8a8680;
+
+    width: root.size;
+    height: root.size;
+    accessible-role: AccessibleRole.image;
+    accessible-label: root.name;
+
+    if root.outline-width > 0px: Rectangle {
+        x: -root.outline-width;
+        y: -root.outline-width;
+        width: root.size + root.outline-width * 2;
+        height: root.size + root.outline-width * 2;
+        border-radius: root.radius + root.outline-width;
+        background: root.outline;
+    }
+
+    if root.ring: Rectangle {
+        x: -3.5px;
+        y: -3.5px;
+        width: root.size + 7px;
+        height: root.size + 7px;
+        border-radius: root.radius + 3.5px;
+        border-width: 1.5px;
+        border-color: root.ink;
+    }
+
+    Rectangle {
+        border-radius: root.radius;
+        clip: true;
+        background: DitherEngine.mix(DitherTheme.background, root.ink, 0.11);
+        drop-shadow-blur: root.bloom == DitherBloom.off ? 0px : root.bloom == DitherBloom.high ? 18px : 10px;
+        drop-shadow-color: root.ink.transparentize(root.bloom == DitherBloom.high ? 0.45 : 0.7);
+
+        Image {
+            x: 0;
+            y: 0;
+            width: 100%;
+            height: 100%;
+            image-fit: ImageFit.fill;
+            image-rendering: pixelated;
+            source: DitherEngine.avatar(root.name, root.fill, root.ink);
+        }
+    }
+
+    if root.status != DitherAvatarStatus.none: Rectangle {
+        x: root.size - root.dot - root.size * 0.03;
+        y: root.size - root.dot - root.size * 0.03;
+        width: root.dot;
+        height: root.dot;
+        border-radius: root.dot / 2;
+        background: root.status-color;
+        border-width: 2px;
+        border-color: DitherTheme.background;
+    }
+}
+
+export component DitherAvatarGroup {
+    in property <[string]> names;
+    in property <int> max: 4;
+    in property <length> size: 32px;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <color> outline: DitherTheme.background;
+
+    property <length> overlap: Math.round(root.size / 1px * 0.28) * 1px;
+    property <int> shown: Math.min(root.max, root.names.length);
+    property <int> rest: root.names.length - root.shown;
+
+    height: root.size;
+    width: root.shown * (root.size - root.overlap) + root.overlap + (root.rest > 0 ? root.size - root.overlap : 0px);
+    accessible-role: AccessibleRole.groupbox;
+
+    for name[index] in root.names: DitherAvatar {
+        visible: index < root.shown;
+        x: index * (root.size - root.overlap);
+        name: name;
+        size: root.size;
+        fill: root.fill;
+        outline: root.outline;
+        outline-width: 2px;
+    }
+
+    if root.rest > 0: Rectangle {
+        x: root.shown * (root.size - root.overlap);
+        width: root.size;
+        height: root.size;
+        border-radius: root.size / 2;
+        background: DitherTheme.foreground.transparentize(0.9);
+        border-width: 2px;
+        border-color: root.outline;
+
+        Text {
+            text: "+" + root.rest;
+            color: DitherTheme.foreground.transparentize(0.4);
+            font-size: Math.max(10px, root.size * 0.34);
+            font-weight: 500;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+}

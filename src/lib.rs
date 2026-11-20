@@ -1,3 +1,4 @@
+pub mod avatar;
 pub mod backgrounds;
 pub mod color;
 pub mod diffuse;
@@ -68,6 +69,8 @@ macro_rules! install {
             let options = render::SliderOptions { end, hot, matrix: Matrix::ALL[matrix as usize], color };
             render::slider_fill(cells(columns), cells(rows), &options)
         });
+        engine.on_avatar(|name, fill, color| $crate::avatar::avatar(&name, FillVariant::ALL[fill as usize], color));
+        engine.on_avatar_hue(|name| $crate::avatar::hue(&name) as i32);
         engine.on_picture(|source, columns, rows, method, threshold, palette| {
             let method = Method::ALL[method as usize];
             let options = render::PictureOptions { method, threshold, palette: palette.iter().collect() };

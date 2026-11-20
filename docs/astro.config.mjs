@@ -24,6 +24,7 @@ export default defineConfig({
 					label: 'Components',
 					items: [
 						{ label: 'DitherButton', slug: 'components/button' },
+						{ label: 'DitherAvatar', slug: 'components/avatar' },
 						{ label: 'DitherBadge', slug: 'components/badge' },
 						{ label: 'DitherCard', slug: 'components/card' },
 						{ label: 'DitherDivider', slug: 'components/divider' },

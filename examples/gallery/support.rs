@@ -4,8 +4,8 @@ use dither_slint::noise::fbm;
 use slint::{Image, Rgba8Pixel, SharedPixelBuffer};
 
 #[allow(dead_code)]
-pub const PAGES: [&str; 11] =
-    ["gradient", "button", "badge", "card", "image", "backgrounds", "motion", "divider", "switch", "slider", "input"];
+pub const PAGES: [&str; 12] =
+    ["gradient", "button", "badge", "card", "image", "backgrounds", "motion", "divider", "switch", "slider", "input", "avatar"];
 
 pub fn sample() -> Image {
     let (width, height) = (200u32, 130u32);

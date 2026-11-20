@@ -168,3 +168,13 @@ pub fn tabs_indicator(
     let rect = |b: &[f32]| BoxRect::new(b[0], b[1], b[2], b[3]);
     bytes(tabs_indicator(columns, rows, cell, variant, Matrix::ALL[matrix], colors(color)[0], rect(from), rect(to), progress))
 }
+
+#[wasm_bindgen]
+pub fn avatar(name: &str, fill: usize, color: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::avatar::avatar(name, FillVariant::ALL[fill], colors(color)[0]))
+}
+
+#[wasm_bindgen]
+pub fn avatar_hue(name: &str) -> usize {
+    dither_slint::avatar::hue(name)
+}

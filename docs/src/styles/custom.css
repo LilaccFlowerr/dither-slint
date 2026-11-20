@@ -20,6 +20,8 @@
 .input *,
 .input .layer,
 .tabs *,
-.dmenu * {
+.dmenu *,
+.avatar *,
+.avatar-group * {
 	margin-top: 0 !important;
 }
