@@ -34,6 +34,7 @@ export global DitherEngine {
     pure callback loader(variant: DitherLoaderVariant, height: float, cell: float, time: float, matrix: DitherMatrix, color: color) -> image;
     pure callback skeleton(columns: int, rows: int, cell: float, fill: DitherFill, animation: DitherSkeletonAnimation, phase: float, matrix: DitherMatrix, color: color) -> image;
     pure callback empty(illustration: DitherIllustration, backdrop: bool, matrix: DitherMatrix, color: color) -> image;
+    pure callback slider-range-fill(columns: int, rows: int, start: int, end: int, both: bool, hot: bool, matrix: DitherMatrix, color: color) -> image;
     pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;
     pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;

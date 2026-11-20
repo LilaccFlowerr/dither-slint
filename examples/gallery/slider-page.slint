@@ -1,4 +1,6 @@
-import { DitherBloom, DitherPalette, DitherSlider, DitherSliderSize, DitherTheme } from "../../ui/lib.slint";
+import { Slider } from "std-widgets.slint";
+import { DitherBloom, DitherEdge, DitherFill, DitherPalette, DitherSlider, DitherSliderSize, DitherSliderVariant, DitherSwitch, DitherSwitchSize, DitherTheme } from "../../ui/lib.slint";
+import { DitherLayer as Layer } from "../../ui/components/layer.slint";
 
 component Heading inherits Text {
     color: DitherTheme.foreground;
@@ -6,9 +8,28 @@ component Heading inherits Text {
     font-weight: 600;
 }
 
-component Value inherits Text {
-    color: DitherTheme.foreground.with-alpha(0.6);
-    font-size: 13px;
+component SegmentButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> active;
+    callback clicked;
+
+    height: 28px;
+    border-radius: 6px;
+    background: root.active ? DitherTheme.foreground.with-alpha(0.15) : transparent;
+
+    Text {
+        text: root.text;
+        color: root.active ? DitherTheme.foreground : DitherTheme.foreground.with-alpha(0.5);
+        font-size: 12px;
+        font-weight: root.active ? 600 : 400;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
 }
 
 export component SliderPage inherits VerticalLayout {
@@ -16,23 +37,662 @@ export component SliderPage inherits VerticalLayout {
     spacing: 16px;
     alignment: start;
 
-    in-out property <float> volume: 35;
+    property <int> active-section: 0;
 
-    Heading { text: "Value"; }
-    HorizontalLayout {
-        spacing: 16px;
-        DitherSlider { value <=> root.volume; }
-        Value { text: root.volume; width: 40px; }
+    // Controls Tray Properties
+    property <DitherSliderVariant> current-variant: DitherSliderVariant.thumb;
+    property <DitherFill> current-fill: DitherFill.gradient;
+    property <color> current-color: DitherPalette.blue;
+    property <DitherSliderSize> current-size: DitherSliderSize.md;
+    property <DitherBloom> current-bloom: DitherBloom.low;
+    property <int> current-segments: 0;
+    property <bool> current-ticks: false;
+    property <float> current-cell: 2;
+    property <bool> current-disabled: false;
+
+    // Component values (purely interactive, stationary until interacted with)
+    property <float> cpu-val: 64;
+    property <float> memory-val: 32;
+    property <float> gain-val: 7;
+
+    property <float> master-val: 78;
+    property <float> synths-val: 62;
+    property <float> bass-val: 85;
+    property <float> drums-val: 54;
+
+    property <float> step-gain-val: 5;
+
+    property <float> price-low: 250;
+    property <float> price-high: 600;
+
+    pure function count-band(low: float, high: float, start: float, count: int) -> int {
+        return (start >= low && start < high) ? count : 0;
     }
 
-    Heading { text: "Sizes"; }
-    DitherSlider { size: DitherSliderSize.sm; value: 25; }
-    DitherSlider { value: 50; }
-    DitherSlider { size: DitherSliderSize.lg; value: 75; }
+    pure function product-count(low: float, high: float) -> int {
+        return root.count-band(low, high, 0, 4)
+             + root.count-band(low, high, 50, 9)
+             + root.count-band(low, high, 100, 16)
+             + root.count-band(low, high, 150, 22)
+             + root.count-band(low, high, 200, 27)
+             + root.count-band(low, high, 250, 25)
+             + root.count-band(low, high, 300, 21)
+             + root.count-band(low, high, 350, 18)
+             + root.count-band(low, high, 400, 14)
+             + root.count-band(low, high, 450, 12)
+             + root.count-band(low, high, 500, 10)
+             + root.count-band(low, high, 550, 9)
+             + root.count-band(low, high, 600, 7)
+             + root.count-band(low, high, 650, 6)
+             + root.count-band(low, high, 700, 5)
+             + root.count-band(low, high, 750, 4)
+             + root.count-band(low, high, 800, 3)
+             + root.count-band(low, high, 850, 3)
+             + root.count-band(low, high, 900, 2)
+             + root.count-band(low, high, 950, 2);
+    }
 
-    Heading { text: "Colours, glow and steps"; }
-    DitherSlider { color: DitherPalette.green; value: 60; }
-    DitherSlider { color: DitherPalette.pink; value: 40; bloom: DitherBloom.high; }
-    DitherSlider { value: 30; step: 10; }
-    DitherSlider { value: 50; enabled: false; }
+    // Top action bar matching dither-sdk (Tabs, Animated Switch, Replay)
+    HorizontalLayout {
+        alignment: space-between;
+        width: 520px;
+
+        // Section Tabs
+        Rectangle {
+            height: 32px;
+            border-radius: 8px;
+            background: DitherTheme.foreground.with-alpha(0.06);
+
+            HorizontalLayout {
+                padding: 2px;
+                spacing: 2px;
+                SegmentButton { text: "Telemetry"; active: root.active-section == 0; clicked => { root.active-section = 0; } }
+                SegmentButton { text: "Palette"; active: root.active-section == 1; clicked => { root.active-section = 1; } }
+                SegmentButton { text: "Segments"; active: root.active-section == 2; clicked => { root.active-section = 2; } }
+                SegmentButton { text: "Price Filter"; active: root.active-section == 3; clicked => { root.active-section = 3; } }
+            }
+        }
+
+        // Animated & Replay
+        HorizontalLayout {
+            spacing: 8px;
+            alignment: end;
+
+            Rectangle {
+                height: 32px;
+                border-radius: 6px;
+                border-width: 1px;
+                border-color: DitherTheme.animated ? DitherPalette.purple.with-alpha(0.4) : DitherTheme.foreground.with-alpha(0.12);
+                background: DitherTheme.animated ? DitherPalette.purple.with-alpha(0.12) : transparent;
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 6px;
+                    Text {
+                        text: "✦ Animated";
+                        color: DitherTheme.animated ? DitherPalette.purple : DitherTheme.foreground.with-alpha(0.6);
+                        font-size: 12px;
+                        font-weight: 500;
+                        vertical-alignment: center;
+                    }
+                }
+
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        DitherTheme.animated = !DitherTheme.animated;
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 32px;
+                border-radius: 6px;
+                border-width: 1px;
+                border-color: DitherTheme.foreground.with-alpha(0.12);
+                background: DitherTheme.foreground.with-alpha(0.04);
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 4px;
+                    Text {
+                        text: "↻ Replay";
+                        color: DitherTheme.foreground.with-alpha(0.7);
+                        font-size: 12px;
+                        vertical-alignment: center;
+                    }
+                }
+
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.cpu-val = 64;
+                        root.memory-val = 32;
+                        root.gain-val = 7;
+                        root.master-val = 78;
+                        root.synths-val = 62;
+                        root.bass-val = 85;
+                        root.drums-val = 54;
+                        root.step-gain-val = 5;
+                        root.price-low = 250;
+                        root.price-high = 600;
+                    }
+                }
+            }
+        }
+    }
+
+    // SECTION 0: Telemetry & Controls Tray
+    if root.active-section == 0 : VerticalLayout {
+        spacing: 16px;
+
+        Rectangle {
+            width: 480px;
+            border-radius: 12px;
+            background: DitherTheme.foreground.with-alpha(0.04);
+            border-width: 1px;
+            border-color: DitherTheme.foreground.with-alpha(0.12);
+
+            VerticalLayout {
+                padding: 20px;
+                spacing: 16px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "System Telemetry";
+                        color: DitherTheme.foreground;
+                        font-size: 14px;
+                        font-weight: 600;
+                    }
+                    Text {
+                        text: root.current-variant == DitherSliderVariant.bar ? "Direct bar drag" : "Bayer notched thumb";
+                        color: DitherTheme.foreground.with-alpha(0.45);
+                        font-size: 12px;
+                        font-family: "monospace";
+                    }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: DitherTheme.foreground.with-alpha(0.08);
+                }
+
+                // Slider 1: CPU Load
+                DitherSlider {
+                    label: "Target CPU";
+                    unit: "%";
+                    value <=> root.cpu-val;
+                    minimum: 0;
+                    maximum: 100;
+                    step: 1;
+                    variant: root.current-variant;
+                    fill: root.current-fill;
+                    color: root.current-color;
+                    size: root.current-size;
+                    bloom: root.current-bloom;
+                    segments: root.current-segments;
+                    ticks: root.current-ticks;
+                    cell: Math.round(root.current-cell) * 1px;
+                    enabled: !root.current-disabled;
+                }
+
+                // Slider 2: Memory Allocation
+                DitherSlider {
+                    label: "Memory Allocation";
+                    unit: " GB";
+                    value <=> root.memory-val;
+                    minimum: 0;
+                    maximum: 64;
+                    step: 4;
+                    variant: root.current-variant;
+                    fill: root.current-fill;
+                    color: root.current-color;
+                    size: root.current-size;
+                    bloom: root.current-bloom;
+                    segments: root.current-segments;
+                    ticks: root.current-ticks;
+                    cell: Math.round(root.current-cell) * 1px;
+                    enabled: !root.current-disabled;
+                }
+
+                // Slider 3: Stepped Gain
+                DitherSlider {
+                    label: "Sensitivity Threshold";
+                    unit: " dB";
+                    value <=> root.gain-val;
+                    minimum: 0;
+                    maximum: 10;
+                    step: 1;
+                    show-range: true;
+                    variant: root.current-variant;
+                    fill: root.current-fill;
+                    color: root.current-color;
+                    size: root.current-size;
+                    bloom: root.current-bloom;
+                    segments: root.current-segments > 0 ? root.current-segments : 10;
+                    ticks: true;
+                    cell: Math.round(root.current-cell) * 1px;
+                    enabled: !root.current-disabled;
+                }
+            }
+        }
+
+        // Controls Tray
+        Heading { text: "CONTROLS"; font-size: 12px; }
+
+        VerticalLayout {
+            spacing: 12px;
+            width: 480px;
+
+            // Variant & Fill
+            HorizontalLayout {
+                spacing: 16px;
+
+                VerticalLayout {
+                    spacing: 4px;
+                    Text { text: "VARIANT"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                    Rectangle {
+                        height: 32px;
+                        border-radius: 8px;
+                        background: DitherTheme.foreground.with-alpha(0.06);
+
+                        HorizontalLayout {
+                            padding: 2px;
+                            spacing: 2px;
+                            SegmentButton { text: "thumb"; active: root.current-variant == DitherSliderVariant.thumb; clicked => { root.current-variant = DitherSliderVariant.thumb; } }
+                            SegmentButton { text: "bar"; active: root.current-variant == DitherSliderVariant.bar; clicked => { root.current-variant = DitherSliderVariant.bar; } }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 4px;
+                    Text { text: "FILL"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                    Rectangle {
+                        height: 32px;
+                        border-radius: 8px;
+                        background: DitherTheme.foreground.with-alpha(0.06);
+
+                        HorizontalLayout {
+                            padding: 2px;
+                            spacing: 2px;
+                            SegmentButton { text: "gradient"; active: root.current-fill == DitherFill.gradient; clicked => { root.current-fill = DitherFill.gradient; } }
+                            SegmentButton { text: "dotted"; active: root.current-fill == DitherFill.dotted; clicked => { root.current-fill = DitherFill.dotted; } }
+                            SegmentButton { text: "hatched"; active: root.current-fill == DitherFill.hatched; clicked => { root.current-fill = DitherFill.hatched; } }
+                            SegmentButton { text: "solid"; active: root.current-fill == DitherFill.solid; clicked => { root.current-fill = DitherFill.solid; } }
+                        }
+                    }
+                }
+            }
+
+            // Colour
+            VerticalLayout {
+                spacing: 6px;
+                Text { text: "COLOUR"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                HorizontalLayout {
+                    spacing: 8px;
+                    for c in [DitherPalette.blue, DitherTheme.ink, DitherPalette.purple, DitherPalette.green, DitherPalette.pink, DitherPalette.orange, DitherPalette.red, DitherPalette.grey]: Rectangle {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 10px;
+                        background: c;
+                        border-width: root.current-color == c ? 2px : 0px;
+                        border-color: DitherTheme.foreground;
+
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => { root.current-color = c; }
+                        }
+                    }
+                }
+            }
+
+            // Size & Bloom
+            HorizontalLayout {
+                spacing: 16px;
+
+                VerticalLayout {
+                    spacing: 4px;
+                    Text { text: "SIZE"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                    Rectangle {
+                        height: 32px;
+                        border-radius: 8px;
+                        background: DitherTheme.foreground.with-alpha(0.06);
+
+                        HorizontalLayout {
+                            padding: 2px;
+                            spacing: 2px;
+                            SegmentButton { text: "sm"; active: root.current-size == DitherSliderSize.sm; clicked => { root.current-size = DitherSliderSize.sm; } }
+                            SegmentButton { text: "md"; active: root.current-size == DitherSliderSize.md; clicked => { root.current-size = DitherSliderSize.md; } }
+                            SegmentButton { text: "lg"; active: root.current-size == DitherSliderSize.lg; clicked => { root.current-size = DitherSliderSize.lg; } }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 4px;
+                    Text { text: "BLOOM"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                    Rectangle {
+                        height: 32px;
+                        border-radius: 8px;
+                        background: DitherTheme.foreground.with-alpha(0.06);
+
+                        HorizontalLayout {
+                            padding: 2px;
+                            spacing: 2px;
+                            SegmentButton { text: "off"; active: root.current-bloom == DitherBloom.off; clicked => { root.current-bloom = DitherBloom.off; } }
+                            SegmentButton { text: "low"; active: root.current-bloom == DitherBloom.low; clicked => { root.current-bloom = DitherBloom.low; } }
+                            SegmentButton { text: "high"; active: root.current-bloom == DitherBloom.high; clicked => { root.current-bloom = DitherBloom.high; } }
+                        }
+                    }
+                }
+            }
+
+            // Segments, Ticks & Disabled
+            HorizontalLayout {
+                spacing: 16px;
+                alignment: space-between;
+
+                VerticalLayout {
+                    spacing: 4px;
+                    Text { text: "SEGMENTS"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                    Rectangle {
+                        height: 32px;
+                        border-radius: 8px;
+                        background: DitherTheme.foreground.with-alpha(0.06);
+
+                        HorizontalLayout {
+                            padding: 2px;
+                            spacing: 2px;
+                            SegmentButton { text: "off"; active: root.current-segments == 0; clicked => { root.current-segments = 0; } }
+                            SegmentButton { text: "8"; active: root.current-segments == 8; clicked => { root.current-segments = 8; } }
+                            SegmentButton { text: "12"; active: root.current-segments == 12; clicked => { root.current-segments = 12; } }
+                            SegmentButton { text: "16"; active: root.current-segments == 16; clicked => { root.current-segments = 16; } }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 4px;
+                    Text { text: "TICKS"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                    DitherSwitch {
+                        checked <=> root.current-ticks;
+                        size: DitherSwitchSize.sm;
+                        color: root.current-color;
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 4px;
+                    Text { text: "DISABLED"; color: DitherTheme.foreground.with-alpha(0.5); font-size: 11px; }
+                    DitherSwitch {
+                        checked <=> root.current-disabled;
+                        size: DitherSwitchSize.sm;
+                        color: root.current-color;
+                    }
+                }
+            }
+        }
+    }
+
+    // SECTION 1: Palette Colours (Image 2)
+    if root.active-section == 1 : VerticalLayout {
+        spacing: 12px;
+
+        Text {
+            text: "Sliders accept any palette colour name or custom hex value.";
+            color: DitherTheme.foreground.with-alpha(0.6);
+            font-size: 13px;
+        }
+
+        Rectangle {
+            width: 480px;
+            border-radius: 16px;
+            background: DitherTheme.foreground.with-alpha(0.04);
+            border-width: 1px;
+            border-color: DitherTheme.foreground.with-alpha(0.12);
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 18px;
+
+                DitherSlider {
+                    label: "Master";
+                    color: DitherPalette.blue;
+                    value <=> root.master-val;
+                    size: DitherSliderSize.sm;
+                }
+
+                DitherSlider {
+                    label: "Synths";
+                    color: DitherPalette.purple;
+                    value <=> root.synths-val;
+                    size: DitherSliderSize.sm;
+                }
+
+                DitherSlider {
+                    label: "Bass";
+                    color: DitherPalette.green;
+                    value <=> root.bass-val;
+                    size: DitherSliderSize.sm;
+                }
+
+                DitherSlider {
+                    label: "Drums";
+                    color: DitherPalette.orange;
+                    value <=> root.drums-val;
+                    size: DitherSliderSize.sm;
+                }
+            }
+        }
+    }
+
+    // SECTION 2: Step Meter Segments (Image 1)
+    if root.active-section == 2 : VerticalLayout {
+        spacing: 12px;
+
+        Text {
+            text: "Pass segments to cut the track into discrete blocks with a one-cell gap between them, ideal for stepped thresholds.";
+            color: DitherTheme.foreground.with-alpha(0.6);
+            font-size: 13px;
+            width: 480px;
+        }
+
+        Rectangle {
+            width: 480px;
+            border-radius: 16px;
+            background: DitherTheme.foreground.with-alpha(0.04);
+            border-width: 1px;
+            border-color: DitherTheme.foreground.with-alpha(0.12);
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 20px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "Sensitivity threshold";
+                        color: DitherTheme.foreground;
+                        font-size: 14px;
+                        font-weight: 600;
+                    }
+                    Text {
+                        text: "Step mode";
+                        color: DitherTheme.foreground.with-alpha(0.45);
+                        font-size: 12px;
+                        font-family: "monospace";
+                    }
+                }
+
+                DitherSlider {
+                    label: "Gain steps";
+                    value <=> root.step-gain-val;
+                    minimum: 0;
+                    maximum: 10;
+                    step: 1;
+                    segments: 10;
+                    variant: DitherSliderVariant.bar;
+                    color: DitherPalette.green;
+                    size: DitherSliderSize.lg;
+                    value-text: Math.round(root.step-gain-val) + " / 10";
+                }
+            }
+        }
+    }
+
+    // SECTION 3: Price Filter with Range Thumbs & Histogram (Image 3)
+    if root.active-section == 3 : VerticalLayout {
+        spacing: 12px;
+
+        Text {
+            text: "Two values make a range slider with two lit notched thumbs and a dithered distribution histogram.";
+            color: DitherTheme.foreground.with-alpha(0.6);
+            font-size: 13px;
+            width: 480px;
+        }
+
+        Rectangle {
+            width: 480px;
+            border-radius: 16px;
+            background: DitherTheme.foreground.with-alpha(0.04);
+            border-width: 1px;
+            border-color: DitherTheme.foreground.with-alpha(0.12);
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 16px;
+
+                // Header
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "Price";
+                        color: DitherTheme.foreground;
+                        font-size: 14px;
+                        font-weight: 600;
+                    }
+                    Text {
+                        text: "$" + Math.round(root.price-low) + " – $" + Math.round(root.price-high);
+                        color: DitherTheme.foreground.with-alpha(0.6);
+                        font-size: 13px;
+                        font-family: "monospace";
+                    }
+                }
+
+                // Dithered Histogram with margins aligned to thumb centers
+                Rectangle {
+                    height: 60px;
+
+                    HorizontalLayout {
+                        padding-left: 9px;
+                        padding-right: 9px;
+                        spacing: 2px;
+                        alignment: stretch;
+
+                        for bar[idx] in [
+                            { h: 0.15, price: 0 },
+                            { h: 0.33, price: 50 },
+                            { h: 0.59, price: 100 },
+                            { h: 0.81, price: 150 },
+                            { h: 1.00, price: 200 },
+                            { h: 0.93, price: 250 },
+                            { h: 0.78, price: 300 },
+                            { h: 0.67, price: 350 },
+                            { h: 0.52, price: 400 },
+                            { h: 0.44, price: 450 },
+                            { h: 0.37, price: 500 },
+                            { h: 0.33, price: 550 },
+                            { h: 0.26, price: 600 },
+                            { h: 0.22, price: 650 },
+                            { h: 0.19, price: 700 },
+                            { h: 0.15, price: 750 },
+                            { h: 0.11, price: 800 },
+                            { h: 0.11, price: 850 },
+                            { h: 0.07, price: 900 },
+                            { h: 0.07, price: 950 }
+                        ]: Rectangle {
+                            property <bool> in-range: bar.price >= root.price-low && bar.price < root.price-high;
+
+                            VerticalLayout {
+                                alignment: end;
+                                Rectangle {
+                                    height: bar.h * 56px;
+                                    border-radius: 1px;
+                                    clip: true;
+
+                                    if in-range: Layer {
+                                        cell: 2px;
+                                        fill: DitherFill.gradient;
+                                        color: DitherPalette.green;
+                                        edge: DitherEdge.bottom;
+                                        length: 14;
+                                        from: 1.0;
+                                        to: 0.25;
+                                        frame: false;
+                                    }
+
+                                    if !in-range: Layer {
+                                        cell: 2px;
+                                        fill: DitherFill.dotted;
+                                        color: DitherPalette.grey;
+                                        frame: false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Two-thumb range slider
+                DitherSlider {
+                    is-range: true;
+                    value <=> root.price-low;
+                    value-high <=> root.price-high;
+                    minimum: 0;
+                    maximum: 1000;
+                    step: 50;
+                    color: DitherPalette.green;
+                    show-range: true;
+                    range-start-text: "$0";
+                    range-end-text: "$1,000";
+                    hide-label: true;
+                    show-value: false;
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: DitherTheme.foreground.with-alpha(0.08);
+                }
+
+                // Footer with product count and Reset
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: root.product-count(root.price-low, root.price-high) + " products in range";
+                        color: DitherTheme.foreground.with-alpha(0.7);
+                        font-size: 13px;
+                    }
+
+                    Text {
+                        text: "Reset";
+                        color: DitherPalette.green;
+                        font-size: 13px;
+                        font-weight: 600;
+
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.price-low = 0;
+                                root.price-high = 1000;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
