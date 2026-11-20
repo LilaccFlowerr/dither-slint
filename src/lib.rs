@@ -9,6 +9,7 @@ pub mod matrix;
 pub mod noise;
 pub mod render;
 pub mod style;
+pub mod switch;
 
 mod blue_noise;
 

@@ -15,7 +15,7 @@ component Wave {
     animate progress {
         duration: 180ms;
         delay: root.on ? root.index * 20ms : (4 - root.index) * 20ms;
-        easing: ease-out;
+        easing: cubic-bezier(0.23, 1, 0.32, 1);
     }
 
     width: 100%;
@@ -81,7 +81,7 @@ export component DitherSwitch {
     property <float> hover: root.enabled && (touch.has-hover || focus.has-focus) ? 1 : 0;
     property <float> press: root.enabled && touch.pressed ? 1 : 0;
     property <float> position: root.checked ? 1 : 0;
-    animate position { duration: 180ms; easing: ease-out; }
+    animate position { duration: 180ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
 
     pure function cells(share: float) -> float {
         return max(2, Math.round(root.rows * share));
@@ -207,7 +207,7 @@ export component DitherSwitch {
             border-color: root.checked ? DitherEngine.mix(root.color, black, 0.3) : root.grey.transparentize(0.62);
         }
 
-        DitherFx {
+        fx := DitherFx {
             cell: root.step;
             color: root.color;
             strength: 0.7;
@@ -227,8 +227,18 @@ export component DitherSwitch {
 
         Rectangle {
             y: root.step;
+            width: root.thumb;
+            height: root.thumb;
             border-radius: parent.border-radius;
-            background: black.transparentize(0.7);
+            clip: true;
+            Layer {
+                cell: root.step;
+                length: 1;
+                from: 0.5;
+                to: 0.5;
+                color: black.transparentize(0.55);
+                frame: false;
+            }
         }
 
         Rectangle {
@@ -283,6 +293,11 @@ export component DitherSwitch {
     touch := TouchArea {
         enabled: root.enabled;
         mouse-cursor: pointer;
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                fx.pointer-down(self.mouse-x, self.mouse-y);
+            }
+        }
         clicked => { root.flip(); }
     }
 
