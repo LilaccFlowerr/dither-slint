@@ -1,0 +1,74 @@
+---
+interface Props {
+	variant?: 'ring' | 'dots' | 'pulse' | 'bar';
+	size?: 'sm' | 'md' | 'lg';
+	color?: string;
+	matrix?: number;
+	speed?: number;
+	label?: string;
+}
+
+const { variant = 'ring', size = 'md', color = 'ink', matrix = 1, speed = 1, label = 'Loading' } = Astro.props;
+---
+
+<span class="loader" role="status" aria-label={label} data-variant={variant} data-size={size} data-color={color} data-matrix={matrix} data-speed={speed}>
+	<canvas></canvas>
+</span>
+
+<style is:global>
+	.loader {
+		display: inline-flex;
+		flex: none;
+	}
+	.loader canvas {
+		display: block;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+</style>
+
+<script>
+	import { loader, loader_grid } from '../engine/dither_slint_engine_web.js';
+	import { ready, rgba } from '../scripts/dither';
+
+	const variants = ['ring', 'dots', 'pulse', 'bar'];
+	const heights = { sm: 24, md: 40, lg: 64 } as const;
+	const still = [0.4, 0.2, 0.5, 0.9];
+
+	ready.then(() => {
+		const running = new Set<() => void>();
+		let frame = 0;
+		const tick = () => {
+			frame = 0;
+			for (const draw of running) draw();
+			if (running.size) frame = requestAnimationFrame(tick);
+		};
+
+		for (const root of document.querySelectorAll<HTMLElement>('.loader')) {
+			const data = root.dataset as Record<string, string>;
+			const variant = variants.indexOf(data.variant);
+			const size = data.size as keyof typeof heights;
+			const cell = size === 'sm' ? 1 : 2;
+			const color = new Uint8Array(rgba(data.color));
+			const canvas = root.querySelector('canvas')!;
+			const context = canvas.getContext('2d')!;
+			const [columns, rows] = loader_grid(variant, heights[size], cell);
+			canvas.width = columns;
+			canvas.height = rows;
+			canvas.style.width = `${columns * cell}px`;
+			canvas.style.height = `${rows * cell}px`;
+			const start = performance.now();
+			const draw = () => {
+				const time = ((performance.now() - start) / 1000) * Number(data.speed) + still[variant];
+				const bytes = loader(variant, heights[size], cell, time, Number(data.matrix), color);
+				context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+			};
+			draw();
+			new IntersectionObserver(([entry]) => {
+				if (entry.isIntersecting) running.add(draw);
+				else running.delete(draw);
+				if (running.size && !frame) frame = requestAnimationFrame(tick);
+			}).observe(root);
+		}
+	});
+</script>

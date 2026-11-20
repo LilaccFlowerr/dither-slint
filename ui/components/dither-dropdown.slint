@@ -1,0 +1,264 @@
+import { DitherBloom, DitherEdge, DitherEngine, DitherFill, DitherGlow, DitherMatrix } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+import { DitherLayer as Layer } from "layer.slint";
+import { DitherDivider } from "dither-divider.slint";
+
+export enum DitherMenuItemVariant { pill, dither, glow, hatched, dotted, outline }
+
+export enum DitherMenuContainer { card, glow, pixel, solid }
+
+export struct DitherMenuItem {
+    text: string,
+    shortcut: string,
+    destructive: bool,
+    disabled: bool,
+    group: string,
+    divider: bool,
+}
+
+component Highlight {
+    in property <DitherMenuItemVariant> variant;
+    in property <color> color;
+    in property <DitherMatrix> matrix;
+    in property <length> step;
+    in property <DitherBloom> bloom;
+
+    property <float> strength: root.bloom == DitherBloom.high ? 1.5 : root.bloom == DitherBloom.low ? 1.2 : 1;
+
+    width: 100%;
+    height: 100%;
+
+    Rectangle {
+        border-radius: 6px;
+        clip: true;
+        background: root.variant == DitherMenuItemVariant.pill ? root.color.transparentize(0.7)
+            : root.variant == DitherMenuItemVariant.glow ? transparent
+            : root.color.transparentize(0.9);
+        border-width: root.variant == DitherMenuItemVariant.outline ? 1px : 0px;
+        border-color: root.color.transparentize(0.3);
+
+        if root.variant == DitherMenuItemVariant.glow: Rectangle {
+            background: @radial-gradient(circle, root.color.transparentize(0.55) 0%, transparent 100%);
+        }
+
+        if root.variant == DitherMenuItemVariant.dither: Layer {
+            cell: root.step;
+            edge: DitherEdge.right;
+            length: 28;
+            from: 0.65;
+            to: 0.0625;
+            color: root.color;
+            opacity: min(1, root.strength);
+            frame: false;
+        }
+
+        if root.variant == DitherMenuItemVariant.hatched: Layer {
+            cell: root.step;
+            fill: DitherFill.hatched;
+            color: root.color;
+            opacity: min(1, root.strength);
+            frame: false;
+        }
+
+        if root.variant == DitherMenuItemVariant.dotted: Layer {
+            cell: root.step;
+            fill: DitherFill.dotted;
+            color: root.color;
+            opacity: min(1, root.strength);
+            frame: false;
+        }
+    }
+}
+
+export component DitherDropdownMenu {
+    in property <[DitherMenuItem]> items;
+    in property <DitherMenuItemVariant> variant: DitherMenuItemVariant.pill;
+    in property <DitherMenuContainer> menu: DitherMenuContainer.card;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <length> cell: 2px;
+    in property <length> menu-width: 208px;
+    in property <bool> enabled: true;
+    out property <bool> is-open;
+    callback selected(int);
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> highlighted: -1;
+    property <color> danger: DitherPalette.red;
+    property <length> item-h: 30px;
+
+    public function open() {
+        if root.enabled {
+            root.highlighted = -1;
+            popup.show();
+            root.is-open = true;
+        }
+    }
+
+    public function close() {
+        popup.close();
+    }
+
+    function move(by: int) {
+        let count = root.items.length;
+        if count > 0 {
+            let next = Math.mod(root.highlighted + by + count, count);
+            let after = Math.mod(next + by + count, count);
+            root.highlighted = root.items[next].disabled ? after : next;
+        }
+    }
+
+    accessible-role: AccessibleRole.button;
+    accessible-enabled: root.enabled;
+
+    @children
+
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: MouseCursor.pointer;
+        clicked => { root.open(); }
+    }
+
+    popup := PopupWindow {
+        x: 0;
+        y: root.height + 6px;
+        width: root.menu-width;
+        close-policy: close-on-click-outside;
+
+        Rectangle {
+            border-radius: root.menu == DitherMenuContainer.pixel ? 4px : 16px;
+            background: root.menu == DitherMenuContainer.solid ? #09090b : DitherTheme.background;
+            border-width: 1px;
+            border-color: DitherTheme.foreground.transparentize(root.menu == DitherMenuContainer.pixel ? 0.7 : 0.88);
+            drop-shadow-blur: 24px;
+            drop-shadow-color: black.transparentize(0.5);
+            drop-shadow-offset-y: 8px;
+            clip: true;
+
+            if root.menu == DitherMenuContainer.glow: Rectangle {
+                background: @radial-gradient(circle, root.color.transparentize(0.78) 0%, transparent 100%);
+            }
+
+            if root.menu == DitherMenuContainer.card: Image {
+                x: 0;
+                y: 0;
+                width: Math.ceil(parent.width / root.step) * root.step;
+                height: Math.ceil(parent.height / root.step) * root.step;
+                image-fit: ImageFit.fill;
+                image-rendering: pixelated;
+                source: DitherEngine.card-glow(Math.ceil(parent.width / root.step), Math.ceil(parent.height / root.step), DitherGlow.top-right, 120px / root.step, 0.3, 0, false, 16px / root.step, DitherFill.gradient, root.matrix, root.color);
+            }
+
+            keys := FocusScope {
+                init => { self.focus(); }
+                key-pressed(event) => {
+                    if event.text == Key.DownArrow {
+                        root.move(1);
+                        return accept;
+                    }
+                    if event.text == Key.UpArrow {
+                        root.move(-1);
+                        return accept;
+                    }
+                    if event.text == Key.Return && root.highlighted >= 0 {
+                        root.selected(root.highlighted);
+                        popup.close();
+                        return accept;
+                    }
+                    if event.text == Key.Escape {
+                        popup.close();
+                        return accept;
+                    }
+                    reject
+                }
+            }
+
+            VerticalLayout {
+                padding: 6px;
+                spacing: 2px;
+
+                for item[index] in root.items: VerticalLayout {
+                    spacing: 2px;
+
+                    if item.group != "": Rectangle {
+                        height: 26px;
+                        Text {
+                            x: 10px;
+                            text: item.group;
+                            color: DitherTheme.foreground.transparentize(0.5);
+                            font-size: 12px;
+                            font-weight: 500;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    if item.divider: Rectangle {
+                        height: 9px;
+                        DitherDivider {
+                            color: DitherTheme.foreground;
+                            strength: 0.3;
+                            thickness: 1;
+                        }
+                    }
+
+                    Rectangle {
+                        height: root.item-h;
+                        opacity: item.disabled ? 0.4 : 1;
+
+                        property <bool> lit: root.highlighted == index && !item.disabled;
+                        property <color> text-color: lit ? white
+                            : item.destructive ? root.danger.brighter(0.2)
+                            : DitherTheme.foreground.transparentize(0.1);
+
+                        if lit: Highlight {
+                            variant: root.variant;
+                            color: item.destructive ? root.danger : root.color;
+                            matrix: root.matrix;
+                            step: root.step;
+                            bloom: root.bloom;
+                        }
+
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            spacing: 10px;
+
+                            Text {
+                                text: item.text;
+                                color: text-color;
+                                font-size: 13px;
+                                font-weight: item.destructive ? 500 : 400;
+                                vertical-alignment: center;
+                                horizontal-stretch: 1;
+                            }
+
+                            if item.shortcut != "": Text {
+                                text: item.shortcut;
+                                color: DitherTheme.foreground.transparentize(lit ? 0.3 : 0.55);
+                                font-size: 12px;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        TouchArea {
+                            enabled: !item.disabled;
+                            mouse-cursor: MouseCursor.default;
+                            changed has-hover => {
+                                if self.has-hover {
+                                    root.highlighted = index;
+                                } else if root.highlighted == index {
+                                    root.highlighted = -1;
+                                }
+                            }
+                            clicked => {
+                                root.selected(index);
+                                popup.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

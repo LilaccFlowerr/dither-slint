@@ -11,6 +11,10 @@ import { DividerPage } from "divider-page.slint";
 import { SwitchPage } from "switch-page.slint";
 import { SliderPage } from "slider-page.slint";
 import { InputPage } from "input-page.slint";
+import { AvatarPage } from "avatar-page.slint";
+import { LoaderPage } from "loader-page.slint";
+import { SkeletonPage } from "skeleton-page.slint";
+import { EmptyPage } from "empty-page.slint";
 
 export component Shots inherits Window {
     in property <int> which;
@@ -30,5 +34,9 @@ export component Shots inherits Window {
         if root.which == 8: SwitchPage { }
         if root.which == 9: SliderPage { }
         if root.which == 10: InputPage { }
+        if root.which == 11: AvatarPage { }
+        if root.which == 12: LoaderPage { }
+        if root.which == 13: SkeletonPage { }
+        if root.which == 14: EmptyPage { }
     }
 }

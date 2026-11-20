@@ -19,6 +19,12 @@
 .divider *,
 .input *,
 .input .layer,
-.tabs * {
+.tabs *,
+.dmenu *,
+.avatar *,
+.avatar-group *,
+.loader *,
+.skeleton *,
+.empty .scene canvas {
 	margin-top: 0 !important;
 }

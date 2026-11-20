@@ -1,0 +1,47 @@
+import { DitherFill, DitherSkeleton, DitherSkeletonAnimation, DitherSkeletonShape, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component SkeletonPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 14px;
+    alignment: start;
+
+    Heading { text: "Shapes"; }
+    HorizontalLayout {
+        spacing: 16px;
+        alignment: start;
+        DitherSkeleton { shape: DitherSkeletonShape.circle; size: 48px; }
+        VerticalLayout {
+            width: 320px;
+            spacing: 10px;
+            DitherSkeleton { height: 16px; width: 140px; }
+            DitherSkeleton { shape: DitherSkeletonShape.text; lines: 3; }
+        }
+    }
+
+    Heading { text: "Animations"; }
+    HorizontalLayout {
+        spacing: 16px;
+        alignment: start;
+        for animation in [DitherSkeletonAnimation.sweep, DitherSkeletonAnimation.pulse, DitherSkeletonAnimation.none]: DitherSkeleton {
+            animation: animation;
+            width: 160px;
+            height: 48px;
+        }
+    }
+
+    Heading { text: "Fills and colour"; }
+    HorizontalLayout {
+        spacing: 16px;
+        alignment: start;
+        DitherSkeleton { fill: DitherFill.dotted; width: 140px; height: 40px; }
+        DitherSkeleton { fill: DitherFill.hatched; width: 140px; height: 40px; }
+        DitherSkeleton { fill: DitherFill.solid; width: 140px; height: 40px; }
+        DitherSkeleton { color: DitherPalette.blue; width: 140px; height: 40px; }
+    }
+}

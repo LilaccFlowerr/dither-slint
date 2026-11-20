@@ -147,7 +147,14 @@ pub fn rule(
 
 #[wasm_bindgen]
 pub fn slider_fill(columns: u32, rows: u32, end: i32, hot: bool, matrix: usize, color: &[u8]) -> Vec<u8> {
-    let options = render::SliderOptions { end, hot, matrix: Matrix::ALL[matrix], color: colors(color)[0] };
+    let options = render::SliderOptions {
+        start: 0,
+        end,
+        both: false,
+        hot,
+        matrix: Matrix::ALL[matrix],
+        color: colors(color)[0],
+    };
     bytes(render::slider_fill(columns, rows, &options))
 }
 
@@ -167,4 +174,45 @@ pub fn tabs_indicator(
     let variant = if variant == 0 { TabsVariant::Pill } else { TabsVariant::Underline };
     let rect = |b: &[f32]| BoxRect::new(b[0], b[1], b[2], b[3]);
     bytes(tabs_indicator(columns, rows, cell, variant, Matrix::ALL[matrix], colors(color)[0], rect(from), rect(to), progress))
+}
+
+#[wasm_bindgen]
+pub fn avatar(name: &str, fill: usize, color: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::avatar::avatar(name, FillVariant::ALL[fill], colors(color)[0]))
+}
+
+#[wasm_bindgen]
+pub fn avatar_hue(name: &str) -> usize {
+    dither_slint::avatar::hue(name)
+}
+
+#[wasm_bindgen]
+pub fn loader(variant: usize, height: f32, cell: f32, time: f32, matrix: usize, color: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::loader::loader(dither_slint::loader::Variant::ALL[variant], height, cell, time, Matrix::ALL[matrix], colors(color)[0]))
+}
+
+#[wasm_bindgen]
+pub fn loader_grid(variant: usize, height: f32, cell: f32) -> Vec<u32> {
+    let (columns, rows) = dither_slint::loader::grid(dither_slint::loader::Variant::ALL[variant], height, cell);
+    vec![columns, rows]
+}
+
+#[wasm_bindgen]
+pub fn skeleton(columns: u32, rows: u32, cell: f32, fill: usize, animation: usize, phase: f32, matrix: usize, color: &[u8]) -> Vec<u8> {
+    let options = dither_slint::skeleton::SkeletonOptions {
+        cell,
+        fill: FillVariant::ALL[fill],
+        animation: dither_slint::skeleton::Animation::ALL[animation],
+        phase,
+        matrix: Matrix::ALL[matrix],
+        color: colors(color)[0],
+    };
+    bytes(dither_slint::skeleton::skeleton(columns, rows, &options))
+}
+
+#[wasm_bindgen]
+pub fn empty_state(illustration: usize, backdrop: bool, matrix: usize, color: &[u8]) -> Vec<u8> {
+    use dither_slint::empty::{Illustration, Layer, empty};
+    let layer = if backdrop { Layer::Backdrop } else { Layer::Object };
+    bytes(empty(Illustration::ALL[illustration], layer, Matrix::ALL[matrix], colors(color)[0]))
 }

@@ -1,0 +1,50 @@
+import { DitherEngine, DitherLoaderVariant, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export { DitherLoaderVariant }
+
+export enum DitherLoaderSize { sm, md, lg }
+
+export component DitherLoader {
+    in property <DitherLoaderVariant> variant: DitherLoaderVariant.ring;
+    in property <DitherLoaderSize> size: DitherLoaderSize.md;
+    in property <string> label: "Loading";
+    in property <color> color: DitherTheme.ink;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 0px;
+    in property <float> speed: 1;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <length> height-of: root.size == DitherLoaderSize.sm ? 24px : root.size == DitherLoaderSize.lg ? 64px : 40px;
+    property <length> unit: root.cell > 0px ? root.cell : root.size == DitherLoaderSize.sm ? 1px : 2px;
+    property <length> step: max(1phx, Math.round(root.unit / 1phx) * 1phx);
+    property <float> still: root.variant == DitherLoaderVariant.ring ? 0.4
+        : root.variant == DitherLoaderVariant.dots ? 0.2
+        : root.variant == DitherLoaderVariant.pulse ? 0.5 : 0.9;
+    property <float> elapsed;
+    property <float> time: root.animated ? root.elapsed * root.speed + root.still : root.still;
+    property <image> frame: DitherEngine.loader(root.variant, root.height-of / 1px, root.step / 1px, root.time, root.matrix, root.color);
+
+    width: root.frame.width * root.step;
+    height: root.frame.height * root.step;
+    accessible-role: AccessibleRole.progress-indicator;
+    accessible-label: root.label;
+
+    Timer {
+        interval: 33ms;
+        running: root.animated;
+        triggered => {
+            root.elapsed = animation-tick() / 1s;
+        }
+    }
+
+    Image {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: root.frame;
+    }
+}

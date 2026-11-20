@@ -12,6 +12,11 @@ import { DividerPage } from "divider-page.slint";
 import { SwitchPage } from "switch-page.slint";
 import { SliderPage } from "slider-page.slint";
 import { InputPage } from "input-page.slint";
+import { DropdownPage } from "dropdown-page.slint";
+import { AvatarPage } from "avatar-page.slint";
+import { LoaderPage } from "loader-page.slint";
+import { SkeletonPage } from "skeleton-page.slint";
+import { EmptyPage } from "empty-page.slint";
 
 export component Gallery inherits Window {
     title: "dither-slint";
@@ -21,7 +26,7 @@ export component Gallery inherits Window {
 
     in property <image> sample;
 
-    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch", "Slider", "Input"];
+    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch", "Slider", "Input", "Dropdown", "Avatar", "Loader", "Skeleton", "Empty state"];
     property <int> page: 0;
 
     HorizontalLayout {
@@ -62,6 +67,11 @@ export component Gallery inherits Window {
             if root.page == 9: SwitchPage { }
             if root.page == 10: SliderPage { }
             if root.page == 11: InputPage { }
+            if root.page == 12: DropdownPage { }
+            if root.page == 13: AvatarPage { }
+            if root.page == 14: LoaderPage { }
+            if root.page == 15: SkeletonPage { }
+            if root.page == 16: EmptyPage { }
         }
     }
 }

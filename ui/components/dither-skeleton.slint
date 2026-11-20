@@ -1,0 +1,105 @@
+import { DitherEngine, DitherFill, DitherMatrix, DitherSkeletonAnimation } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export { DitherSkeletonAnimation }
+
+export enum DitherSkeletonShape { block, text, circle }
+
+component Bar {
+    in property <color> color;
+    in property <DitherFill> fill;
+    in property <DitherSkeletonAnimation> animation;
+    in property <DitherMatrix> matrix;
+    in property <length> step;
+    in property <length> radius;
+    in property <float> elapsed;
+    in property <float> duration;
+    in property <float> delay;
+
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+    property <float> phase: Math.mod(root.elapsed - root.delay, root.duration) / root.duration;
+
+    Rectangle {
+        border-radius: root.radius;
+        clip: true;
+        background: root.color.transparentize(root.fill == DitherFill.solid ? 0.82 : 0.93);
+
+        Image {
+            x: 0;
+            y: 0;
+            width: root.columns * root.step;
+            height: root.rows * root.step;
+            image-fit: ImageFit.fill;
+            image-rendering: pixelated;
+            source: DitherEngine.skeleton(root.columns, root.rows, root.step / 1px, root.fill, root.animation, root.phase, root.matrix, root.color);
+        }
+    }
+}
+
+export component DitherSkeleton {
+    in property <DitherSkeletonShape> shape: DitherSkeletonShape.block;
+    in property <int> lines: 3;
+    in property <length> size: 40px;
+    in property <color> color: #8a8680;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <DitherSkeletonAnimation> animation: DitherSkeletonAnimation.sweep;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 2px;
+    in property <float> duration: 1.8;
+    in property <float> delay: 0;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <float> elapsed;
+    property <bool> text: root.shape == DitherSkeletonShape.text;
+
+    preferred-width: root.shape == DitherSkeletonShape.circle ? root.size : 160px;
+    preferred-height: root.shape == DitherSkeletonShape.circle ? root.size
+        : root.text ? root.lines * 12px + (root.lines - 1) * 10px : 20px;
+    min-width: root.shape == DitherSkeletonShape.circle ? root.size : 0px;
+    max-width: root.shape == DitherSkeletonShape.circle ? root.size : 100000px;
+    min-height: root.shape == DitherSkeletonShape.circle ? root.size : 0px;
+    max-height: root.shape == DitherSkeletonShape.circle ? root.size : 100000px;
+    accessible-role: AccessibleRole.none;
+
+    Timer {
+        interval: 33ms;
+        running: root.animated && root.animation != DitherSkeletonAnimation.none;
+        triggered => {
+            root.elapsed = animation-tick() / 1s;
+        }
+    }
+
+    if !root.text: Bar {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        color: root.color;
+        fill: root.fill;
+        animation: root.animation;
+        matrix: root.matrix;
+        step: root.step;
+        radius: root.shape == DitherSkeletonShape.circle ? self.height / 2 : 6px;
+        elapsed: root.elapsed;
+        duration: root.duration;
+        delay: root.delay;
+    }
+
+    for line in root.text ? root.lines : 0: Bar {
+        x: 0;
+        y: line * 22px;
+        height: 12px;
+        width: line == root.lines - 1 && root.lines > 1 ? root.width * 0.62 : root.width;
+        color: root.color;
+        fill: root.fill;
+        animation: root.animation;
+        matrix: root.matrix;
+        step: root.step;
+        radius: 3px;
+        elapsed: root.elapsed;
+        duration: root.duration;
+        delay: root.delay + line * 0.08;
+    }
+}

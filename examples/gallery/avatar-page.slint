@@ -1,0 +1,47 @@
+import { DitherAvatar, DitherAvatarGroup, DitherAvatarShape, DitherAvatarStatus, DitherBloom, DitherFill, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component AvatarPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    Heading { text: "Faces"; }
+    HorizontalLayout {
+        spacing: 16px;
+        alignment: start;
+        for name in ["Ada Lovelace", "Grace Hopper", "Alan Turing", "Linus", "dither-bot", "Margaret"]: DitherAvatar {
+            name: name;
+            size: 56px;
+        }
+    }
+
+    Heading { text: "Fills, shape and colour"; }
+    HorizontalLayout {
+        spacing: 16px;
+        alignment: start;
+        DitherAvatar { name: "Ada Lovelace"; size: 56px; fill: DitherFill.dotted; }
+        DitherAvatar { name: "Ada Lovelace"; size: 56px; fill: DitherFill.hatched; }
+        DitherAvatar { name: "Ada Lovelace"; size: 56px; fill: DitherFill.solid; }
+        DitherAvatar { name: "Ada Lovelace"; size: 56px; shape: DitherAvatarShape.square; color: DitherPalette.orange; }
+        DitherAvatar { name: "Ada Lovelace"; size: 56px; ring: true; bloom: DitherBloom.high; }
+    }
+
+    Heading { text: "Status and group"; }
+    HorizontalLayout {
+        spacing: 24px;
+        alignment: start;
+        DitherAvatar { name: "Grace Hopper"; size: 48px; status: DitherAvatarStatus.online; }
+        DitherAvatar { name: "Alan Turing"; size: 48px; status: DitherAvatarStatus.busy; }
+        DitherAvatarGroup {
+            names: ["Ada", "Grace", "Alan", "Linus", "Margaret", "Dennis"];
+            max: 4;
+            size: 40px;
+        }
+    }
+}

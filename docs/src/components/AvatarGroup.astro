@@ -1,0 +1,23 @@
+---
+import Avatar from './Avatar.astro';
+
+interface Props {
+	names: string[];
+	max?: number;
+	size?: number;
+}
+
+const { names, max = 4, size = 32 } = Astro.props;
+const shown = names.slice(0, max);
+const rest = names.length - shown.length;
+const overlap = -Math.round(size * 0.28);
+---
+
+<div class="avatar-group" role="group">
+	{shown.map((name, index) => (
+		<span style={index ? `margin-left: ${overlap}px` : ''}>
+			<Avatar name={name} size={size} />
+		</span>
+	))}
+	{rest > 0 && <span class="more" role="img" aria-label={`${rest} more`} style={`margin-left: ${overlap}px; width: ${size}px; height: ${size}px; font-size: ${Math.max(10, Math.round(size * 0.34))}px`}>+{rest}</span>}
+</div>
