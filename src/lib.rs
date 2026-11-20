@@ -7,6 +7,7 @@ pub mod motion;
 pub mod pattern;
 pub mod render;
 pub mod style;
+pub mod tabs;
 
 mod blue_noise;
 
@@ -56,6 +57,25 @@ macro_rules! install {
         });
         engine.on_ripple(|columns, rows, x, y, t, strength, color| {
             $crate::lively::ripple(columns.max(0) as u32, rows.max(0) as u32, x, y, t, strength, color)
+        });
+        engine.on_tabs_indicator(|columns, rows, cell, variant, kind, color, fx, fy, fw, fh, tx, ty, tw, th, progress| {
+            let variant = match variant {
+                DitherTabsVariant::Pill => $crate::tabs::TabsVariant::Pill,
+                DitherTabsVariant::Underline => $crate::tabs::TabsVariant::Underline,
+            };
+            let from = $crate::tabs::BoxRect { x: fx, y: fy, w: fw, h: fh };
+            let to = $crate::tabs::BoxRect { x: tx, y: ty, w: tw, h: th };
+            $crate::tabs::tabs_indicator(
+                columns.max(0) as u32,
+                rows.max(0) as u32,
+                cell,
+                variant,
+                matrix(kind),
+                color,
+                from,
+                to,
+                progress,
+            )
         });
     }};
 }

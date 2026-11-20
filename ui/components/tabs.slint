@@ -1,0 +1,314 @@
+import { DitherBloom, DitherEngine, DitherMatrix, DitherTabsVariant } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherFx } from "fx.slint";
+
+export { DitherTabsVariant }
+
+component TabTrigger {
+    in property <string> text;
+    in property <image> icon;
+    in property <bool> is-active;
+    in property <DitherTabsVariant> variant;
+    in property <color> color;
+    in property <color> active-label-color;
+    in property <length> cell: 2px;
+    in property <bool> animated: true;
+    out property <bool> has-hover: touch.has-hover;
+    callback clicked;
+
+    height: root.variant == DitherTabsVariant.pill ? 32px : 40px;
+
+    if root.has-hover && !root.is-active: Rectangle {
+        x: 0;
+        y: root.variant == DitherTabsVariant.pill ? 0 : root.height - root.cell * 2;
+        width: root.width;
+        height: root.variant == DitherTabsVariant.pill ? root.height : root.cell * 2;
+        border-radius: root.variant == DitherTabsVariant.pill ? 8px : 0px;
+        background: root.color.transparentize(0.70);
+    }
+
+    fx := DitherFx {
+        cell: root.cell;
+        color: root.color;
+        strength: 0.5;
+        animated: root.animated;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: MouseCursor.pointer;
+        changed has-hover => {
+            if self.has-hover && !root.is-active {
+                fx.sweep();
+            }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                fx.ripple(self.mouse-x, self.mouse-y);
+            }
+        }
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    content := HorizontalLayout {
+        padding-left: root.variant == DitherTabsVariant.pill ? 14px : 12px;
+        padding-right: self.padding-left;
+        spacing: 6px;
+        alignment: center;
+
+        if root.icon.width > 0: VerticalLayout {
+            alignment: center;
+            Image {
+                source: root.icon;
+                width: 16px;
+                height: 16px;
+                colorize: root.is-active ? root.active-label-color : (root.has-hover ? DitherTheme.foreground : #8a857d);
+            }
+        }
+
+        if root.text != "": Text {
+            text: root.text;
+            color: root.is-active ? root.active-label-color : (root.has-hover ? DitherTheme.foreground : #8a857d);
+            font-size: 14px;
+            font-weight: 500;
+            vertical-alignment: center;
+            animate color { duration: 150ms; }
+        }
+    }
+}
+
+export component DitherTabs {
+    in property <[string]> tabs: ["Overview", "Deploys", "Settings"];
+    in-out property <int> current: 0;
+    in property <DitherTabsVariant> variant: DitherTabsVariant.pill;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <length> cell: 2px;
+    in property <bool> animated: DitherTheme.animated;
+    in property <bool> enabled: true;
+    callback changed(int);
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <length> from-x: 0;
+    property <length> from-y: 0;
+    property <length> from-w: 0;
+    property <length> from-h: 0;
+    property <length> to-x: 0;
+    property <length> to-y: 0;
+    property <length> to-w: 0;
+    property <length> to-h: 0;
+
+    property <bool> moving;
+    property <duration> move-start;
+
+    property <int> columns: Math.ceil(bar.width / root.step);
+    property <int> rows: Math.ceil(bar.height / root.step);
+
+    property <color> active-label: root.variant == DitherTabsVariant.pill ? #05070f : DitherTheme.foreground;
+
+    public function glide-to(new-index: int, nx: length, ny: length, nw: length, nh: length) {
+        if root.animated && (root.to-w > 0) && (root.to-x != nx || root.to-y != ny) {
+            root.from-x = root.to-x;
+            root.from-y = root.to-y;
+            root.from-w = root.to-w;
+            root.from-h = root.to-h;
+            root.to-x = nx;
+            root.to-y = ny;
+            root.to-w = nw;
+            root.to-h = nh;
+            root.move-start = animation-tick();
+            root.moving = true;
+        } else {
+            root.from-x = nx;
+            root.from-y = ny;
+            root.from-w = nw;
+            root.from-h = nh;
+            root.to-x = nx;
+            root.to-y = ny;
+            root.to-w = nw;
+            root.to-h = nh;
+            root.moving = false;
+        }
+        root.current = new-index;
+        root.changed(new-index);
+    }
+
+    public function jump-to(new-index: int) {
+        root.moving = false;
+        root.current = new-index;
+        root.changed(new-index);
+    }
+
+    Timer {
+        interval: 260ms;
+        running: root.moving;
+        triggered => {
+            root.moving = animation-tick() - root.move-start < 260ms;
+        }
+    }
+
+    VerticalLayout {
+        alignment: start;
+        spacing: 16px;
+
+        HorizontalLayout {
+            alignment: center;
+
+            bar := Rectangle {
+                clip: false;
+                height: 40px;
+                border-radius: root.variant == DitherTabsVariant.pill ? 12px : 0px;
+                background: root.variant == DitherTabsVariant.pill ? #22201d : transparent;
+
+                if root.variant == DitherTabsVariant.underline: Rectangle {
+                    y: parent.height - 1px;
+                    width: parent.width;
+                    height: 1px;
+                    background: #33312e;
+                }
+
+                if root.bloom != DitherBloom.off: Rectangle {
+                    x: root.to-x;
+                    y: root.to-y;
+                    width: root.to-w;
+                    height: root.to-h;
+                    border-radius: root.variant == DitherTabsVariant.pill ? 8px : 0px;
+                    background: root.color.transparentize(0.5);
+                    drop-shadow-blur: root.bloom == DitherBloom.low ? 10px : 18px;
+                    drop-shadow-color: root.color.transparentize(root.bloom == DitherBloom.high ? 0.45 : 0.7);
+                }
+
+                indicator := Image {
+                    x: 0;
+                    y: 0;
+                    width: root.columns * root.step;
+                    height: root.rows * root.step;
+                    image-fit: ImageFit.fill;
+                    image-rendering: pixelated;
+                    source: DitherEngine.tabs-indicator(
+                        root.columns,
+                        root.rows,
+                        root.step / 1phx,
+                        root.variant,
+                        root.matrix,
+                        root.color,
+                        root.from-x / 1phx,
+                        root.from-y / 1phx,
+                        root.from-w / 1phx,
+                        root.from-h / 1phx,
+                        root.to-x / 1phx,
+                        root.to-y / 1phx,
+                        root.to-w / 1phx,
+                        root.to-h / 1phx,
+                        root.moving ? Math.min(1.0, (animation-tick() - root.move-start) / 260ms) : 1.0
+                    );
+                }
+
+                if focus.has-focus: Rectangle {
+                    x: -3px;
+                    y: -3px;
+                    width: parent.width + 6px;
+                    height: parent.height + 6px;
+                    border-radius: root.variant == DitherTabsVariant.pill ? 14px : 4px;
+                    border-width: 2px;
+                    border-color: DitherTheme.foreground;
+                }
+
+                list-layout := HorizontalLayout {
+                    padding: root.variant == DitherTabsVariant.pill ? 4px : 0px;
+                    spacing: root.variant == DitherTabsVariant.pill ? 4px : 0px;
+                    alignment: center;
+
+                    for tab[i] in root.tabs: trigger := TabTrigger {
+                        text: tab;
+                        is-active: i == root.current;
+                        variant: root.variant;
+                        color: root.color;
+                        active-label-color: root.active-label;
+                        cell: root.step;
+                        animated: root.animated;
+
+                        changed x => {
+                            if i == root.current {
+                                if root.to-w == 0 || !root.moving {
+                                    root.to-x = self.x;
+                                    root.to-y = self.y;
+                                    root.to-w = self.width;
+                                    root.to-h = self.height;
+                                    if root.from-w == 0 {
+                                        root.from-x = self.x;
+                                        root.from-y = self.y;
+                                        root.from-w = self.width;
+                                        root.from-h = self.height;
+                                    }
+                                }
+                            }
+                        }
+
+                        changed width => {
+                            if i == root.current {
+                                if root.to-w == 0 || !root.moving {
+                                    root.to-x = self.x;
+                                    root.to-y = self.y;
+                                    root.to-w = self.width;
+                                    root.to-h = self.height;
+                                    if root.from-w == 0 {
+                                        root.from-x = self.x;
+                                        root.from-y = self.y;
+                                        root.from-w = self.width;
+                                        root.from-h = self.height;
+                                    }
+                                }
+                            }
+                        }
+
+                        changed is-active => {
+                            if self.is-active && !root.moving {
+                                root.to-x = self.x;
+                                root.to-y = self.y;
+                                root.to-w = self.width;
+                                root.to-h = self.height;
+                                root.from-x = self.x;
+                                root.from-y = self.y;
+                                root.from-w = self.width;
+                                root.from-h = self.height;
+                            }
+                        }
+
+                        clicked => {
+                            root.glide-to(i, self.x, self.y, self.width, self.height);
+                        }
+                    }
+                }
+            }
+        }
+
+        @children
+    }
+
+    focus := FocusScope {
+        enabled: root.enabled;
+        focus-on-click: true;
+        key-pressed(event) => {
+            if event.text == Key.LeftArrow || event.text == Key.UpArrow {
+                root.jump-to(Math.max(0, root.current - 1));
+                return accept;
+            }
+            if event.text == Key.RightArrow || event.text == Key.DownArrow {
+                root.jump-to(Math.min(root.tabs.length - 1, root.current + 1));
+                return accept;
+            }
+            if event.text == Key.Home {
+                root.jump-to(0);
+                return accept;
+            }
+            if event.text == Key.End {
+                root.jump-to(root.tabs.length - 1);
+                return accept;
+            }
+            reject
+        }
+    }
+}
