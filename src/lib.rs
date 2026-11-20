@@ -10,6 +10,7 @@ pub mod noise;
 pub mod render;
 pub mod slider;
 pub mod style;
+pub mod switch;
 pub mod tabs;
 
 mod blue_noise;

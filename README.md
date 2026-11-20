@@ -101,6 +101,32 @@ DitherButton {
 | `enabled` | `true` | |
 | `animated` | `DitherTheme.animated` | A dithered sweep on hover and a ripple from where you press. |
 
+### DitherSwitch
+
+A toggle switch whose track fills with dither behind the thumb as it turns on, stepping through the Bayer levels, and drains the same way when it turns off.
+
+```slint
+DitherSwitch {
+    checked: true;
+    color: DitherPalette.blue;
+    bloom: DitherBloom.low;
+    toggled(on) => {
+        debug("switch toggled:", on);
+    }
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `checked` | `false` | Whether it is on. |
+| `fill` | `gradient` | Texture of the shade when on and track when off: `gradient`, `dotted`, `hatched` or `solid`. |
+| `color` | `DitherTheme.ink` | Colour of the ink when on. |
+| `size` | `md` | `sm`, `md` or `lg`: tracks of 34 by 20, 42 by 24 and 54 by 30 pixels, rounded to whole cells. |
+| `bloom` | `off` | `low` or `high` adds a glow in the ink's colour when on. |
+| `cell` | `2px` | Size of one dither cell. |
+| `enabled` | `true` | Drops to 45% opacity and ignores clicks and keys when `false`. |
+| `animated` | `DitherTheme.animated` | A ripple from where you press. |
+
 Turn the motion off everywhere with `DitherTheme.animated = false`, or per button with `animated: false`. `DitherFx` is the layer behind it, so other components can use the same sweep and ripple.
 
 ### DitherTabs
