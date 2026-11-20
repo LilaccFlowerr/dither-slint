@@ -8,6 +8,7 @@ pub mod lively;
 pub mod matrix;
 pub mod noise;
 pub mod render;
+pub mod slider;
 pub mod style;
 pub mod tabs;
 
@@ -65,7 +66,25 @@ macro_rules! install {
             render::rule(cells(columns), cells(rows), &options)
         });
         engine.on_slider_fill(|columns, rows, end, hot, matrix, color| {
-            let options = render::SliderOptions { end, hot, matrix: Matrix::ALL[matrix as usize], color };
+            let options = render::SliderOptions {
+                start: 0,
+                end,
+                both: false,
+                hot,
+                matrix: Matrix::ALL[matrix as usize],
+                color,
+            };
+            render::slider_fill(cells(columns), cells(rows), &options)
+        });
+        engine.on_slider_range_fill(|columns, rows, start, end, both, hot, matrix, color| {
+            let options = render::SliderOptions {
+                start,
+                end,
+                both,
+                hot,
+                matrix: Matrix::ALL[matrix as usize],
+                color,
+            };
             render::slider_fill(cells(columns), cells(rows), &options)
         });
         engine.on_picture(|source, columns, rows, method, threshold, palette| {
