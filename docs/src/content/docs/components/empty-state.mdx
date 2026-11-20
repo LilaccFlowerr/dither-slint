@@ -1,0 +1,58 @@
+---
+title: DitherEmptyState
+description: "A placeholder for a view with nothing in it yet: a lit dithered illustration, a title and an action."
+---
+
+import EmptyState from '../../../components/EmptyState.astro';
+import Button from '../../../components/Button.astro';
+import Demo from '../../../components/Demo.astro';
+
+Above the text sits a small lit object drawn in dither cells. Each surface takes its tone from a light up and to the left, so faces turned to the light are dense, faces turned away are sparse, and curved surfaces step through every dither level. A one-cell seam splits the parts of the object, and a faint halo and floor shadow sit behind it. The object bobs up and down a whole cell every so often. Put buttons inside and they become the action under the text.
+
+<Demo
+	title="Illustrations"
+	code={`DitherEmptyState {
+    title: "No projects yet";
+    description: "Create a project to start building.";
+
+    DitherButton {
+        text: "New project";
+    }
+}
+
+DitherEmptyState {
+    illustration: DitherIllustration.search;
+    title: "Nothing found";
+    description: "Try a different word or clear the filters.";
+}
+
+DitherEmptyState {
+    illustration: DitherIllustration.folder;
+    title: "This folder is empty";
+}
+
+DitherEmptyState {
+    illustration: DitherIllustration.planet;
+    title: "Nothing here yet";
+}`}
+>
+	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; width: 100%">
+		<EmptyState title="No projects yet" description="Create a project to start building."><Button text="New project" /></EmptyState>
+		<EmptyState illustration="search" title="Nothing found" description="Try a different word or clear the filters." color="green"><Button text="Clear filters" variant="outline" /></EmptyState>
+		<EmptyState illustration="folder" title="This folder is empty" description="Files you add show up here." color="orange" />
+		<EmptyState illustration="planet" title="Nothing here yet" description="New events will land here when they arrive." color="pink" />
+	</div>
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `title` | | The heading. Say plainly what is empty. |
+| `description` | | One or two sentences: why it is empty and what to do next. |
+| `illustration` | `box` | `box` for lists and orders, `search` for no results, `folder` for files and documents, `planet` for anything still to arrive. |
+| `color` | `DitherTheme.ink` | Colour of the illustration. |
+| `matrix` | `bayer4` | `bayer4` for crisp steps, `bayer8` for finer ones, `blue-noise` for an even grain. |
+| `animate` | `DitherTheme.animated` | Bobs the object a cell up and down. |
+
+Anything you put inside is shown under the text, usually one or two buttons.

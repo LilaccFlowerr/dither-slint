@@ -147,7 +147,14 @@ pub fn rule(
 
 #[wasm_bindgen]
 pub fn slider_fill(columns: u32, rows: u32, end: i32, hot: bool, matrix: usize, color: &[u8]) -> Vec<u8> {
-    let options = render::SliderOptions { end, hot, matrix: Matrix::ALL[matrix], color: colors(color)[0] };
+    let options = render::SliderOptions {
+        start: 0,
+        end,
+        both: false,
+        hot,
+        matrix: Matrix::ALL[matrix],
+        color: colors(color)[0],
+    };
     bytes(render::slider_fill(columns, rows, &options))
 }
 
@@ -188,4 +195,24 @@ pub fn loader(variant: usize, height: f32, cell: f32, time: f32, matrix: usize, 
 pub fn loader_grid(variant: usize, height: f32, cell: f32) -> Vec<u32> {
     let (columns, rows) = dither_slint::loader::grid(dither_slint::loader::Variant::ALL[variant], height, cell);
     vec![columns, rows]
+}
+
+#[wasm_bindgen]
+pub fn skeleton(columns: u32, rows: u32, cell: f32, fill: usize, animation: usize, phase: f32, matrix: usize, color: &[u8]) -> Vec<u8> {
+    let options = dither_slint::skeleton::SkeletonOptions {
+        cell,
+        fill: FillVariant::ALL[fill],
+        animation: dither_slint::skeleton::Animation::ALL[animation],
+        phase,
+        matrix: Matrix::ALL[matrix],
+        color: colors(color)[0],
+    };
+    bytes(dither_slint::skeleton::skeleton(columns, rows, &options))
+}
+
+#[wasm_bindgen]
+pub fn empty_state(illustration: usize, backdrop: bool, matrix: usize, color: &[u8]) -> Vec<u8> {
+    use dither_slint::empty::{Illustration, Layer, empty};
+    let layer = if backdrop { Layer::Backdrop } else { Layer::Object };
+    bytes(empty(Illustration::ALL[illustration], layer, Matrix::ALL[matrix], colors(color)[0]))
 }

@@ -2,6 +2,7 @@ pub mod avatar;
 pub mod backgrounds;
 pub mod color;
 pub mod diffuse;
+pub mod empty;
 pub mod export;
 pub mod field;
 pub mod glow;
@@ -10,6 +11,7 @@ pub mod loader;
 pub mod matrix;
 pub mod noise;
 pub mod render;
+pub mod skeleton;
 pub mod style;
 pub mod tabs;
 
@@ -74,6 +76,21 @@ macro_rules! install {
         engine.on_avatar_hue(|name| $crate::avatar::hue(&name) as i32);
         engine.on_loader(|variant, height, cell, time, matrix, color| {
             $crate::loader::loader($crate::loader::Variant::ALL[variant as usize], height, cell, time, Matrix::ALL[matrix as usize], color)
+        });
+        engine.on_skeleton(|columns, rows, cell, fill, animation, phase, matrix, color| {
+            let options = $crate::skeleton::SkeletonOptions {
+                cell,
+                fill: FillVariant::ALL[fill as usize],
+                animation: $crate::skeleton::Animation::ALL[animation as usize],
+                phase,
+                matrix: Matrix::ALL[matrix as usize],
+                color,
+            };
+            $crate::skeleton::skeleton(cells(columns), cells(rows), &options)
+        });
+        engine.on_empty(|illustration, backdrop, matrix, color| {
+            let layer = if backdrop { $crate::empty::Layer::Backdrop } else { $crate::empty::Layer::Object };
+            $crate::empty::empty($crate::empty::Illustration::ALL[illustration as usize], layer, Matrix::ALL[matrix as usize], color)
         });
         engine.on_picture(|source, columns, rows, method, threshold, palette| {
             let method = Method::ALL[method as usize];
@@ -192,5 +209,7 @@ mod tests {
         assert_eq!(in_rust(&Idle::ALL), in_slint("DitherIdle"));
         assert_eq!(in_rust(&Method::ALL), in_slint("DitherMethod"));
         assert_eq!(in_rust(&crate::loader::Variant::ALL), in_slint("DitherLoaderVariant"));
+        assert_eq!(in_rust(&crate::skeleton::Animation::ALL), in_slint("DitherSkeletonAnimation"));
+        assert_eq!(in_rust(&crate::empty::Illustration::ALL), in_slint("DitherIllustration"));
     }
 }

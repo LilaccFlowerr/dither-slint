@@ -1,0 +1,38 @@
+import { DitherButton, DitherButtonVariant, DitherEmptyState, DitherIllustration, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+export component EmptyPage inherits VerticalLayout {
+    padding: 8px;
+
+    GridLayout {
+        spacing: 8px;
+
+        Row {
+            DitherEmptyState {
+                title: "No projects yet";
+                description: "Create a project to start building.";
+                DitherButton { text: "New project"; }
+            }
+            DitherEmptyState {
+                illustration: DitherIllustration.search;
+                title: "Nothing found";
+                description: "Try a different word or clear the filters.";
+                color: DitherPalette.green;
+                DitherButton { text: "Clear filters"; variant: DitherButtonVariant.outline; }
+            }
+        }
+        Row {
+            DitherEmptyState {
+                illustration: DitherIllustration.folder;
+                title: "This folder is empty";
+                description: "Files you add show up here.";
+                color: DitherPalette.orange;
+            }
+            DitherEmptyState {
+                illustration: DitherIllustration.planet;
+                title: "Nothing here yet";
+                description: "New events will land here when they arrive.";
+                color: DitherPalette.pink;
+            }
+        }
+    }
+}

@@ -23,6 +23,8 @@
 .dmenu *,
 .avatar *,
 .avatar-group *,
-.loader * {
+.loader *,
+.skeleton *,
+.empty .scene canvas {
 	margin-top: 0 !important;
 }

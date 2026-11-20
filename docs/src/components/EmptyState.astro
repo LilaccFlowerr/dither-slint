@@ -1,0 +1,107 @@
+---
+interface Props {
+	illustration?: 'box' | 'search' | 'folder' | 'planet';
+	title: string;
+	description?: string;
+	color?: string;
+	matrix?: number;
+	animate?: boolean;
+}
+
+const { illustration = 'box', title, description, color = 'ink', matrix = 1, animate = true } = Astro.props;
+---
+
+<div class="empty" data-illustration={illustration} data-color={color} data-matrix={matrix} data-animate={animate ? '' : undefined}>
+	<div class="scene">
+		<canvas class="backdrop"></canvas>
+		<canvas class="object"></canvas>
+	</div>
+	<h4>{title}</h4>
+	{description && <p>{description}</p>}
+	<div class="actions"><slot /></div>
+</div>
+
+<style is:global>
+	.empty {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		width: 100%;
+		padding: 1.5rem 1rem;
+		text-align: center;
+	}
+	.empty .scene {
+		position: relative;
+		width: 100%;
+		max-width: 336px;
+		aspect-ratio: 112 / 72;
+	}
+	.empty .scene canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+	.empty .scene .backdrop {
+		opacity: 0.55;
+	}
+	.empty[data-animate] .lifted .backdrop {
+		opacity: 0.385;
+	}
+	.empty h4 {
+		margin: 0.75rem 0 0 !important;
+		font-size: 1rem;
+		font-weight: 600;
+		color: #ebe5d9;
+	}
+	.empty p {
+		max-width: 24rem;
+		margin: 0.4rem 0 0 !important;
+		font-size: 0.875rem;
+		color: rgba(235, 229, 217, 0.6);
+	}
+	.empty .actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.5rem;
+		margin-top: 1.5rem;
+	}
+	.empty .actions:empty {
+		display: none;
+	}
+</style>
+
+<script>
+	import { empty_state } from '../engine/dither_slint_engine_web.js';
+	import { ready, rgba } from '../scripts/dither';
+
+	const illustrations = ['box', 'search', 'folder', 'planet'];
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.empty')) {
+			const data = root.dataset as Record<string, string>;
+			const index = illustrations.indexOf(data.illustration);
+			const color = new Uint8Array(rgba(data.color));
+			const scene = root.querySelector<HTMLElement>('.scene')!;
+			for (const [name, backdrop] of [['object', false], ['backdrop', true]] as const) {
+				const canvas = root.querySelector<HTMLCanvasElement>(`.${name}`)!;
+				canvas.width = 112;
+				canvas.height = 72;
+				canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(empty_state(index, backdrop, Number(data.matrix), color)), 112, 72), 0, 0);
+			}
+			if (data.animate !== undefined) {
+				const cell = () => scene.clientWidth / 112;
+				const object = scene.querySelector<HTMLElement>('.object')!;
+				let lifted = false;
+				setInterval(() => {
+					lifted = !lifted;
+					scene.classList.toggle('lifted', lifted);
+					object.style.transform = lifted ? `translateY(${-cell()}px)` : '';
+				}, 1600);
+			}
+		}
+	});
+</script>

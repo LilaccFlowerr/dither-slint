@@ -1,0 +1,90 @@
+---
+interface Props {
+	shape?: 'block' | 'text' | 'circle';
+	lines?: number;
+	size?: number;
+	width?: number | string;
+	height?: number;
+	color?: string;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	animation?: 'sweep' | 'pulse' | 'none';
+}
+
+const { shape = 'block', lines = 3, size = 40, width, height = 20, color = '#8a8680', fill = 'gradient', animation = 'sweep' } = Astro.props;
+const count = shape === 'text' ? lines : 1;
+const box = (index: number) =>
+	shape === 'circle'
+		? `width: ${size}px; height: ${size}px; border-radius: 50%`
+		: shape === 'text'
+			? `width: ${index === count - 1 && count > 1 ? '62%' : '100%'}; height: 12px; border-radius: 3px`
+			: `width: ${typeof width === 'number' ? `${width}px` : (width ?? '160px')}; height: ${height}px; border-radius: 6px`;
+---
+
+<div class="skeleton" aria-hidden="true" data-color={color} data-fill={fill} data-animation={animation} style={shape === 'text' ? 'display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px' : 'display: inline-block'}>
+	{Array.from({ length: count }, (_, index) => <div class="bar" data-delay={index * 0.08} style={box(index)}><canvas></canvas></div>)}
+</div>
+
+<style is:global>
+	.skeleton .bar {
+		position: relative;
+		overflow: hidden;
+	}
+	.skeleton .bar canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+</style>
+
+<script>
+	import { skeleton } from '../engine/dither_slint_engine_web.js';
+	import { css, ready, rgba } from '../scripts/dither';
+
+	const fills = { gradient: 0, dotted: 1, hatched: 2, solid: 3 };
+	const animations = { sweep: 0, pulse: 1, none: 2 };
+	const cell = 2;
+	const duration = 1.8;
+
+	ready.then(() => {
+		const running = new Set<(now: number) => void>();
+		let frame = 0;
+		const tick = (now: number) => {
+			frame = 0;
+			for (const draw of running) draw(now);
+			if (running.size) frame = requestAnimationFrame(tick);
+		};
+
+		for (const root of document.querySelectorAll<HTMLElement>('.skeleton')) {
+			const { color, fill, animation } = root.dataset as Record<string, string>;
+			const ink = rgba(color);
+			const ink4 = new Uint8Array(ink);
+			for (const bar of root.querySelectorAll<HTMLElement>('.bar')) {
+				const canvas = bar.querySelector('canvas')!;
+				const context = canvas.getContext('2d')!;
+				bar.style.background = css([ink[0], ink[1], ink[2], fill === 'solid' ? 46 : 18]);
+				const delay = Number(bar.dataset.delay);
+				const draw = (now: number) => {
+					const columns = Math.max(1, Math.ceil(bar.clientWidth / cell));
+					const rows = Math.max(1, Math.ceil(bar.clientHeight / cell));
+					const phase = (((now / 1000 - delay) % duration) + duration) % duration / duration;
+					const bytes = skeleton(columns, rows, cell, fills[fill as keyof typeof fills], animations[animation as keyof typeof animations], phase, 1, ink4);
+					canvas.width = columns;
+					canvas.height = rows;
+					canvas.style.width = `${columns * cell}px`;
+					canvas.style.height = `${rows * cell}px`;
+					context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+				};
+				draw(0);
+				if (animation !== 'none') {
+					new IntersectionObserver(([entry]) => {
+						if (entry.isIntersecting) running.add(draw);
+						else running.delete(draw);
+						if (running.size && !frame) frame = requestAnimationFrame(tick);
+					}).observe(bar);
+				}
+			}
+		}
+	});
+</script>
