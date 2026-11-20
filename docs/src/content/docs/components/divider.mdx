@@ -1,0 +1,81 @@
+---
+title: DitherDivider
+description: A dithered rule whose ends fade out, with an optional label in the middle.
+---
+
+import Divider from '../../../components/Divider.astro';
+import Demo from '../../../components/Demo.astro';
+
+The rule is solid in the middle and fades towards each tip in ten steps of dither. `fade` sets how much of each half is spent fading.
+
+<Demo
+	title="Rule"
+	code={`DitherDivider {
+}`}
+>
+	<Divider />
+</Demo>
+
+<Demo
+	title="With a label"
+	code={`DitherDivider {
+    label: "or";
+}`}
+>
+	<Divider label="or" />
+</Demo>
+
+<Demo
+	title="Fills and colours"
+	code={`DitherDivider {
+    fill: DitherFill.dotted;
+}
+
+DitherDivider {
+    fill: DitherFill.hatched;
+    color: DitherPalette.green;
+}
+
+DitherDivider {
+    color: DitherPalette.orange;
+    thickness: 3;
+}`}
+>
+	<Divider fill="dotted" />
+	<Divider fill="hatched" color="green" />
+	<Divider color="orange" thickness={3} />
+</Demo>
+
+<Demo
+	title="Vertical"
+	code={`HorizontalLayout {
+    height: 40px;
+    Text { text: "12"; }
+    DitherDivider {
+        orientation: DitherOrientation.vertical;
+    }
+    Text { text: "340"; }
+}`}
+>
+	<div style="display: flex; gap: 1.5rem; height: 48px; align-items: stretch; width: 100%; max-width: 280px">
+		<span style="align-self: center">12</span>
+		<Divider orientation="vertical" />
+		<span style="align-self: center">340</span>
+		<Divider orientation="vertical" />
+		<span style="align-self: center">7</span>
+	</div>
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `orientation` | `horizontal` | `horizontal` or `vertical`. A vertical rule fills the height of its container. |
+| `label` | | Text in the middle of the rule, which splits around it. Horizontal only. |
+| `thickness` | `2` | Thickness in cells. |
+| `fade` | `0.6` | Share of each half that fades out, from 0 to 1. |
+| `strength` | `0.6` | Densest dither level, at the middle of the rule. |
+| `color` | `DitherTheme.ink` | Colour of the rule. |
+| `fill` | `gradient` | `gradient` fades through dither levels, the others fade by opacity. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `2px` | Size of one dither cell. |

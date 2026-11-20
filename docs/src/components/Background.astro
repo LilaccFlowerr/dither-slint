@@ -1,12 +1,14 @@
 ---
 interface Control {
 	label: string;
-	index: number;
-	min: number;
-	max: number;
-	step: number;
 	prop: string;
-	values?: string[];
+	index: number;
+	kind?: 'slider' | 'select' | 'angle' | 'bool' | 'count';
+	min?: number;
+	max?: number;
+	step?: number;
+	options?: string[];
+	array?: string;
 }
 
 interface Props {
@@ -14,40 +16,58 @@ interface Props {
 	name: string;
 	params: number[];
 	palette: string[];
+	slots?: 'palette' | 'noise';
 	matrix?: number;
 	cell?: number;
 	still?: number;
 	controls?: Control[];
 }
 
-const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls = [] } = Astro.props;
+const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, still = 0, controls = [] } = Astro.props;
 ---
 
-<div class="background" data-field={field} data-name={name} data-params={JSON.stringify(params)} data-palette={palette.join(' ')} data-still={still}>
-	<canvas></canvas>
+<div class="background" data-field={field} data-name={name} data-slots={slots} data-palette={palette.join(' ')} data-params={JSON.stringify(params)} data-still={still}>
+	<div class="stage">
+	<div class="view">
+		<canvas></canvas>
+		<div class="handles"></div>
+	</div>
 	<div class="controls">
-		<label>Matrix
+		<label><span>Matrix</span>
 			<select name="matrix">
-				{['bayer2', 'bayer4', 'bayer8', 'blue-noise'].map((name, index) => <option value={index} selected={index === matrix}>{name}</option>)}
+				{['bayer2', 'bayer4', 'bayer8', 'blue-noise'].map((value, index) => <option value={index} selected={index === matrix}>{value}</option>)}
 			</select>
 		</label>
-		<label><span>Cell <output></output></span>
-			<input type="range" name="cell" min="2" max="10" step="1" value={cell} />
+		<label><span>Cell</span>
+			<input type="range" name="cell" min="2" max="10" step="1" value={cell} /><output></output>
 		</label>
-		<label><span>Speed <output></output></span>
-			<input type="range" name="speed" min="0" max="3" step="0.1" value="1" />
+		<label><span>Speed</span>
+			<input type="range" name="speed" min="0" max="3" step="0.1" value="1" /><output></output>
 		</label>
-		{controls.map((control) => control.values ? (
-			<label>{control.label}
-				<select data-index={control.index} data-prop={control.prop} data-values={control.values.join(' ')}>
-					{control.values.map((value, index) => <option value={index} selected={index === params[control.index]}>{value.split('.')[1]}</option>)}
-				</select>
-			</label>
-		) : (
-			<label><span>{control.label} <output></output></span>
-				<input type="range" data-index={control.index} data-prop={control.prop} min={control.min} max={control.max} step={control.step} value={params[control.index]} />
-			</label>
-		))}
+		{controls.map((control) => {
+			const kind = control.kind ?? 'slider';
+			const base = { 'data-index': control.index, 'data-prop': control.prop, 'data-kind': kind, 'data-array': control.array };
+			if (kind === 'select') {
+				return (
+					<label><span>{control.label}</span>
+						<select {...base} data-options={control.options!.join(' ')}>
+							{control.options!.map((value, index) => <option value={index} selected={index === params[control.index]}>{value.split('.')[1]}</option>)}
+						</select>
+					</label>
+				);
+			}
+			if (kind === 'bool') {
+				return <label class="check"><input type="checkbox" {...base} checked={params[control.index] === 1} /> {control.label}</label>;
+			}
+			const value = kind === 'angle' ? Math.round((params[control.index] * 180) / Math.PI) : params[control.index];
+			return (
+				<label hidden={control.array !== undefined}><span>{control.label}</span>
+					<input type="range" {...base} min={control.min} max={control.max} step={control.step} value={value} /><output></output>
+				</label>
+			);
+		})}
+		<div class="colors"></div>
+	</div>
 	</div>
 	<details>
 		<summary>Code</summary>
@@ -57,24 +77,63 @@ const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls 
 
 <style>
 	.background {
+		container-type: inline-size;
 		border: 1px solid var(--sl-color-gray-5);
 		border-radius: 8px;
 		overflow: hidden;
 		margin: 1.5rem 0;
 	}
+	.stage {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+	}
+	.view {
+		position: relative;
+		min-height: 360px;
+	}
 	canvas {
-		display: block;
+		position: absolute;
+		inset: 0;
 		width: 100%;
-		height: 280px;
+		height: 100%;
 		image-rendering: pixelated;
 	}
+	.handles {
+		position: absolute;
+		inset: 0;
+	}
+	.handles :global(i) {
+		position: absolute;
+		width: 18px;
+		height: 18px;
+		margin: -9px 0 0 -9px;
+		border: 2px solid #fff;
+		border-radius: 50%;
+		background: rgba(0, 0, 0, 0.35);
+		cursor: grab;
+		touch-action: none;
+	}
 	.controls {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-		gap: 0.75rem 1rem;
+		min-width: 0;
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		gap: 0.55rem;
+		max-height: 360px;
+		overflow: hidden auto;
 		padding: 0.9rem 1rem;
-		border-top: 1px solid var(--sl-color-gray-5);
+		border-left: 1px solid var(--sl-color-gray-5);
 		font-size: var(--sl-text-sm);
+	}
+	@container (max-width: 640px) {
+		.stage {
+			grid-template-columns: 1fr;
+		}
+		.controls {
+			max-height: none;
+			border-left: 0;
+			border-top: 1px solid var(--sl-color-gray-5);
+		}
 	}
 	details {
 		border-top: 1px solid var(--sl-color-gray-5);
@@ -93,20 +152,55 @@ const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls 
 		overflow-x: auto;
 	}
 	label {
+		display: grid;
+		grid-template-columns: 72px minmax(0, 1fr) 36px;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	label input[type='range'] {
+		min-width: 0;
+		width: 100%;
+	}
+	label[hidden] {
+		display: none;
+	}
+	label select {
+		grid-column: 2 / 4;
+	}
+	label.check {
 		display: flex;
-		justify-content: end;
-		flex-direction: column;
-		gap: 0.25rem;
+		gap: 0.4rem;
+	}
+	.colors {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 0.9rem;
+		padding-top: 0.25rem;
+	}
+	.colors label {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.colors input[type='color'] {
+		width: 30px;
+		height: 22px;
+		padding: 0;
+		border: 1px solid var(--sl-color-gray-5);
+		background: none;
 	}
 	output {
 		color: var(--sl-color-gray-3);
-		margin-left: 0.4rem;
+		text-align: right;
 	}
 </style>
 
 <script>
 	import { blend, ready, rgba, type Rgba } from '../scripts/dither';
 	import { shader } from '../engine/dither_slint_engine_web.js';
+
+	const matrixNames = ['bayer2', 'bayer4', 'bayer8', 'blue-noise'];
+	const hex = ([r, g, b]: Rgba) => `#${[r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
 
 	function color(spec: string): Rgba {
 		const [kind, a, b, amount] = spec.split(':');
@@ -118,34 +212,107 @@ const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls 
 			const canvas = demo.querySelector('canvas')!;
 			const context = canvas.getContext('2d')!;
 			const params = JSON.parse(demo.dataset.params!) as number[];
-			const palette = new Uint8Array(demo.dataset.palette!.split(' ').flatMap(color));
+			const noise = demo.dataset.slots === 'noise';
+			const slotNames = noise ? ['Background', 'Color', 'Highlight'] : [];
+			const specs = demo.dataset.palette!.split(' ');
+			const picks: HTMLInputElement[] = [];
 			const input = (name: string) => demo.querySelector<HTMLInputElement>(`[name=${name}]`)!;
+			const controls = [...demo.querySelectorAll<HTMLInputElement>('[data-index]')];
+			let highlight: HTMLInputElement | null = null;
 			let visible = false;
 			let frame = 0;
 			let time = 0;
 			let last = 0;
 
-			const matrixNames = ['bayer2', 'bayer4', 'bayer8', 'blue-noise'];
+			const holder = demo.querySelector('.colors')!;
+			specs.forEach((spec, index) => {
+				const label = document.createElement('label');
+				const pick = document.createElement('input');
+				pick.type = 'color';
+				pick.value = hex(color(spec));
+				label.append(noise ? slotNames[index] : String(index + 1), pick);
+				holder.append(label);
+				picks.push(pick);
+			});
+			if (noise) {
+				const label = document.createElement('label');
+				label.className = 'check';
+				highlight = Object.assign(document.createElement('input'), { type: 'checkbox' });
+				const pick = Object.assign(document.createElement('input'), { type: 'color', value: '#ffffff' });
+				label.append(highlight, ' Highlight ', pick);
+				holder.append(label);
+				picks.push(pick);
+			}
+
+			const colors = () => (noise && !highlight!.checked ? picks.slice(0, 2) : picks).map((pick) => rgba(pick.value));
+
+			const value = (control: HTMLInputElement) => {
+				const kind = control.dataset.kind;
+				if (kind === 'bool') return control.checked ? 'true' : 'false';
+				if (kind === 'angle') return `${control.value}deg`;
+				if (kind === 'select') return control.dataset.options!.split(' ')[Number(control.value)];
+				return control.value;
+			};
+
 			const code = () => {
-				const lines = [
-					`matrix: DitherMatrix.${matrixNames[Number(input('matrix').value)]};`,
-					`cell: ${input('cell').value}px;`,
-					`speed: ${input('speed').value};`,
-				];
-				for (const control of demo.querySelectorAll<HTMLElement>('[data-index]')) {
-					const names = control.dataset.values?.split(' ');
-					const value = params[Number(control.dataset.index)];
-					lines.push(`${control.dataset.prop}: ${names ? names[value] : value};`);
+				const lines = [`matrix: DitherMatrix.${matrixNames[Number(input('matrix').value)]};`, `cell: ${input('cell').value}px;`, `speed: ${input('speed').value};`];
+				if (noise) {
+					lines.push(`background: ${picks[0].value};`, `color: ${picks[1].value};`);
+					if (highlight!.checked) lines.push(`highlight: ${picks[2].value};`);
+				} else {
+					lines.push(`palette: [${picks.map((pick) => pick.value).join(', ')}];`);
+				}
+				let sources = false;
+				for (const control of controls) {
+					if (control.dataset.kind === 'count') continue;
+					if (control.dataset.array) {
+						if (sources) continue;
+						sources = true;
+						const used = controls.filter((item) => item.dataset.array).slice(0, params[0] * 2);
+						lines.push(`${control.dataset.array}: [${used.map((item) => item.value).join(', ')}];`);
+						continue;
+					}
+					lines.push(`${control.dataset.prop}: ${value(control)};`);
 				}
 				demo.querySelector('code')!.textContent = `${demo.dataset.name} {\n${lines.map((line) => `    ${line}\n`).join('')}}`;
 			};
 
+			const sourceInputs = controls.filter((item) => item.dataset.array);
+			const handles = demo.querySelector<HTMLElement>('.handles')!;
+			const place = () => {
+				handles.replaceChildren();
+				for (let i = 0; i < Math.min(4, params[0]); i++) {
+					if (!sourceInputs.length) break;
+					const dot = document.createElement('i');
+					const [x, y] = [sourceInputs[i * 2], sourceInputs[i * 2 + 1]];
+					dot.style.left = `${Number(x.value) * 100}%`;
+					dot.style.top = `${Number(y.value) * 100}%`;
+					dot.addEventListener('pointerdown', (event) => {
+						dot.setPointerCapture(event.pointerId);
+						const move = (at: PointerEvent) => {
+							const box = handles.getBoundingClientRect();
+							const fraction = (value: number, size: number) => Math.min(1, Math.max(0, value / size));
+							for (const [input, value] of [[x, fraction(at.clientX - box.left, box.width)], [y, fraction(at.clientY - box.top, box.height)]] as const) {
+								input.value = value.toFixed(2);
+								params[Number(input.dataset.index)] = Number(input.value);
+							}
+							dot.style.left = `${Number(x.value) * 100}%`;
+							dot.style.top = `${Number(y.value) * 100}%`;
+							show();
+						};
+						dot.addEventListener('pointermove', move);
+						dot.addEventListener('pointerup', () => dot.removeEventListener('pointermove', move), { once: true });
+					});
+					handles.append(dot);
+				}
+			};
+
 			const show = () => {
-				code();
 				const cell = Number(input('cell').value);
 				const columns = Math.max(1, Math.round(canvas.clientWidth / cell));
 				const rows = Math.max(1, Math.round(canvas.clientHeight / cell));
 				const at = Number(input('speed').value) === 0 ? Number(demo.dataset.still) : time;
+				const palette = new Uint8Array(colors().flat());
 				const bytes = shader(demo.dataset.field!, columns, rows, at, new Float32Array(params), palette, Number(input('matrix').value), 0);
 				canvas.width = columns;
 				canvas.height = rows;
@@ -153,6 +320,7 @@ const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls 
 				for (const output of demo.querySelectorAll('output')) {
 					output.textContent = output.closest('label')!.querySelector('input')!.value;
 				}
+				code();
 			};
 
 			const run = (now: number) => {
@@ -165,10 +333,16 @@ const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls 
 
 			demo.addEventListener('input', (event) => {
 				const target = event.target as HTMLInputElement;
-				if (target.dataset.index) params[Number(target.dataset.index)] = Number(target.value);
+				if (target.dataset.index) {
+					const kind = target.dataset.kind;
+					params[Number(target.dataset.index)] =
+						kind === 'bool' ? (target.checked ? 1 : 0) : kind === 'angle' ? (Number(target.value) * Math.PI) / 180 : Number(target.value);
+				}
+				if (target.dataset.kind === 'count') place();
 				show();
 			});
-			code();
+			place();
+			show();
 			new IntersectionObserver(([entry]) => {
 				visible = entry.isIntersecting;
 				if (visible && !frame) {

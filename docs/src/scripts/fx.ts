@@ -29,7 +29,7 @@ function canvasOn(host: HTMLElement) {
 	const canvas = document.createElement('canvas');
 	canvas.className = 'layer fx';
 	canvas.style.opacity = '1';
-	canvas.hidden = true;
+	canvas.style.display = 'none';
 	host.append(canvas);
 	return canvas;
 }
@@ -40,7 +40,7 @@ function draw(canvas: HTMLCanvasElement, bytes: Uint8Array, columns: number, row
 	canvas.style.width = `${columns * step}px`;
 	canvas.style.height = `${rows * step}px`;
 	canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
-	canvas.hidden = false;
+	canvas.style.display = '';
 }
 
 export function attachFx(host: HTMLElement, trigger: HTMLElement, options: FxOptions) {
@@ -75,13 +75,35 @@ export function attachFx(host: HTMLElement, trigger: HTMLElement, options: FxOpt
 	};
 
 	function startHover() {
-		if (!held() && m().hover !== 'none' && enterStart === null) enterStart = performance.now();
+		const name = m().hover;
+		if (!held() && name !== 'none' && enterStart === null && name in hoverTime) {
+			const started = (enterStart = performance.now());
+			window.setTimeout(() => {
+				if (enterStart === started) {
+					enterStart = null;
+					hoverCanvas.style.display = 'none';
+				}
+			}, hoverTime[name as keyof typeof hoverTime] / pace() + 100);
+		}
 		schedule();
 	}
 
+	const clear = () => {
+		for (const canvas of [idleCanvas, hoverCanvas, pressCanvas]) canvas.style.display = 'none';
+	};
+
 	function tick(now: number) {
 		frame = 0;
-		const dt = now - last;
+		try {
+			frameAt(now);
+		} catch (error) {
+			clear();
+			throw error;
+		}
+	}
+
+	function frameAt(now: number) {
+		const dt = Math.max(0, now - last);
 		last = now;
 		const [columns, rows] = size();
 		let busy = false;
@@ -97,13 +119,13 @@ export function attachFx(host: HTMLElement, trigger: HTMLElement, options: FxOpt
 			entering = (now - enterStart) * pace() < total;
 			if (!entering) enterStart = null;
 		}
-		if (entering || level > 0.01) {
+		if (entering || level > 0.01 || (hovering && held())) {
 			const total = hoverTime[hoverName as keyof typeof hoverTime] ?? 1;
 			const t = held() || enterStart === null ? 0 : ((now - enterStart) * pace()) / total;
 			draw(hoverCanvas, hover(hovers.indexOf(hoverName), columns, rows, t, spot[0], spot[1], level, amount(), color4, matrix()), columns, rows, cell);
 			busy = true;
 		} else {
-			hoverCanvas.hidden = true;
+			hoverCanvas.style.display = 'none';
 		}
 
 		const pressName = m().press;
@@ -115,10 +137,10 @@ export function attachFx(host: HTMLElement, trigger: HTMLElement, options: FxOpt
 				busy = true;
 			} else {
 				pressStart = null;
-				pressCanvas.hidden = true;
+				pressCanvas.style.display = 'none';
 			}
 		} else {
-			pressCanvas.hidden = true;
+			pressCanvas.style.display = 'none';
 		}
 
 		const idleName = m().idle;
@@ -141,18 +163,27 @@ export function attachFx(host: HTMLElement, trigger: HTMLElement, options: FxOpt
 		if (t >= 0) {
 			draw(idleCanvas, idle(idles.indexOf(idleName), columns, rows, t, amount(), color4, cell, matrix()), columns, rows, cell);
 		} else {
-			idleCanvas.hidden = true;
+			idleCanvas.style.display = 'none';
 		}
 		busy ||= idleName !== 'none';
 
 		if (busy) schedule();
+		else clear();
+	}
+
+	let timer = 0;
+
+	function run(now?: number) {
+		cancelAnimationFrame(frame);
+		clearTimeout(timer);
+		tick(typeof now === 'number' ? now : performance.now());
 	}
 
 	function schedule() {
-		if (!frame) {
-			last = performance.now();
-			frame = requestAnimationFrame(tick);
-		}
+		if (frame) return;
+		last = performance.now();
+		frame = requestAnimationFrame(run);
+		timer = window.setTimeout(run, 100);
 	}
 
 	trigger.addEventListener('pointerenter', (event) => {
@@ -167,12 +198,25 @@ export function attachFx(host: HTMLElement, trigger: HTMLElement, options: FxOpt
 	trigger.addEventListener('pointerleave', () => {
 		hovering = false;
 		schedule();
+		window.setTimeout(() => {
+			if (!hovering) {
+				level = 0;
+				if (enterStart === null) hoverCanvas.style.display = 'none';
+			}
+		}, 1500);
 	});
 	trigger.addEventListener('pointerdown', (event) => {
 		if (m().press === 'none') return;
 		pressAt = cellsAt(event);
 		seed += 1;
-		pressStart = performance.now();
+		const started = (pressStart = performance.now());
+		const total = pressTime[m().press as keyof typeof pressTime];
+		window.setTimeout(() => {
+			if (pressStart === started) {
+				pressStart = null;
+				pressCanvas.style.display = 'none';
+			}
+		}, total / pace() + 100);
 		schedule();
 	});
 	schedule();

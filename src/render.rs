@@ -96,6 +96,55 @@ pub fn fill(columns: u32, rows: u32, options: &FillOptions) -> Image {
     })
 }
 
+const RULE_STEPS: usize = 10;
+
+pub struct RuleOptions {
+    pub vertical: bool,
+    pub fade_start: bool,
+    pub fade_end: bool,
+    pub fade: f32,
+    pub strength: f32,
+    pub variant: FillVariant,
+    pub matrix: Matrix,
+    pub color: Color,
+}
+
+fn rule_level(percent: f32, options: &RuleOptions) -> usize {
+    let ramps = options.fade_start as u8 + options.fade_end as u8;
+    if ramps == 0 {
+        return RULE_STEPS;
+    }
+    let ramp = (options.fade * 50.0).min(100.0 / ramps as f32);
+    let step = ramp / RULE_STEPS as f32;
+    let index = |from: f32| (((percent - from) / step) as usize).min(RULE_STEPS - 1);
+    if options.fade_start && percent < ramp {
+        index(0.0)
+    } else if options.fade_end && percent >= 100.0 - ramp {
+        RULE_STEPS - 1 - index(100.0 - ramp)
+    } else {
+        RULE_STEPS
+    }
+}
+
+pub fn rule(columns: u32, rows: u32, options: &RuleOptions) -> Image {
+    let (columns, rows) = (columns.max(1), rows.max(1));
+    let ink = pixel(options.color);
+    paint(columns, rows, |x, y| {
+        let along = if options.vertical { (y as f32 + 0.5) / rows as f32 } else { (x as f32 + 0.5) / columns as f32 };
+        let level = rule_level(along * 100.0, options);
+        let tone = options.strength * ((level + 1) as f32 / (RULE_STEPS + 1) as f32).powf(1.6);
+        let (cx, cy) = (x as i32, y as i32);
+        match options.variant {
+            FillVariant::Gradient if options.matrix.is_inked(cx, cy, tone) => ink,
+            FillVariant::Gradient => Rgba8Pixel::new(0, 0, 0, 0),
+            textured if texture_inked(textured, x as usize, y as usize) => {
+                Rgba8Pixel::new(ink.r, ink.g, ink.b, (ink.a as f32 * tone).round() as u8)
+            }
+            _ => Rgba8Pixel::new(0, 0, 0, 0),
+        }
+    })
+}
+
 pub struct GradientOptions {
     pub angle: f32,
     pub from: f32,
@@ -289,5 +338,38 @@ mod tests {
         assert!((0..4).all(|y| at(0, y).g == 0 && at(0, y).r == 0));
         assert!((0..4).all(|y| at(31, y).g == 255));
         assert!((0..32).any(|x| at(x, 0).r == 255 && at(x, 0).g == 0));
+    }
+
+    fn rule_of(columns: u32, options: RuleOptions) -> Vec<Rgba8Pixel> {
+        rule(columns, 1, &options).to_rgba8().unwrap().as_slice().to_vec()
+    }
+
+    fn faded(strength: f32) -> RuleOptions {
+        RuleOptions {
+            vertical: false,
+            fade_start: true,
+            fade_end: true,
+            fade: 0.6,
+            strength,
+            variant: FillVariant::Gradient,
+            matrix: Matrix::Bayer2,
+            color: Color::from_rgb_u8(255, 0, 0),
+        }
+    }
+
+    #[test]
+    fn a_rule_is_solid_in_the_middle_and_thins_towards_both_tips() {
+        let pixels = rule_of(100, faded(1.0));
+        let inked = |range: std::ops::Range<usize>| pixels[range].iter().filter(|p| p.a > 0).count();
+        assert!(inked(40..60) > inked(0..10));
+        assert!(inked(40..60) > inked(90..100));
+        assert_eq!(inked(0..2), 0);
+    }
+
+    #[test]
+    fn a_rule_without_fade_keeps_the_same_density_along_its_length() {
+        let options = RuleOptions { fade_start: false, fade_end: false, ..faded(1.0) };
+        let pixels = rule_of(100, options);
+        assert_eq!(pixels[..50].iter().filter(|p| p.a > 0).count(), pixels[50..].iter().filter(|p| p.a > 0).count());
     }
 }

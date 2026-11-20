@@ -26,6 +26,7 @@ export default defineConfig({
 						{ label: 'DitherButton', slug: 'components/button' },
 						{ label: 'DitherBadge', slug: 'components/badge' },
 						{ label: 'DitherCard', slug: 'components/card' },
+						{ label: 'DitherDivider', slug: 'components/divider' },
 						{ label: 'DitherGradient', slug: 'components/gradient' },
 						{ label: 'DitherImage', slug: 'components/image' },
 					],

@@ -1,0 +1,110 @@
+import { DitherEngine, DitherFill, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export enum DitherOrientation { horizontal, vertical }
+
+component Rule {
+    in property <bool> vertical;
+    in property <bool> fade-start;
+    in property <bool> fade-end;
+    in property <float> fade;
+    in property <float> strength;
+    in property <DitherFill> fill;
+    in property <DitherMatrix> matrix;
+    in property <color> color;
+    in property <length> step;
+
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+
+    Image {
+        x: 0;
+        y: 0;
+        width: root.columns * root.step;
+        height: root.rows * root.step;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: DitherEngine.rule(root.columns, root.rows, root.vertical, root.fade-start, root.fade-end, root.fade, root.strength, root.fill, root.matrix, root.color);
+    }
+}
+
+export component DitherDivider {
+    in property <DitherOrientation> orientation: DitherOrientation.horizontal;
+    in property <string> label;
+    in property <int> thickness: 2;
+    in property <float> fade: 0.6;
+    in property <float> strength: 0.6;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 2px;
+
+    property <bool> vertical: root.orientation == DitherOrientation.vertical;
+    property <bool> labelled: root.label != "" && !root.vertical;
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <length> breadth: max(1, root.thickness) * root.step;
+    property <float> amount: Math.min(1, Math.max(0, root.fade));
+
+    accessible-role: AccessibleRole.none;
+    min-width: root.vertical ? root.breadth : 0;
+    min-height: root.vertical ? 0 : root.labelled ? max(root.breadth, 12px) : root.breadth;
+    preferred-width: root.vertical ? root.breadth : 0px;
+    preferred-height: root.vertical ? 0px : root.labelled ? max(root.breadth, 12px) : root.breadth;
+    horizontal-stretch: root.vertical ? 0 : 1;
+    vertical-stretch: root.vertical ? 1 : 0;
+
+    if !root.labelled: Rule {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        vertical: root.vertical;
+        fade-start: true;
+        fade-end: true;
+        fade: root.amount;
+        strength: root.strength;
+        fill: root.fill;
+        matrix: root.matrix;
+        color: root.color;
+        step: root.step;
+    }
+
+    if root.labelled: HorizontalLayout {
+        spacing: 12px;
+        alignment: stretch;
+
+        Rule {
+            height: root.breadth;
+            vertical: false;
+            fade-start: true;
+            fade-end: false;
+            fade: root.amount * 2;
+            strength: root.strength;
+            fill: root.fill;
+            matrix: root.matrix;
+            color: root.color;
+            step: root.step;
+        }
+
+        Text {
+            text: root.label;
+            color: DitherTheme.foreground.with-alpha(0.6);
+            font-size: 12px;
+            font-weight: 500;
+            vertical-alignment: center;
+        }
+
+        Rule {
+            height: root.breadth;
+            vertical: false;
+            fade-start: false;
+            fade-end: true;
+            fade: root.amount * 2;
+            strength: root.strength;
+            fill: root.fill;
+            matrix: root.matrix;
+            color: root.color;
+            step: root.step;
+        }
+    }
+}

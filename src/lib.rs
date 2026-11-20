@@ -50,6 +50,19 @@ macro_rules! install {
             };
             render::fill(cells(columns), cells(rows), &options)
         });
+        engine.on_rule(|columns, rows, vertical, fade_start, fade_end, fade, strength, variant, matrix, color| {
+            let options = render::RuleOptions {
+                vertical,
+                fade_start,
+                fade_end,
+                fade,
+                strength,
+                variant: FillVariant::ALL[variant as usize],
+                matrix: Matrix::ALL[matrix as usize],
+                color,
+            };
+            render::rule(cells(columns), cells(rows), &options)
+        });
         engine.on_picture(|source, columns, rows, method, threshold, palette| {
             let method = Method::ALL[method as usize];
             let options = render::PictureOptions { method, threshold, palette: palette.iter().collect() };

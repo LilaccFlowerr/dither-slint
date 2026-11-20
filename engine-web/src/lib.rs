@@ -118,3 +118,29 @@ pub fn picture(pixels: &[u8], width: u32, height: u32, columns: u32, rows: u32, 
     let options = render::PictureOptions { method: Method::ALL[method], threshold, palette: colors(palette) };
     bytes(render::picture(&source, columns, rows, &options))
 }
+
+#[wasm_bindgen]
+pub fn rule(
+    columns: u32,
+    rows: u32,
+    vertical: bool,
+    fade_start: bool,
+    fade_end: bool,
+    fade: f32,
+    strength: f32,
+    variant: usize,
+    matrix: usize,
+    color: &[u8],
+) -> Vec<u8> {
+    let options = render::RuleOptions {
+        vertical,
+        fade_start,
+        fade_end,
+        fade,
+        strength,
+        variant: FillVariant::ALL[variant],
+        matrix: Matrix::ALL[matrix],
+        color: colors(color)[0],
+    };
+    bytes(render::rule(columns, rows, &options))
+}
