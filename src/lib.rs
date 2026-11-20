@@ -64,6 +64,10 @@ macro_rules! install {
             };
             render::rule(cells(columns), cells(rows), &options)
         });
+        engine.on_slider_fill(|columns, rows, end, hot, matrix, color| {
+            let options = render::SliderOptions { end, hot, matrix: Matrix::ALL[matrix as usize], color };
+            render::slider_fill(cells(columns), cells(rows), &options)
+        });
         engine.on_picture(|source, columns, rows, method, threshold, palette| {
             let method = Method::ALL[method as usize];
             let options = render::PictureOptions { method, threshold, palette: palette.iter().collect() };

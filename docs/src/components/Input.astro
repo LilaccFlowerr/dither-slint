@@ -1,0 +1,248 @@
+---
+interface Props {
+	label?: string;
+	placeholder?: string;
+	value?: string;
+	description?: string;
+	error?: string;
+	size?: 'sm' | 'md' | 'lg';
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	color?: string;
+	bloom?: 'off' | 'low' | 'high';
+	icon?: boolean;
+	clearable?: boolean;
+	password?: boolean;
+	disabled?: boolean;
+}
+
+const { label, placeholder, value = '', description, error, size = 'md', fill = 'gradient', color = 'ink', bloom = 'off', icon, clearable, password, disabled } = Astro.props;
+---
+
+<div class="input" data-size={size} data-fill={fill} data-color={color} data-bloom={bloom} data-invalid={error ? '' : undefined} data-disabled={disabled ? '' : undefined}>
+	{label && <label class="label">{label}</label>}
+	<div class="field">
+		<span class="fx"></span>
+		{icon && <svg class="icon" viewBox="0 0 16 16" width="16" height="16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 L14 14" /></svg>}
+		<input type={password ? 'password' : 'text'} value={value} placeholder={placeholder} disabled={disabled} aria-label={label ?? placeholder} />
+		{clearable && <button type="button" class="clear" tabindex="-1" aria-label="Clear"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 2 L10 10 M10 2 L2 10" /></svg></button>}
+		{password && <button type="button" class="reveal" tabindex="-1" aria-label="Show password"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M1.5 8 C1.5 8 4 3.5 8 3.5 C12 3.5 14.5 8 14.5 8 C14.5 8 12 12.5 8 12.5 C4 12.5 1.5 8 1.5 8 Z" /><circle cx="8" cy="8" r="2" /><path class="slash" d="M2.5 13.5 L13.5 2.5" /></svg></button>}
+	</div>
+	{error ? <p class="message error">{error}</p> : description && <p class="message">{description}</p>}
+</div>
+
+<style is:global>
+	.input {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		width: 100%;
+		max-width: 340px;
+		color: #ebe5d9;
+		font-size: 14px;
+	}
+	.input .label {
+		font-size: 13px;
+		font-weight: 500;
+	}
+	.input .field {
+		position: relative;
+		display: flex;
+		align-items: center;
+		isolation: isolate;
+		box-shadow: inset 0 0 0 1px rgba(235, 229, 217, 0.13);
+		transition: box-shadow 220ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.input .field:hover {
+		box-shadow: inset 0 0 0 1px rgba(235, 229, 217, 0.24);
+	}
+	.input .field:focus-within,
+	.input[data-invalid] .field {
+		box-shadow: inset 0 0 0 1px var(--edge);
+	}
+	.input[data-disabled] .field {
+		opacity: 0.45;
+	}
+	.input .fx {
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		overflow: hidden;
+		border-radius: inherit;
+		pointer-events: none;
+	}
+	.input .floor {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 38%;
+		overflow: hidden;
+	}
+	.input .floor .inner {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+	.input .layer {
+		position: absolute;
+		top: 0;
+		left: 0;
+		image-rendering: pixelated;
+		opacity: var(--opacity);
+	}
+	.input .layer.hover,
+	.input .layer.focus {
+		opacity: 0;
+		transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.input .field:hover:not(:focus-within) .layer.hover {
+		opacity: var(--opacity);
+	}
+	.input .field:focus-within .layer.focus,
+	.input[data-invalid] .layer.focus {
+		opacity: var(--opacity);
+	}
+	.input input {
+		flex: 1;
+		min-width: 0;
+		height: 100%;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		outline: none;
+		color: inherit;
+		font: inherit;
+	}
+	.input input::placeholder {
+		color: rgba(235, 229, 217, 0.45);
+	}
+	.input svg {
+		flex: none;
+		fill: none;
+		stroke: rgba(235, 229, 217, 0.6);
+		stroke-width: 1.5;
+		stroke-linecap: round;
+	}
+	.input .field:focus-within .icon {
+		stroke: #ebe5d9;
+	}
+	.input button {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 22px;
+		height: 22px;
+		padding: 0;
+		border: 0;
+		border-radius: 5px;
+		background: none;
+		cursor: pointer;
+	}
+	.input button:hover {
+		background: rgba(235, 229, 217, 0.08);
+	}
+	.input button:hover svg {
+		stroke: #ebe5d9;
+	}
+	.input .clear {
+		visibility: hidden;
+	}
+	.input .field[data-filled] .clear {
+		visibility: visible;
+	}
+	.input .slash {
+		display: none;
+	}
+	.input .field[data-revealed] .slash {
+		display: inline;
+	}
+	.input .message {
+		margin: 0 !important;
+		font-size: 12px;
+		color: rgba(235, 229, 217, 0.6);
+	}
+	.input .message.error {
+		color: #ea3c3c;
+	}
+</style>
+
+<script>
+	import { css, layer, ready, rgba, type Layer } from '../scripts/dither';
+	import { attachFx } from '../scripts/fx';
+
+	const specs = {
+		sm: { height: 32, radius: 8, pad: 10, gap: 6, font: 13 },
+		md: { height: 40, radius: 10, pad: 12, gap: 8, font: 14 },
+		lg: { height: 44, radius: 11, pad: 14, gap: 10, font: 15 },
+	} as const;
+	const step = 2;
+
+	function build(root: HTMLElement) {
+		const { size, fill, bloom } = root.dataset as Record<string, string>;
+		const spec = specs[size as keyof typeof specs];
+		const invalid = root.dataset.invalid !== undefined;
+		const color = invalid ? rgba('red') : rgba(root.dataset.color!);
+		const field = root.querySelector<HTMLElement>('.field')!;
+		const input = field.querySelector('input')!;
+		const rows = Math.round(spec.height / step);
+		const cells = (share: number) => Math.max(2, Math.round(rows * share));
+		const textured = fill === 'dotted' || fill === 'hatched';
+
+		Object.assign(field.style, {
+			height: `${spec.height}px`,
+			borderRadius: `${spec.radius}px`,
+			padding: `0 ${spec.pad}px`,
+			gap: `${spec.gap}px`,
+			fontSize: `${spec.font}px`,
+			background: css([color[0], color[1], color[2], 15]),
+			boxShadow: bloom !== 'off' ? undefined : '',
+		});
+		field.style.setProperty('--edge', css([color[0], color[1], color[2], 158]));
+		input.style.caretColor = css(color);
+
+		const fx = field.querySelector<HTMLElement>('.fx')!;
+		const floor = document.createElement('span');
+		floor.className = 'floor';
+		const inner = document.createElement('span');
+		inner.className = 'inner';
+		inner.style.height = `${spec.height}px`;
+		floor.append(inner);
+		fx.append(floor);
+		const layers: Layer[] = [
+			{ variant: textured ? (fill as Layer['variant']) : 'gradient', length: fill === 'solid' ? 2 : cells(0.34), from: fill === 'solid' ? 1 : 0.5, color, opacity: textured ? 0.45 : 1, frame: false },
+			{ length: cells(0.5), from: 0.6, color, hover: true, frame: false },
+			{ length: cells(0.7), from: 0.85, color, opacity: 0.9, frame: false },
+		];
+		for (const options of layers) layer(inner, step, options);
+		inner.querySelectorAll('canvas')[2].classList.add('focus');
+
+		attachFx(fx, field, { color, strength: 0.55, cell: step });
+
+		const sync = () => field.toggleAttribute('data-filled', input.value !== '');
+		input.addEventListener('input', sync);
+		sync();
+
+		root.querySelector('.clear')?.addEventListener('click', () => {
+			input.value = '';
+			sync();
+			input.focus();
+		});
+		input.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && root.querySelector('.clear') && input.value !== '') {
+				event.preventDefault();
+				input.value = '';
+				sync();
+			}
+		});
+		root.querySelector('.reveal')?.addEventListener('click', () => {
+			const show = input.type === 'password';
+			input.type = show ? 'text' : 'password';
+			field.toggleAttribute('data-revealed', show);
+		});
+	}
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.input')) build(root);
+	});
+</script>

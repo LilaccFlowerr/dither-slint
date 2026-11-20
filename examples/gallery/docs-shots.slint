@@ -9,6 +9,8 @@ import { ImagePage } from "image-page.slint";
 import { MotionPage } from "motion-page.slint";
 import { DividerPage } from "divider-page.slint";
 import { SwitchPage } from "switch-page.slint";
+import { SliderPage } from "slider-page.slint";
+import { InputPage } from "input-page.slint";
 
 export component Shots inherits Window {
     in property <int> which;
@@ -26,5 +28,7 @@ export component Shots inherits Window {
         if root.which == 6: MotionPage { }
         if root.which == 7: DividerPage { }
         if root.which == 8: SwitchPage { }
+        if root.which == 9: SliderPage { }
+        if root.which == 10: InputPage { }
     }
 }
