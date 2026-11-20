@@ -37,9 +37,15 @@ const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls 
 		<label><span>Speed <output></output></span>
 			<input type="range" name="speed" min="0" max="3" step="0.1" value="1" />
 		</label>
-		{controls.map((control) => (
+		{controls.map((control) => control.values ? (
+			<label>{control.label}
+				<select data-index={control.index} data-prop={control.prop} data-values={control.values.join(' ')}>
+					{control.values.map((value, index) => <option value={index} selected={index === params[control.index]}>{value.split('.')[1]}</option>)}
+				</select>
+			</label>
+		) : (
 			<label><span>{control.label} <output></output></span>
-				<input type="range" data-index={control.index} data-prop={control.prop} data-values={control.values?.join(" ")} min={control.min} max={control.max} step={control.step} value={params[control.index]} />
+				<input type="range" data-index={control.index} data-prop={control.prop} min={control.min} max={control.max} step={control.step} value={params[control.index]} />
 			</label>
 		))}
 	</div>
@@ -119,22 +125,19 @@ const { field, name, params, palette, matrix = 1, cell = 3, still = 0, controls 
 			let time = 0;
 			let last = 0;
 
-			const initial = [...params];
-			const initialMatrix = input('matrix').value;
 			const matrixNames = ['bayer2', 'bayer4', 'bayer8', 'blue-noise'];
 			const code = () => {
-				const lines: string[] = [];
-				if (input('matrix').value !== initialMatrix) lines.push(`matrix: DitherMatrix.${matrixNames[Number(input('matrix').value)]};`);
-				if (input('cell').value !== '3') lines.push(`cell: ${input('cell').value}px;`);
-				if (input('speed').value !== '1') lines.push(`speed: ${input('speed').value};`);
-				for (const control of demo.querySelectorAll<HTMLInputElement>('[data-index]')) {
-					const index = Number(control.dataset.index);
-					if (params[index] === initial[index]) continue;
+				const lines = [
+					`matrix: DitherMatrix.${matrixNames[Number(input('matrix').value)]};`,
+					`cell: ${input('cell').value}px;`,
+					`speed: ${input('speed').value};`,
+				];
+				for (const control of demo.querySelectorAll<HTMLElement>('[data-index]')) {
 					const names = control.dataset.values?.split(' ');
-					lines.push(`${control.dataset.prop}: ${names ? names[params[index]] : params[index]};`);
+					const value = params[Number(control.dataset.index)];
+					lines.push(`${control.dataset.prop}: ${names ? names[value] : value};`);
 				}
-				const body = lines.map((line) => `    ${line}\n`).join('');
-				demo.querySelector('code')!.textContent = `${demo.dataset.name} {${lines.length ? '\n' + body : ' '}}`;
+				demo.querySelector('code')!.textContent = `${demo.dataset.name} {\n${lines.map((line) => `    ${line}\n`).join('')}}`;
 			};
 
 			const show = () => {
