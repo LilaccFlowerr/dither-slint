@@ -1,0 +1,104 @@
+---
+title: DitherInput
+description: A text field with a dithered floor that rises as you hover and focus.
+---
+
+import Input from '../../../components/Input.astro';
+import Demo from '../../../components/Demo.astro';
+
+The field is drawn like the outline button: a faint tint of the colour inside a hairline, with a dithered floor that rises from the bottom edge. Hover thickens the floor a little. Focus fades in a denser, taller floor and turns the hairline to the colour. Only opacity animates, so every dot stays on the grid.
+
+<Demo
+	title="Field"
+	code={`DitherInput {
+    label: "Email";
+    placeholder: "you@example.com";
+    description: "We only use it to sign you in.";
+}`}
+>
+	<Input label="Email" placeholder="you@example.com" description="We only use it to sign you in." />
+</Demo>
+
+<Demo
+	title="Search, password and error"
+	code={`DitherInput {
+    icon: @image-url("search.svg");
+    placeholder: "Search";
+    clearable: true;
+}
+
+DitherInput {
+    label: "Password";
+    password: true;
+}
+
+DitherInput {
+    label: "Username";
+    text: "ab";
+    error: "Use at least three characters.";
+}`}
+>
+	<Input icon clearable placeholder="Search" value="dither" />
+	<Input label="Password" password value="hunter2" />
+	<Input label="Username" value="ab" error="Use at least three characters." />
+</Demo>
+
+<Demo
+	title="Sizes and fills"
+	code={`DitherInput {
+    size: DitherInputSize.sm;
+    placeholder: "Small";
+}
+
+DitherInput {
+    size: DitherInputSize.lg;
+    fill: DitherFill.dotted;
+    placeholder: "Large";
+}
+
+DitherInput {
+    fill: DitherFill.hatched;
+    color: DitherPalette.green;
+    placeholder: "Hatched";
+}
+
+DitherInput {
+    enabled: false;
+    placeholder: "Disabled";
+}`}
+>
+	<Input size="sm" placeholder="Small" />
+	<Input size="lg" fill="dotted" placeholder="Large" />
+	<Input fill="hatched" color="green" placeholder="Hatched" />
+	<Input disabled placeholder="Disabled" />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `text` | | The current text. |
+| `placeholder` | | Shown while the field is empty. |
+| `label` | | A label above the field. |
+| `description` | | Muted help text below the field. |
+| `error` | | An error below the field. Turns it red. |
+| `icon` | | An image before the text, such as a magnifier for search. |
+| `password` | `false` | Hides the text and adds a show and hide button. |
+| `clearable` | `false` | A clear button while there is text. Escape clears too. |
+| `fill` | `gradient` | Texture of the floor: `gradient`, `dotted`, `hatched` or `solid`. |
+| `color` | `DitherTheme.ink` | Colour of the tint, floor and focus edge. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `size` | `md` | `sm`, `md` or `lg`: 32, 40 and 44 pixels high. |
+| `bloom` | `off` | A soft glow in the colour while focused. |
+| `cell` | `2px` | Size of one dither cell. |
+| `enabled` | `true` | Drops to 45% opacity and ignores input when `false`. |
+
+`edited(string)` is called whenever the text changes, `accepted(string)` when you press Enter and `cleared()` after the clear button or Escape.
+
+```slint
+DitherInput {
+    edited(text) => {
+        debug(text);
+    }
+}
+```

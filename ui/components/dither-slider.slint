@@ -1,0 +1,233 @@
+import { DitherBloom, DitherEdge, DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherLayer as Layer } from "layer.slint";
+
+export enum DitherSliderSize { sm, md, lg }
+
+export component DitherSlider {
+    in-out property <float> value;
+    in property <float> minimum: 0;
+    in property <float> maximum: 100;
+    in property <float> step: 1;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherSliderSize> size: DitherSliderSize.md;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 2px;
+    in property <bool> enabled: true;
+    out property <bool> has-focus: focus.has-focus;
+    out property <bool> dragging: touch.pressed;
+    callback changed(float);
+
+    property <length> unit: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    pure function by-size(small: length, medium: length, large: length) -> length {
+        if root.size == DitherSliderSize.sm { return small; }
+        if root.size == DitherSliderSize.lg { return large; }
+        return medium;
+    }
+
+    property <int> rows: Math.max(2, Math.round(root.by-size(6px, 8px, 12px) / root.unit));
+    property <int> across: Math.max(3, Math.round(root.by-size(14px, 18px, 22px) / root.unit));
+    property <int> tall: Math.max(root.rows + 4, Math.round(root.by-size(20px, 24px, 30px) / root.unit));
+    property <length> thumb-w: (Math.mod(root.across, 2) == 0 ? root.across + 1 : root.across) * root.unit;
+    property <length> thumb-h: root.tall * root.unit;
+    property <length> track-h: root.rows * root.unit;
+    property <int> columns: Math.floor(root.width / root.unit);
+
+    property <float> ratio: root.maximum > root.minimum ? Math.min(1, Math.max(0, (root.value - root.minimum) / (root.maximum - root.minimum))) : 0;
+    property <length> travel: root.width - root.thumb-w;
+    property <length> centre: root.thumb-w / 2 + root.ratio * root.travel;
+    property <int> end: Math.round(root.centre / root.unit - root.thumb-w / 2 / root.unit) - 1;
+    property <float> hot: root.enabled && (touch.has-hover || root.has-focus || root.dragging) ? 1 : 0;
+
+    property <color> light: DitherEngine.mix(root.color, white, 0.42);
+    property <color> dark: DitherEngine.mix(root.color, black, 0.48);
+
+    pure function thumb-cells(share: float) -> float {
+        return max(2, Math.round(root.tall * share));
+    }
+
+    function set(next: float) {
+        if root.enabled {
+            let snapped = root.step > 0 ? root.minimum + Math.round((next - root.minimum) / root.step) * root.step : next;
+            let clamped = Math.min(root.maximum, Math.max(root.minimum, snapped));
+            if clamped != root.value {
+                root.value = clamped;
+                root.changed(clamped);
+            }
+        }
+    }
+
+    function from-pointer(x: length) {
+        if root.travel > 0 {
+            root.set(root.minimum + (x - root.thumb-w / 2) / root.travel * (root.maximum - root.minimum));
+        }
+    }
+
+    function nudge(amount: float) {
+        root.set(root.value + amount * (root.step > 0 ? root.step : (root.maximum - root.minimum) / 100));
+    }
+
+    min-width: 80px;
+    preferred-width: 200px;
+    horizontal-stretch: 1;
+    height: root.thumb-h;
+    opacity: root.enabled ? 1 : 0.45;
+    accessible-role: AccessibleRole.slider;
+    accessible-value: root.value;
+    accessible-value-minimum: root.minimum;
+    accessible-value-maximum: root.maximum;
+    accessible-value-step: root.step;
+    accessible-enabled: root.enabled;
+
+    Rectangle {
+        y: (root.thumb-h - root.track-h) / 2;
+        height: root.track-h;
+        border-radius: root.unit;
+        clip: true;
+        background: root.color.transparentize(0.85);
+
+        Image {
+            x: 0;
+            y: 0;
+            width: root.columns * root.unit;
+            height: root.rows * root.unit;
+            image-fit: ImageFit.fill;
+            image-rendering: pixelated;
+            source: DitherEngine.slider-fill(root.columns, root.rows, root.end, false, root.matrix, root.color);
+        }
+
+        Image {
+            x: 0;
+            y: 0;
+            width: root.columns * root.unit;
+            height: root.rows * root.unit;
+            image-fit: ImageFit.fill;
+            image-rendering: pixelated;
+            opacity: root.hot;
+            animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+            source: DitherEngine.slider-fill(root.columns, root.rows, root.end, true, root.matrix, root.color);
+        }
+    }
+
+    Rectangle {
+        x: root.ratio * root.travel;
+        width: root.thumb-w;
+        height: root.thumb-h;
+
+        Rectangle {
+            x: -3px;
+            y: -3px;
+            width: parent.width + 6px;
+            height: parent.height + 6px;
+            border-radius: root.unit + 3px;
+            border-width: 2px;
+            border-color: DitherTheme.foreground;
+            visible: root.has-focus && !root.dragging;
+        }
+
+        Rectangle {
+            border-radius: root.unit;
+            background: DitherEngine.mix(root.color, black, 0.3);
+            drop-shadow-blur: root.bloom == DitherBloom.off ? 0px : 10px;
+            drop-shadow-color: root.color.transparentize(0.6);
+        }
+
+        Rectangle {
+            x: 1px;
+            y: 1px;
+            width: parent.width - 2px;
+            height: parent.height - 2px;
+            border-radius: root.unit;
+            clip: true;
+            background: root.color;
+
+            Layer {
+                cell: root.unit;
+                length: root.thumb-cells(0.5);
+                color: root.dark;
+                frame: false;
+            }
+
+            Layer {
+                cell: root.unit;
+                edge: DitherEdge.top;
+                length: root.thumb-cells(0.22);
+                color: root.light;
+                frame: false;
+            }
+
+            Layer {
+                cell: root.unit;
+                edge: DitherEdge.top;
+                length: root.thumb-cells(0.7);
+                color: root.light;
+                opacity: touch.has-hover && !root.dragging ? 1 : 0;
+                frame: false;
+                animate opacity { duration: 220ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+            }
+
+            Layer {
+                cell: root.unit;
+                edge: DitherEdge.top;
+                length: root.thumb-cells(0.45);
+                from: 0.5;
+                color: root.dark;
+                opacity: root.dragging ? 1 : 0;
+                frame: false;
+                animate opacity { duration: 80ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+            }
+
+            Rectangle {
+                width: root.unit;
+                height: Math.round(root.tall / 3) * root.unit;
+                background: root.dark;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: MouseCursor.pointer;
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                root.from-pointer(self.mouse-x);
+            }
+        }
+        moved => {
+            root.from-pointer(self.mouse-x);
+        }
+    }
+
+    focus := FocusScope {
+        enabled: root.enabled;
+        focus-on-click: false;
+        key-pressed(event) => {
+            if event.text == Key.RightArrow || event.text == Key.UpArrow {
+                root.nudge(1);
+                return accept;
+            }
+            if event.text == Key.LeftArrow || event.text == Key.DownArrow {
+                root.nudge(-1);
+                return accept;
+            }
+            if event.text == Key.PageUp {
+                root.nudge(10);
+                return accept;
+            }
+            if event.text == Key.PageDown {
+                root.nudge(-10);
+                return accept;
+            }
+            if event.text == Key.Home {
+                root.set(root.minimum);
+                return accept;
+            }
+            if event.text == Key.End {
+                root.set(root.maximum);
+                return accept;
+            }
+            reject
+        }
+    }
+}

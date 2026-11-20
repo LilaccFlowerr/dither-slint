@@ -145,6 +145,28 @@ pub fn rule(columns: u32, rows: u32, options: &RuleOptions) -> Image {
     })
 }
 
+pub struct SliderOptions {
+    pub end: i32,
+    pub hot: bool,
+    pub matrix: Matrix,
+    pub color: Color,
+}
+
+pub fn slider_fill(columns: u32, rows: u32, options: &SliderOptions) -> Image {
+    let (columns, rows) = (columns.max(1), rows.max(1));
+    let (floor, length) = if options.hot { (5.0 / 16.0, 60.0) } else { (2.0 / 16.0, 30.0) };
+    let (ink, clear) = (pixel(options.color), Rgba8Pixel::new(0, 0, 0, 0));
+    paint(columns, rows, |x, y| {
+        let corner = (x == 0 || x + 1 == columns) && (y == 0 || y + 1 == rows);
+        if corner || x as i32 >= options.end {
+            return clear;
+        }
+        let distance = (options.end - 1 - x as i32) as f32;
+        let level = if distance < 2.0 { 1.0 } else { (1.0 - (distance - 1.5) / length * (1.0 - floor)).max(floor) };
+        if options.matrix.is_inked(x as i32, y as i32, level) { ink } else { clear }
+    })
+}
+
 pub struct GradientOptions {
     pub angle: f32,
     pub from: f32,
@@ -371,5 +393,16 @@ mod tests {
         let options = RuleOptions { fade_start: false, fade_end: false, ..faded(1.0) };
         let pixels = rule_of(100, options);
         assert_eq!(pixels[..50].iter().filter(|p| p.a > 0).count(), pixels[50..].iter().filter(|p| p.a > 0).count());
+    }
+
+    #[test]
+    fn the_slider_fill_is_solid_at_the_thumb_and_thins_away_from_it() {
+        let options = SliderOptions { end: 60, hot: false, matrix: Matrix::Bayer4, color: Color::from_rgb_u8(255, 0, 0) };
+        let image = slider_fill(100, 8, &options).to_rgba8().unwrap();
+        let inked = |x: usize| (1..7).filter(|&y| image.as_slice()[y * 100 + x].a > 0).count();
+        assert_eq!(inked(59), 6);
+        assert!(inked(58) == 6);
+        assert!(inked(30) < inked(55));
+        assert_eq!(inked(60), 0);
     }
 }

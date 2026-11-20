@@ -144,3 +144,9 @@ pub fn rule(
     };
     bytes(render::rule(columns, rows, &options))
 }
+
+#[wasm_bindgen]
+pub fn slider_fill(columns: u32, rows: u32, end: i32, hot: bool, matrix: usize, color: &[u8]) -> Vec<u8> {
+    let options = render::SliderOptions { end, hot, matrix: Matrix::ALL[matrix], color: colors(color)[0] };
+    bytes(render::slider_fill(columns, rows, &options))
+}

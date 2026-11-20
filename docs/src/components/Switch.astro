@@ -174,13 +174,11 @@ const { checked, fill = 'gradient', color = 'ink', size = 'md', bloom = 'off', d
 		for (const options of [shade, { edge: 'top', length: cells(rows, 0.25), color: light, frame: false }, { edge: 'top', length: cells(rows, 0.6), color: light, hover: true, frame: false }] as Layer[]) {
 			layer(lit, step, options);
 		}
-		const litFrame = box(lit, 'part', { boxShadow: `inset 0 0 0 1px ${css(edge)}` });
-		void litFrame;
+		box(lit, 'part', { boxShadow: `inset 0 0 0 1px ${css(edge)}` });
 
 		attachFx(surface, button, { color, strength: 0.7, cell: step, effect: { hover: 'none' } });
 
-		const frame = box(button, 'frame', { boxShadow: `inset 0 0 0 1px ${css([grey[0], grey[1], grey[2], 97])}` });
-		void frame;
+		box(button, 'frame', { boxShadow: `inset 0 0 0 1px ${css([grey[0], grey[1], grey[2], 97])}` });
 
 		const thumbBox = box(button, 'thumb', { left: `${pad}px`, top: `${pad}px`, width: `${thumb}px`, height: `${thumb}px`, borderRadius: `${thumbRadius}px` });
 		box(thumbBox, 'part', { background: 'rgba(0, 0, 0, 0.3)', transform: `translateY(${step}px)` });
