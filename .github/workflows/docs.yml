@@ -48,6 +48,9 @@ jobs:
 
       - name: Build the site
         working-directory: docs
+        env:
+          DOCS_SITE: https://lilaccflowerr.github.io
+          DOCS_BASE: /dither-slint
         run: |
           npm ci
           npm run build

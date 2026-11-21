@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "installCommand": "cd docs && npm ci",
+  "buildCommand": "sh scripts/build-docs.sh",
+  "outputDirectory": "docs/dist"
+}
