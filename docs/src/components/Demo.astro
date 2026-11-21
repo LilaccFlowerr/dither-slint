@@ -69,6 +69,15 @@ const { title, code } = Astro.props;
 		gap: 0.75rem 1rem;
 		padding: 1.5rem;
 	}
+	.frame:has(:global(.dmenu)) {
+		overflow: visible;
+	}
+	.frame:has(:global(.dmenu)) .bar {
+		border-radius: 7px 7px 0 0;
+	}
+	.frame:has(:global(.dmenu)) .preview {
+		border-radius: 0 0 7px 7px;
+	}
 	.preview[hidden],
 	.source[hidden] {
 		display: none;
