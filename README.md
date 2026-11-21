@@ -14,10 +14,10 @@ the docs can be found here
 
 ```toml
 [dependencies]
-dither-slint = "0.3"
+dither-slint = "0.4"
 
 [build-dependencies]
-dither-slint = "0.3"
+dither-slint = "0.4"
 slint-build = "1.18"
 ```
 
