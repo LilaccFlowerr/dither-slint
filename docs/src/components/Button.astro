@@ -8,25 +8,28 @@ interface Props {
 	bloom?: 'off' | 'low' | 'high';
 	loading?: boolean;
 	disabled?: boolean;
+	href?: string;
 }
 
-const { text, variant = 'filled', fill = 'gradient', color = 'ink', size = 'md', bloom = 'off', loading, disabled } = Astro.props;
+const { text, variant = 'filled', fill = 'gradient', color = 'ink', size = 'md', bloom = 'off', loading, disabled, href } = Astro.props;
+const Tag = href ? 'a' : 'button';
 ---
 
-<button
+<Tag
+	href={href}
 	class="btn"
 	data-variant={variant}
 	data-fill={fill}
 	data-color={color}
 	data-size={size}
 	data-bloom={bloom}
-	disabled={disabled || loading}
+	disabled={href ? undefined : disabled || loading}
 	data-loading={loading ? '' : undefined}
 	data-disabled={disabled ? '' : undefined}
 >
 	{loading && <span class="busy"><i></i><i></i><i></i></span>}
 	{size === 'icon' ? <svg viewBox="0 0 16 16" width="16" height="16"><path d="M8 3 V13 M3 8 H13" /></svg> : <span class="text">{text}</span>}
-</button>
+</Tag>
 
 <style is:global>
 	.btn {
@@ -45,6 +48,9 @@ const { text, variant = 'filled', fill = 'gradient', color = 'ink', size = 'md',
 		white-space: nowrap;
 		cursor: pointer;
 		transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	a.btn {
+		text-decoration: none;
 	}
 	.btn:active:not(:disabled) {
 		transform: scale(0.97);

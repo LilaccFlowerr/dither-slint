@@ -11,15 +11,19 @@ interface Props {
 	cell?: number;
 	rim?: boolean;
 	radius?: number;
-	width?: number;
+	width?: number | string;
+	href?: string;
 }
 
-const { title, glow = 'top-left', reach = 240, strength = 0.5, interactive, color = 'ink', fill = 'gradient', matrix = 1, cell = 3, rim = true, radius = 14, width = 280 } = Astro.props;
+const { title, glow = 'top-left', reach = 240, strength = 0.5, interactive, color = 'ink', fill = 'gradient', matrix = 1, cell = 3, rim = true, radius = 14, width = 280, href } = Astro.props;
+const Tag = href ? 'a' : 'div';
+const size = typeof width === 'number' ? `${width}px` : width;
 ---
 
-<div
+<Tag
+	href={href}
 	class="card"
-	style={`width: ${width}px; border-radius: ${radius}px`}
+	style={`width: ${size}; border-radius: ${radius}px`}
 	data-glow={glow}
 	data-reach={reach}
 	data-strength={strength}
@@ -35,9 +39,13 @@ const { title, glow = 'top-left', reach = 240, strength = 0.5, interactive, colo
 		{title && <strong>{title}</strong>}
 		<span><slot /></span>
 	</div>
-</div>
+</Tag>
 
 <style is:global>
+	a.card {
+		display: block;
+		text-decoration: none;
+	}
 	.card {
 		position: relative;
 		box-sizing: border-box;
@@ -85,8 +93,8 @@ const { title, glow = 'top-left', reach = 240, strength = 0.5, interactive, colo
 		const color = rgba(data.color!);
 		const color4 = new Uint8Array(color);
 		const glow = glows.indexOf(data.glow!);
-		const columns = Math.ceil(card.clientWidth / step);
-		const rows = Math.ceil(card.clientHeight / step);
+		let columns = Math.ceil(card.clientWidth / step);
+		let rows = Math.ceil(card.clientHeight / step);
 
 		const put = (canvas: HTMLCanvasElement, bytes: Uint8Array) => {
 			canvas.width = columns;
@@ -125,6 +133,15 @@ const { title, glow = 'top-left', reach = 240, strength = 0.5, interactive, colo
 		};
 
 		draw();
+		new ResizeObserver(() => {
+			const wide = Math.ceil(card.clientWidth / step);
+			const tall = Math.ceil(card.clientHeight / step);
+			if (wide === columns && tall === rows) return;
+			columns = wide;
+			rows = tall;
+			sparkleTick = -1;
+			draw();
+		}).observe(card);
 		if (data.interactive !== undefined) {
 			card.addEventListener('pointerenter', () => ((target = 1), !frame && (frame = requestAnimationFrame(run))));
 			card.addEventListener('pointerleave', () => ((target = 0), !frame && (frame = requestAnimationFrame(run))));

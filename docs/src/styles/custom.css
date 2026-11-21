@@ -28,3 +28,62 @@
 .empty .scene canvas {
 	margin-top: 0 !important;
 }
+
+.home-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-top: -1.5rem !important;
+}
+.home-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 1.25rem !important;
+}
+.home-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+	margin-top: 3rem !important;
+}
+.home-actions *,
+.home-badges *,
+.home-grid > *,
+.home-grid .card * {
+	margin-top: 0 !important;
+}
+.home-grid .card .content span {
+	color: #ebe5d9 !important;
+}
+
+.home-grid {
+	margin-bottom: 4rem;
+}
+.home-grid > * {
+	transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.home-grid > a:nth-of-type(even) {
+	transform: translateY(3rem);
+}
+.home-grid > :hover {
+	transform: translateY(-5px);
+}
+.home-grid > a:nth-of-type(even):hover {
+	transform: translateY(calc(3rem - 5px));
+}
+.home-grid .card {
+	min-height: 190px;
+}
+.home-grid .card strong {
+	font-size: 1.2rem;
+}
+@media (max-width: 720px) {
+	.home-grid {
+		grid-template-columns: 1fr;
+	}
+	.home-grid > a:nth-of-type(even),
+	.home-grid > a:nth-of-type(even):hover {
+		transform: none;
+	}
+}

@@ -3,29 +3,38 @@ title: dither-slint
 description: Dithered UI components for Slint, written in Rust.
 template: splash
 hero:
-  tagline: Dithered UI components for Slint. Buttons, badges, cards, images, motion and animated backgrounds, drawn in dots.
-  actions:
-    - text: Get started
-      link: guides/installation/
-      icon: right-arrow
-    - text: See the components
-      link: components/button/
-      variant: minimal
+  tagline: Dithered UI components for Slint, in Rust. Buttons, inputs, sliders, tabs, avatars, motion and animated backgrounds, all drawn in dots.
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import Badge from '../../components/Badge.astro';
+import Button from '../../components/Button.astro';
+import Card from '../../components/Card.astro';
+import HeroBackground from '../../components/HeroBackground.astro';
 
-<CardGrid stagger>
-  <Card title="Components" icon="puzzle">
-    A button, badge, card, gradient and image with a lit, dithered surface.
+<HeroBackground />
+
+<div class="home-actions">
+  <Button href="guides/installation/" text="Get started" size="lg" bloom="low" />
+  <Button href="components/button/" text="See the components" size="lg" variant="outline" />
+</div>
+
+<div class="home-badges">
+  <Badge text="Rust" />
+  <Badge text="Slint" variant="secondary" />
+  <Badge text="Bayer and blue noise" variant="outline" />
+</div>
+
+<div class="home-grid">
+  <Card href="components/button/" title="Components" glow="top-left" interactive strength={0.32} reach={200} width="100%">
+    Buttons, badges, cards, inputs, sliders, switches, tabs, avatars and more, each with a lit, dithered surface.
   </Card>
-  <Card title="Motion" icon="rocket">
+  <Card href="motion/overview/" title="Motion" glow="top-right" color="purple" interactive strength={0.32} reach={200} width="100%">
     Fourteen hover, press and idle effects, from a sweep to a burst of sparks.
   </Card>
-  <Card title="Backgrounds" icon="star">
+  <Card href="backgrounds/overview/" title="Backgrounds" glow="bottom-left" color="green" interactive strength={0.32} reach={200} width="100%">
     Ripples, plasma, waves and noise fields that move, on a CPU renderer in Rust.
   </Card>
-  <Card title="Your own dither" icon="pencil">
+  <Card href="engine/write-your-own/" title="Your own dither" glow="bottom-right" color="orange" interactive strength={0.32} reach={200} width="100%">
     Write a field in Rust that returns a tone per cell and the engine does the rest.
   </Card>
-</CardGrid>
+</div>

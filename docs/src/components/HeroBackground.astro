@@ -1,0 +1,86 @@
+<span class="hero-bg-anchor" hidden></span>
+
+<style is:global>
+	.hero {
+		position: relative;
+		isolation: isolate;
+	}
+	html:has(.hero-bg) {
+		overflow-x: clip;
+	}
+	.hero-bg {
+		position: absolute;
+		z-index: -1;
+		top: -5rem;
+		bottom: -3rem;
+		left: 50%;
+		width: 100vw;
+		transform: translateX(-50%);
+		pointer-events: none;
+		opacity: 0.8;
+		mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
+	}
+	.hero-bg canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		margin: 0 !important;
+		image-rendering: pixelated;
+	}
+</style>
+
+<script>
+	import { blend, ready, rgba } from '../scripts/dither';
+	import { shader } from '../engine/dither_slint_engine_web.js';
+
+	const cell = 3;
+	const speed = 0.5;
+	const params = new Float32Array([1, 0.9, 7, 1.5]);
+
+	ready.then(() => {
+		const hero = document.querySelector<HTMLElement>('.hero');
+		if (!hero) return;
+
+		const box = document.createElement('div');
+		box.className = 'hero-bg';
+		box.setAttribute('aria-hidden', 'true');
+		const canvas = document.createElement('canvas');
+		box.append(canvas);
+		hero.prepend(box);
+
+		const context = canvas.getContext('2d')!;
+		const palette = new Uint8Array([rgba('background'), blend(rgba('background'), rgba('ink'), 0.35), rgba('ink'), blend(rgba('foreground'), rgba('ink'), 0.45)].flat());
+		const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		let time = 9;
+		let last = 0;
+		let frame = 0;
+		let visible = true;
+
+		const draw = () => {
+			const columns = Math.max(1, Math.round(box.clientWidth / cell));
+			const rows = Math.max(1, Math.round(box.clientHeight / cell));
+			const bytes = shader('waves', columns, rows, time, params, palette, 1, 0);
+			canvas.width = columns;
+			canvas.height = rows;
+			context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+		};
+
+		const run = (now: number) => {
+			frame = 0;
+			time += ((now - last) / 1000) * speed;
+			last = now;
+			draw();
+			if (visible) frame = requestAnimationFrame(run);
+		};
+
+		draw();
+		if (still) return;
+		new IntersectionObserver(([entry]) => {
+			visible = entry.isIntersecting;
+			if (visible && !frame) {
+				last = performance.now();
+				frame = requestAnimationFrame(run);
+			}
+		}).observe(hero);
+	});
+</script>
