@@ -6,6 +6,10 @@ Dithered UI components for [Slint](https://slint.dev), based on the dither work 
 
 > Work in progress. More components are on the way.
 
+## docs
+https://lilaccflowerr.github.io/dither-slint/
+the docs can be found here
+
 ## Install
 
 ```toml
