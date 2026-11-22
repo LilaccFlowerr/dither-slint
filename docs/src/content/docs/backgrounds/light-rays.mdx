@@ -11,6 +11,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -26,15 +27,7 @@ import Background from '../../../components/Background.astro';
 
 Two beams of light that fan down from above the box and flicker. Pick a `preset` (`cyber-blue`, `azure-and-white`, `sunset-rose`, `emerald-aurora`, `neon-violet`, `solar-flare` or `monochrome`); every other property starts at the preset's value and overrides it when you set it. The demo shows Cyber Blue; give the second colour its own value to see two beams.
 
-| Property | Default | |
-| --- | --- | --- |
-| `preset` | `cyber-blue` | Starting values for everything below. |
-| `intensity` | from the preset | Brightness of the rays, 0 to 100. |
-| `rays` | from the preset | How many rays and how fast they flicker, 0 to 100. |
-| `reach` | from the preset | How far the rays reach down the box, 0 to 100. |
-| `position` | from the preset | Where the light sits across the top, 0 (left) to 100 (right). |
-| `speed` | from the preset | How fast the rays move, 0 to 100. |
-| `color` | from the preset | The rays, or the first beam. |
-| `color2` | from the preset | The second beam. A one-colour preset uses `color` for both. |
-| `mode` | `multi` | `single` gives both beams `color`, `multi` gives the second `color2`, `random` picks a hue when the component appears. |
-| `background` | `DitherTheme.background` | The dark behind the rays. |
+## Properties
+
+<Api file="dither-light-rays" />
+

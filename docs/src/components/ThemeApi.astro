@@ -1,0 +1,25 @@
+---
+import { descriptions, globalsOf } from '../scripts/slint-api';
+
+const described = descriptions('theme');
+const globals = globalsOf();
+---
+
+{globals.map((global) => (
+	<section>
+		<h3>{global.name}</h3>
+		<table>
+			<thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+			<tbody>
+				{global.properties.map((member) => (
+					<tr>
+						<td><code>{member.name}</code></td>
+						<td><code>{member.type}</code></td>
+						<td><code>{member.default}</code></td>
+						<td set:html={described[global.name]?.[member.name] ?? ''} />
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</section>
+))}

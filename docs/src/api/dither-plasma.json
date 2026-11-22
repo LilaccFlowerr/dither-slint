@@ -1,0 +1,8 @@
+{
+ "DitherPlasma": {
+  "scale": "Size of the blobs.",
+  "warp": "How far slow noise bends the pattern.",
+  "bands": "How many times the colours cycle.",
+  "intensity": "Brightest tone."
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "DitherDonutChart": {
+  "slices": "The slices, each <code>{ label, value, color, fill }</code>. A negative value counts as 0. A transparent <code>color</code> takes the next colour of the series: ink, orange, green, pink, purple, blue, red, grey.",
+  "label": "What the total counts, such as <code>Requests today</code>. Shown in the middle of a donut.",
+  "mode": "<code>donut</code> is a ring with the total in the middle. <code>pie</code> is full wedges with a card over the lit one.",
+  "size": "Diameter of the chart.",
+  "thickness": "Donut only: ring thickness as a share of the radius, 0.1 to 0.9.",
+  "gap": "Gap between slices, in dither cells.",
+  "unit": "Written after every value, such as <code> GB</code>. Values are written as whole numbers with separators.",
+  "legend": "Show the legend. Hover a row to spotlight a slice, click to lock it.",
+  "interactive": "Hover, click and the legend spotlight.",
+  "animated": "The slices sweep in clockwise when the chart appears.",
+  "matrix": "The dither pattern of the gradient fills.",
+  "cell": "Size of one dither cell."
+ }
+}

@@ -1,0 +1,25 @@
+{
+  "DitherTheme": {
+    "background": "The page background. Components fade towards it and the text effects hide cells with it.",
+    "foreground": "The text colour, and the base of every soft border and fill.",
+    "ink": "The default colour of dithered ink.",
+    "animated": "Turns motion on or off everywhere. Components read it as the default for their own <code>animated</code>."
+  },
+  "DitherPalette": {
+    "blue": "A ready-made ink colour.",
+    "purple": "A ready-made ink colour.",
+    "green": "A ready-made ink colour.",
+    "pink": "A ready-made ink colour.",
+    "orange": "A ready-made ink colour.",
+    "red": "A ready-made ink colour.",
+    "grey": "A ready-made ink colour."
+  },
+  "DitherMotion": {
+    "hover": "The default hover effect of every component.",
+    "press": "The default press effect of every component.",
+    "idle": "The default idle effect of every component.",
+    "matrix": "The dither pattern of the motion effects.",
+    "speed": "Multiplies the speed of every motion effect.",
+    "intensity": "Multiplies the strength of every motion effect."
+  }
+}

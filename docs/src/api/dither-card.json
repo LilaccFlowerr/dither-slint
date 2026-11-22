@@ -1,0 +1,16 @@
+{
+ "DitherCard": {
+  "glow": "<code>top-left</code>, <code>top-right</code>, <code>bottom-left</code>, <code>bottom-right</code>, <code>top</code> or <code>bottom</code>.",
+  "reach": "How far the glow reaches from its origin.",
+  "strength": "Densest level, at the origin, 0 to 1.",
+  "interactive": "Grows the glow through the levels on hover.",
+  "color": "Colour of the glow.",
+  "fill": "Texture of the glow.",
+  "matrix": "The dither pattern.",
+  "cell": "Size of one dither cell.",
+  "rim": "Light the border with dither.",
+  "radius": "Corner radius, which the rim follows.",
+  "inset": "Space between the edge and your content.",
+  "spacing": "Space between the children."
+ }
+}

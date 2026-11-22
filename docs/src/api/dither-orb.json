@@ -1,0 +1,11 @@
+{
+ "DitherOrb": {
+  "color": "Colour of the orb.",
+  "highlight": "A third, brighter colour for the specular highlight. Transparent keeps the highlight in <code>color</code>.",
+  "background": "Colour behind the orb. Transparent floats it over what is behind.",
+  "size": "Radius as a share of the box's shorter side, 0.1 to 0.5.",
+  "morph": "How much the outline wobbles. 0 is a perfect sphere.",
+  "lean": "Where the orb and its light tilt to, each axis -1 to 1 from the centre. Drive it from a <code>TouchArea</code> to follow the pointer.",
+  "glow": "Strength of the dithered glow around the orb, 0 to 1."
+ }
+}

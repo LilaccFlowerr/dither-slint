@@ -35,6 +35,12 @@
 .reveal *,
 .logos *,
 .treemap *,
+.chart *,
+.donut *,
+.heatmap *,
+.pixel-area *,
+.radar *,
+.effect *,
 .empty .scene canvas {
 	margin-top: 0 !important;
 }
@@ -96,4 +102,18 @@
 	.home-grid > a:nth-of-type(even):hover {
 		transform: none;
 	}
+}
+
+pre,
+pre *,
+code,
+.expressive-code,
+.expressive-code * {
+	-webkit-user-select: text !important;
+	user-select: text !important;
+}
+
+.api-table td code,
+.sl-markdown-content td code {
+	white-space: normal;
 }

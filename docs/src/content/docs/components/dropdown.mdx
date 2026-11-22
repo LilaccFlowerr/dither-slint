@@ -5,6 +5,7 @@ description: A floating menu with dithered item highlights and a dithered corner
 
 import Dropdown from '../../../components/Dropdown.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 Put any component inside the menu and it becomes the trigger. Clicking it opens the menu below. The items are an array, so a menu is data: text, an optional shortcut, and flags for destructive and disabled rows. An item can also start a group with a heading, or have a line above it. Move through the items with the pointer or the arrow keys, press Enter to choose and Escape to close.
 
@@ -35,6 +36,8 @@ Put any component inside the menu and it becomes the trigger. Clicking it opens 
 		]}
 	/>
 </Demo>
+
+## Examples
 
 <Demo
 	title="Item highlights"
@@ -89,16 +92,6 @@ DitherDropdownMenu {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `items` | | The rows. Each has `text`, `shortcut`, `destructive`, `disabled`, `group` (a heading above the item) and `divider` (a line above the item). |
-| `variant` | `pill` | Highlight of the active item: `pill`, `dither`, `glow`, `hatched`, `dotted` or `outline`. |
-| `menu` | `card` | The container: `card` with a dithered corner glow, `glow`, `pixel` or `solid`. |
-| `color` | `DitherTheme.ink` | Colour of the highlights and the glow. |
-| `matrix` | `bayer4` | The dither pattern. |
-| `bloom` | `off` | `low` or `high` strengthens the textured highlights. |
-| `cell` | `2px` | Size of one dither cell. |
-| `menu-width` | `208px` | Width of the menu. |
-| `enabled` | `true` | Ignores clicks when `false`. |
+<Api file="dither-dropdown" />
 
 `selected(int)` is called with the index of the chosen item. `open()` and `close()` open and close the menu from code, and `is-open` tells you whether it is open.

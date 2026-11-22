@@ -5,6 +5,7 @@ description: A logo drawn in dithered ink, with sharp edges and a textured insid
 
 import Demo from '../../../components/Demo.astro';
 import Logo from '../../../components/Logo.astro';
+import Api from '../../../components/Api.astro';
 
 Edges land on whole cells, so the shapes stay sharp while the inside takes a dither texture. Use a PNG with a transparent background; the alpha channel becomes the logo. Give it a width and a height, and the picture fits inside.
 
@@ -19,6 +20,8 @@ Edges land on whole cells, so the shapes stay sharp while the inside takes a dit
 >
 	<Logo variant="single" fill={1} />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Shimmer"
@@ -35,18 +38,5 @@ Edges land on whole cells, so the shapes stay sharp while the inside takes a dit
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `source` | | The logo, a PNG with a transparent background. |
-| `ink` | `DitherTheme.ink` | Colour of the ink when `tone` is `mono`. |
-| `tone` | `mono` | `mono` is one ink, `original` keeps the file's own colours. |
-| `logo-source` | `alpha` | `alpha` reads the transparent background, `dark` reads a dark logo on a light, opaque background. |
-| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
-| `outline` | `true` | Keep a solid outline one cell wide, so the shapes stay exact however open the fill is. |
-| `floor` | `0.3` | Gradient fill: how much ink is left at the bottom, 0 to 1. |
-| `matrix` | `bayer4` | Threshold pattern of the gradient fill. |
-| `cell` | `1px` | Size of one cell. Larger cells give a chunkier mark. |
-| `effect` | `none` | `none`, `shimmer` or `scan`. |
-| `period` | `6s` | Time per sweep. |
-| `phase` | `0` | Where in the sweep this logo starts, 0 to 1. |
-| `animate` | `DitherTheme.animated` | Turn the effect off. |
+<Api file="dither-logo" />
+

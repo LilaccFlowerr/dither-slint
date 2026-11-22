@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -23,9 +24,7 @@ import Background from '../../../components/Background.astro';
 
 Stacked ridge lines like a pulsar plot, each hiding the ones behind it. The peaks shift slowly. Lines stay at least 4.5 cells apart, so a short box draws fewer of them.
 
-| Property | Default | |
-| --- | --- | --- |
-| `lines` | `32` | How many lines, 6 to 64. |
-| `amplitude` | `1` | Height of the peaks: 2 is twice as tall. |
-| `spread` | `0.5` | Width of the peaked band in the middle, as a share of the box, 0.1 to 1. |
-| `shade` | `0.25` | Faint tone under the raised peaks, 0 to 0.5. 0 keeps only the lines. |
+## Properties
+
+<Api file="dither-ridgelines" />
+

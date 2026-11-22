@@ -1,0 +1,107 @@
+---
+title: DitherBarChart
+description: Dithered bars under a solid cap, grouped, stacked or scaled to 100%.
+---
+
+import Demo from '../../../components/Demo.astro';
+import Chart from '../../../components/Chart.astro';
+import Api from '../../../components/Api.astro';
+
+Each bar is a dithered body under a solid cap. With the default `gradient` fill a bar is densest at its top and thins out towards the axis. The highlighted bar, or the one under the pointer, fills in solid. Several series sit side by side, stack on top of each other, or stack and scale to 100%.
+
+<Demo
+	title="One series"
+	code={`DitherBarChart {
+    categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    series: [
+        { label: "Revenue", color: DitherTheme.ink, values: [12, 18, 15, 24, 28, 26], low: [], high: [], dashed: false },
+    ];
+}`}
+>
+	<Chart
+		kind="bar"
+		categories={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+		series={[{ label: 'Revenue', color: 'ink', values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52] }]}
+	/>
+</Demo>
+
+## Examples
+
+<Demo
+	title="Grouped"
+	code={`DitherBarChart {
+    categories: ["Q1", "Q2", "Q3", "Q4"];
+    highlight: DitherBarHighlight.max;
+    series: [
+        { label: "2025", color: DitherPalette.grey, values: [42, 58, 70, 94], low: [], high: [], dashed: false },
+        { label: "2026", color: DitherTheme.ink, values: [52, 66, 88, 110], low: [], high: [], dashed: false },
+    ];
+}`}
+>
+	<Chart
+		kind="bar"
+		highlight="max"
+		categories={['Q1', 'Q2', 'Q3', 'Q4']}
+		series={[
+			{ label: '2025', color: 'grey', values: [42, 58, 70, 94] },
+			{ label: '2026', color: 'ink', values: [52, 66, 88, 110] },
+		]}
+	/>
+</Demo>
+
+<Demo
+	title="Stacked"
+	code={`DitherBarChart {
+    categories: ["Q1", "Q2", "Q3", "Q4"];
+    stack: DitherChartStack.stacked;
+    series: [
+        { label: "Web", color: DitherTheme.ink, values: [42, 58, 70, 94], low: [], high: [], dashed: false },
+        { label: "Mobile", color: DitherPalette.orange, values: [30, 44, 56, 78], low: [], high: [], dashed: false },
+    ];
+}`}
+>
+	<Chart
+		kind="bar"
+		stack="stacked"
+		categories={['Q1', 'Q2', 'Q3', 'Q4']}
+		series={[
+			{ label: 'Web', color: 'ink', values: [42, 58, 70, 94] },
+			{ label: 'Mobile', color: 'orange', values: [30, 44, 56, 78] },
+			{ label: 'Desktop', color: 'green', values: [14, 18, 20, 26] },
+		]}
+	/>
+</Demo>
+
+<Demo
+	title="Percent"
+	code={`DitherBarChart {
+    categories: ["Q1", "Q2", "Q3", "Q4"];
+    stack: DitherChartStack.percent;
+    series: [
+        { label: "Web", color: DitherTheme.ink, values: [42, 58, 70, 94], low: [], high: [], dashed: false },
+        { label: "Mobile", color: DitherPalette.orange, values: [30, 44, 56, 78], low: [], high: [], dashed: false },
+    ];
+}`}
+>
+	<Chart
+		kind="bar"
+		stack="percent"
+		highlight="none"
+		categories={['Q1', 'Q2', 'Q3', 'Q4']}
+		series={[
+			{ label: 'Web', color: 'ink', values: [42, 58, 70, 94] },
+			{ label: 'Mobile', color: 'orange', values: [30, 44, 56, 78] },
+			{ label: 'Desktop', color: 'green', values: [14, 18, 20, 26] },
+		]}
+	/>
+</Demo>
+
+## Data
+
+The data is the same as for [DitherLineChart](../line-chart/): `categories` and `series`, each with `values`. The `low`, `high` and `dashed` fields are not used; leave them empty. A transparent `color` takes the next colour of the series.
+
+## Properties
+
+<Api file="dither-bar-chart" inherits={["chart-frame"]} hide={["area-keys", "bars", "spec", "layout", "scrubbing", "scrubbed", "color-of", "opacity-of", "markers", "zero", "smooth"]} />
+
+A bar is at most 36 px wide, so wide charts keep air between the bars. The value of the highlighted bar is written above it.

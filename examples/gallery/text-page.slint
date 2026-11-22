@@ -1,0 +1,39 @@
+import { DitherDissolveFill, DitherDissolveOrder, DitherDissolveText, DitherPalette, DitherScrambleMode, DitherScrambleText, DitherText, DitherTextFill, DitherTheme } from "../../ui/lib.slint";
+
+export component TextPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    Text { text: "dither text"; color: DitherTheme.foreground; }
+    HorizontalLayout {
+        spacing: 32px;
+        alignment: start;
+
+        DitherText { text: "Gradient"; fill: DitherTextFill.gradient; }
+        DitherText { text: "Noise"; fill: DitherTextFill.noise; ink: DitherPalette.pink; }
+        DitherText { text: "Dotted"; fill: DitherTextFill.dotted; ink: DitherPalette.green; }
+        DitherText { text: "Hatched"; fill: DitherTextFill.hatched; ink: DitherPalette.orange; }
+    }
+
+    Text { text: "dissolve text, in from the middle, by word"; color: DitherTheme.foreground; }
+    DitherDissolveText {
+        text: "Dissolves in word by word";
+        order: DitherDissolveOrder.center;
+        word: true;
+        font-size: 36px;
+    }
+
+    Text { text: "dissolve text, settling into a dotted texture"; color: DitherTheme.foreground; }
+    DitherDissolveText {
+        text: "Dotted letters";
+        fill: DitherDissolveFill.dotted;
+        font-size: 36px;
+    }
+
+    Text { text: "scramble text"; color: DitherTheme.foreground; }
+    DitherScrambleText {
+        text: "Decoding the message";
+        mode: DitherScrambleMode.dither;
+    }
+}

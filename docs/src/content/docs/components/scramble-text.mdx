@@ -1,0 +1,38 @@
+---
+title: DitherScrambleText
+description: "A decode effect with no layout shift: each character resolves from a dithered block through a few glyphs to its letter."
+---
+
+import Demo from '../../../components/Demo.astro';
+import TextEffect from '../../../components/TextEffect.astro';
+import Api from '../../../components/Api.astro';
+
+Each character resolves on its own, slightly staggered. A dithered block thickens through the dither levels, a few glyphs flicker, and the letter settles, fading from the ink colour to the text colour. Changing `text` scrambles only the characters that differ, from the old text to the new one. Every slot keeps the width of its final letter, so nothing shifts.
+
+<Demo
+	title="Dither"
+	code={`DitherScrambleText {
+    text: "Decoding the message";
+}`}
+>
+	<TextEffect kind="scramble" text="Decoding the message" size={36} />
+</Demo>
+
+## Examples
+
+<Demo
+	title="Glyphs only, on hover"
+	code={`DitherScrambleText {
+    text: "Hover to decode";
+    mode: DitherScrambleMode.glyphs;
+    trigger: DitherScrambleTrigger.hover;
+}`}
+>
+	<TextEffect kind="scramble" text="Hover to decode" mode="glyphs" trigger="hover" size={36} />
+</Demo>
+
+## Properties
+
+<Api file="dither-scramble-text" />
+
+`replay()` plays it again, and `completed()` is called when every character has settled.

@@ -1,0 +1,10 @@
+{
+ "DitherEmptyState": {
+  "title": "The heading. Say plainly what is empty.",
+  "description": "One or two sentences: why it is empty and what to do next.",
+  "illustration": "<code>box</code> for lists and orders, <code>search</code> for no results, <code>folder</code> for files and documents, <code>planet</code> for anything still to arrive.",
+  "color": "Colour of the illustration.",
+  "matrix": "<code>bayer4</code> for crisp steps, <code>bayer8</code> for finer ones, <code>blue-noise</code> for an even grain.",
+  "animate": "Bobs the object a cell up and down."
+ }
+}

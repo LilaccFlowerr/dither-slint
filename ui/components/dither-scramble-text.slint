@@ -1,0 +1,120 @@
+import { DitherEngine, DitherScrambleMode, DitherScrambleSlot, DitherScrambleSpec } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export enum DitherScrambleTrigger { mount, hover, change, manual }
+
+export component DitherScrambleText inherits Rectangle {
+    in property <string> text;
+    in property <DitherScrambleTrigger> trigger: DitherScrambleTrigger.mount;
+    in property <DitherScrambleMode> mode: DitherScrambleMode.dither;
+    in property <string> characters;
+    in property <length> font-size: 32px;
+    in property <int> font-weight: 600;
+    in property <color> ink: DitherTheme.ink;
+    in property <color> text-color: DitherTheme.foreground;
+    in property <duration> duration: 520ms;
+    in property <duration> stagger: 34ms;
+    in property <duration> delay: 0ms;
+    in property <float> speed: 1;
+    in property <float> rate: 20;
+    in property <length> cell: 0px;
+    in property <bool> animated: DitherTheme.animated;
+    callback completed();
+
+    property <float> pace: Math.max(0.05, root.speed);
+    property <DitherScrambleSpec> spec: { mode: root.mode, duration: root.duration / 1ms / root.pace, stagger: root.stagger / 1ms / root.pace, delay: root.delay / 1ms / root.pace, rate: root.rate * root.pace };
+    property <string> origin;
+    property <bool> keep-same;
+    property <bool> running: root.animated && root.trigger != DitherScrambleTrigger.hover && root.trigger != DitherScrambleTrigger.manual;
+    property <float> elapsed: 0;
+    property <string> shown: root.text;
+    property <[DitherScrambleSlot]> slots: root.running ? DitherEngine.scramble-slots(root.text, root.origin, root.keep-same, root.elapsed, root.spec, root.characters) : DitherEngine.scramble-slots(root.text, root.origin, root.keep-same, 1000000, root.spec, root.characters);
+    property <length> step: root.cell > 0px ? Math.max(1phx, Math.round(root.cell / 1phx) * 1phx) : Math.max(1phx, Math.round(root.font-size / 22 / 1phx) * 1phx);
+    property <float> block-width: 0.82;
+    property <float> block-height: 0.7;
+    property <float> tick: 16;
+
+    public function replay() {
+        root.origin = "";
+        root.keep-same = false;
+        root.elapsed = 0;
+        root.running = root.animated;
+    }
+
+    init => {
+        root.running = root.animated && root.trigger == DitherScrambleTrigger.mount;
+    }
+
+    changed text => {
+        root.origin = root.shown;
+        root.keep-same = true;
+        root.elapsed = 0;
+        root.running = root.animated;
+        root.shown = root.text;
+    }
+
+    Timer {
+        interval: 16ms;
+        running: root.running;
+        triggered => {
+            root.elapsed += root.tick * root.pace;
+            if DitherEngine.scramble-settled(root.text, root.origin, root.keep-same, root.elapsed, root.spec) {
+                root.running = false;
+                root.completed();
+            }
+        }
+    }
+
+    width: row.preferred-width;
+    height: row.preferred-height;
+
+    row := HorizontalLayout {
+        alignment: start;
+        spacing: 0;
+
+        for slot in root.slots: Rectangle {
+            width: final.preferred-width;
+            height: final.preferred-height;
+
+            final := Text {
+                text: slot.character;
+                color: slot.phase == 4 || !root.running ? root.text-color : transparent;
+                font-size: root.font-size;
+                font-weight: root.font-weight;
+                animate color { duration: 700ms; easing: ease-out; }
+            }
+
+            if slot.phase == 2: Image {
+                x: final.preferred-width * (1 - root.block-width) / 2;
+                y: final.preferred-height * (1 - root.block-height) / 2;
+                width: final.preferred-width * root.block-width;
+                height: final.preferred-height * root.block-height;
+                image-fit: ImageFit.fill;
+                image-rendering: pixelated;
+                source: DitherEngine.scramble-block(Math.ceil(self.width / root.step), Math.ceil(self.height / root.step), slot.level, root.ink);
+            }
+
+            if slot.phase == 1 || slot.phase == 3: Text {
+                width: 100%;
+                height: 100%;
+                text: slot.glyph;
+                color: slot.phase == 1 ? root.text-color.with-alpha(0.45) : root.ink.with-alpha(0.8);
+                font-size: root.font-size;
+                font-weight: root.font-weight;
+                horizontal-alignment: center;
+            }
+        }
+    }
+
+    TouchArea {
+        enabled: root.trigger == DitherScrambleTrigger.hover;
+        changed has-hover => {
+            if self.has-hover {
+                root.origin = root.text;
+                root.keep-same = false;
+                root.elapsed = 0;
+                root.running = root.animated;
+            }
+        }
+    }
+}

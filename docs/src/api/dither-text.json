@@ -1,0 +1,19 @@
+{
+ "DitherText": {
+  "text": "The text.",
+  "font-size": "The type.",
+  "font-weight": "The type.",
+  "ink": "Colour of the letters.",
+  "backdrop": "The flat colour behind the text.",
+  "fill": "<code>gradient</code>, <code>noise</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "direction": "Gradient: the way it thins out, in degrees as in CSS (0 up, 90 right), from its dense side. 180 is solid at the top. Noise, dotted and hatched: the way it drifts.",
+  "from": "Tone at the dense and at the sparse end.",
+  "to": "Tone at the dense and at the sparse end.",
+  "scale": "Noise only: higher values give smaller blobs.",
+  "ghost": "Opacity of the ink between the dots, so textured letters keep their shape. A negative value takes the default.",
+  "matrix": "The dither pattern for gradient and noise.",
+  "cell": "Size of one dither cell.",
+  "animated": "Slowly shift the fill.",
+  "speed": "How fast the fill shifts."
+ }
+}

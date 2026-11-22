@@ -1,0 +1,7 @@
+{
+ "DitherRetroGrid": {
+  "horizon": "Height of the horizon, 0 (bottom) to 1 (top).",
+  "sun": "Size of the sun, as a share of the box height. 0 hides it.",
+  "columns": "How many grid squares across the front of the floor in a 16:10 box. Narrower boxes show fewer."
+ }
+}

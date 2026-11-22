@@ -11,6 +11,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -32,18 +33,7 @@ import Background from '../../../components/Background.astro';
 
 A slow, swirling three-colour gradient. Pick a `preset` (`prism`, `lava`, `plasma`, `pulse`, `vortex` or `mist`); every other property starts at the preset's value and overrides it when you set it. The demo shows Prism.
 
-| Property | Default | |
-| --- | --- | --- |
-| `preset` | `prism` | Starting values for everything below. |
-| `color1`, `color2`, `color3` | from the preset | The three colours. The palette runs from `color1` through `color2` to `color3`, with a blend between each pair. |
-| `rotation` | from the preset | Angle of the pattern, in degrees. |
-| `proportion` | from the preset | Balance between the colours, 0 to 100. |
-| `scale` | from the preset | Size of the pattern, 0 to 1. |
-| `speed` | from the preset | How fast it swirls, 0 to 100. |
-| `distortion` | from the preset | Noise that bends the pattern, 0 to 100. |
-| `swirl` | from the preset | Strength of the swirl, 0 to 100. |
-| `swirl-iterations` | from the preset | How many times it swirls, 1 to 30. |
-| `softness` | from the preset | Soft or sharp edges between the colours, 0 to 100. |
-| `offset` | from the preset | Where in its loop it starts. |
-| `shape` | from the preset | The pattern the swirl folds: `checks`, `stripes` or `edge`. |
-| `shape-size` | from the preset | Size of that pattern, 0 to 100. |
+## Properties
+
+<Api file="dither-animated-gradient" />
+

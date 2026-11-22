@@ -1,0 +1,19 @@
+{
+ "DitherLineChart": {
+  "categories": "The label of every point on the x axis.",
+  "series": "The lines, each <code>{ label, color, values, low, high, dashed }</code>.",
+  "markers": "<code>all</code>, <code>last</code> or <code>none</code>.",
+  "zero": "Start the value axis at zero. By default it fits the data.",
+  "smooth": "A smooth curve that never overshoots, or straight segments.",
+  "axes": "Show the value labels and the category labels.",
+  "tooltip": "Show the readout while the pointer moves over the chart.",
+  "legend": "Show the legend. Hover a key to spotlight a series, click to lock it.",
+  "interactive": "The readout and the legend spotlight.",
+  "animated": "The lines are drawn in from the left when the chart appears.",
+  "unit": "Written after every value, such as <code>%</code>. Values are shortened to 1.2K.",
+  "level": "Coverage of the range bands, 0 to 1.",
+  "matrix": "The dither pattern of the bands.",
+  "cell": "Size of one dither cell in the bands.",
+  "chart-height": "Height of the chart, axes included."
+ }
+}

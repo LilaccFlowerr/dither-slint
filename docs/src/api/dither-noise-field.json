@@ -1,0 +1,20 @@
+{
+ "DitherNoiseField": {
+  "variant": "<code>smoke</code>, <code>ridges</code>, <code>contours</code> or <code>marble</code>.",
+  "color": "<code>highlight</code> adds a third colour for the peaks.",
+  "highlight": "<code>highlight</code> adds a third colour for the peaks.",
+  "background": "<code>highlight</code> adds a third colour for the peaks.",
+  "scale": "Size, folding and octaves of the noise.",
+  "warp": "Size, folding and octaves of the noise.",
+  "detail": "Size, folding and octaves of the noise.",
+  "contrast": "How hard the noise is cut into light and dark. Higher values give crisper edges.",
+  "coverage": "Shifts how much of the box is inked. Positive values fill more, negative values less.",
+  "intensity": "Overall brightness of the ink, 0 to 1.",
+  "bands": "Lines for <code>contours</code>, stripes for <code>marble</code>.",
+  "angle": "Direction and speed of the drift.",
+  "flow": "Direction and speed of the drift.",
+  "invert": "Swap paper and ink.",
+  "mask": "Clear space for text: <code>center</code>, <code>top</code>, <code>bottom</code> or <code>edges</code>.",
+  "mask-size": "Clear space for text: <code>center</code>, <code>top</code>, <code>bottom</code> or <code>edges</code>."
+ }
+}

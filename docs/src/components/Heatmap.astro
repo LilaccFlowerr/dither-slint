@@ -1,0 +1,262 @@
+---
+interface Props {
+	mode?: 'calendar' | 'matrix';
+	entries?: [string, number][];
+	grid?: number[][];
+	rows?: string[];
+	columns?: string[];
+	weeks?: number;
+	weekStart?: 0 | 1;
+	steps?: number;
+	max?: number;
+	unit?: string;
+	units?: string;
+	color?: string;
+	legend?: boolean;
+}
+
+const lastDay = Date.UTC(2026, 10, 22);
+const sample: [string, number][] = Array.from({ length: 370 }, (_, back) => {
+	const date = new Date(lastDay - back * 86_400_000).toISOString().slice(0, 10);
+	const hash = Math.sin(back * 12.9898 + 4.1) * 43758.5453;
+	const noise = hash - Math.floor(hash);
+	const weekday = new Date(lastDay - back * 86_400_000).getUTCDay();
+	const busy = weekday > 0 && weekday < 6 ? 1 : 0.25;
+	return [date, noise > 0.35 ? Math.round(noise * 10 * busy) : 0] as [string, number];
+});
+
+const { mode = 'calendar', entries = sample, grid = [], rows = [], columns = [], weeks = 53, weekStart = 0, steps = 4, max = 0, unit = 'deploy', units = 'deploys', color = 'ink', legend = true } = Astro.props;
+const config = { mode, entries, grid, rows, columns, weeks, weekStart, steps, max, unit, units, color, legend };
+---
+
+<div class="heatmap" data-config={JSON.stringify(config)}>
+	<div class="stage"></div>
+	<div class="key"></div>
+</div>
+
+<style>
+	.heatmap {
+		width: 100%;
+		user-select: none;
+	}
+	.stage {
+		position: relative;
+	}
+	.heatmap :global(canvas) {
+		position: absolute;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+	.heatmap :global(.label) {
+		position: absolute;
+		color: var(--sl-color-gray-3);
+		font-size: 10px;
+		white-space: nowrap;
+	}
+	.heatmap :global(.outline) {
+		position: absolute;
+		border: 1px solid var(--sl-color-white);
+		border-radius: 1px;
+		pointer-events: none;
+		opacity: 0;
+		transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms;
+	}
+	.heatmap :global(.card) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 2;
+		padding: 8px 10px;
+		border: 1px solid var(--sl-color-gray-4);
+		border-radius: 8px;
+		background: var(--sl-color-bg-nav);
+		font-size: 12px;
+		white-space: pre;
+		pointer-events: none;
+		opacity: 0;
+		transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms;
+	}
+	.key {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 6px;
+		margin-top: 12px;
+		color: var(--sl-color-gray-3);
+		font-size: 10px;
+	}
+	.key :global(button) {
+		padding: 4px;
+		border: 0;
+		border-radius: 3px;
+		background: none;
+		cursor: pointer;
+		line-height: 0;
+		transition: opacity 150ms;
+	}
+	.key :global(button[aria-pressed='true']) {
+		outline: 1px solid var(--sl-color-gray-3);
+	}
+	.key :global(canvas) {
+		position: static;
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { heatmap_image, heatmap_layout, heatmap_readout, heatmap_swatch } from '../engine/dither_slint_engine_web.js';
+
+	const base = 3;
+	const square = 4;
+	const pitch = 5;
+	const top = 20;
+	const dimmed = 0.35;
+	const growth = 1.5;
+	const revealMs = 1080;
+	const revealSteps = 30;
+	const foreground = rgba('#ebe5d9');
+
+	interface Layout {
+		cell: number;
+		columns: number;
+		rows: number;
+		left: number;
+		labelEvery: number;
+		peak: number;
+		columnLabels: [number, string][];
+		rowLabels: [number, string][];
+	}
+
+	ready.then(() => {
+		for (const map of document.querySelectorAll<HTMLElement>('.heatmap')) {
+			const config = JSON.parse(map.dataset.config!);
+			const stage = map.querySelector<HTMLElement>('.stage')!;
+			const key = map.querySelector<HTMLElement>('.key')!;
+			const matrix = config.mode === 'matrix';
+			const steps = Math.min(6, Math.max(2, config.steps));
+			const dates = (config.entries as [string, number][]).map(([date]) => date).join('\n');
+			const values = new Float32Array((config.entries as [string, number][]).map(([, value]) => value));
+			const grid = new Float32Array((config.grid as number[][]).flat());
+			const rows = (config.rows as string[]).join('\n');
+			const columns = (config.columns as string[]).join('\n');
+			const ink = new Uint8Array(rgba(config.color));
+			const light = new Uint8Array(foreground);
+			let reveal = 0;
+			let focus = -1;
+			let locked = -1;
+			let layout: Layout;
+
+			const spec = (width: number) => new Float32Array([matrix ? 1 : 0, config.weeks, config.weekStart, steps, config.max, width, base]);
+
+			function render() {
+				const width = Math.floor(stage.clientWidth);
+				layout = JSON.parse(heatmap_layout(spec(width), dates, values, grid, columns, rows));
+				const pixels = layout.cell;
+				const step = pixels * pitch;
+				const drawnWidth = layout.columns * step - pixels;
+				const drawnHeight = layout.rows * step - pixels;
+				stage.style.height = `${top + drawnHeight}px`;
+				stage.replaceChildren();
+				for (const [column, text] of layout.columnLabels) {
+					if (column % layout.labelEvery !== 0) continue;
+					const label = document.createElement('span');
+					label.className = 'label';
+					label.textContent = text;
+					label.style.left = `${layout.left + column * step}px`;
+					label.style.top = '0';
+					stage.append(label);
+				}
+				for (const [row, text] of layout.rowLabels) {
+					const label = document.createElement('span');
+					label.className = 'label';
+					label.textContent = text;
+					label.style.left = '0';
+					label.style.top = `${top + row * step + (square * pixels) / 2 - 7}px`;
+					stage.append(label);
+				}
+				const cells = layout.columns * pitch - 1;
+				const canvas = document.createElement('canvas');
+				canvas.width = cells;
+				canvas.height = layout.rows * pitch - 1;
+				canvas.style.cssText = `left: ${layout.left}px; top: ${top}px; width: ${drawnWidth}px; height: ${drawnHeight}px`;
+				const stepped = Math.round(reveal * revealSteps) / revealSteps;
+				const bytes = heatmap_image(spec(width), dates, values, grid, columns, rows, ink, light, focus, stepped);
+				canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), canvas.width, canvas.height), 0, 0);
+				stage.append(canvas);
+				const outline = document.createElement('div');
+				outline.className = 'outline';
+				outline.style.cssText = `left: ${-growth}px; top: ${-growth}px; width: ${square * pixels + 2 * growth - 2}px; height: ${square * pixels + 2 * growth - 2}px`;
+				const card = document.createElement('div');
+				card.className = 'card';
+				stage.append(outline, card);
+				stage.onpointermove = (event) => {
+					const box = stage.getBoundingClientRect();
+					const column = Math.floor((event.clientX - box.left - layout.left) / step);
+					const row = Math.floor((event.clientY - box.top - top) / step);
+					const text = heatmap_readout(spec(width), dates, values, grid, columns, rows, column, row, config.unit, config.units);
+					if (!text) {
+						outline.style.opacity = '0';
+						card.style.opacity = '0';
+						return;
+					}
+					const x = layout.left + column * step;
+					const y = top + row * step;
+					outline.style.transform = `translate(${x}px, ${y}px)`;
+					outline.style.opacity = '1';
+					card.textContent = text;
+					card.style.opacity = '1';
+					const left = Math.min(Math.max(0, x + (square * pixels) / 2 - card.offsetWidth / 2), width - card.offsetWidth);
+					card.style.transform = `translate(${left}px, ${y - 2 - card.offsetHeight - 8}px)`;
+				};
+				stage.onpointerleave = () => {
+					outline.style.opacity = '0';
+					card.style.opacity = '0';
+				};
+				key.querySelectorAll<HTMLElement>('button').forEach((button, bucket) => {
+					const lit = focus >= 0 ? focus : locked;
+					button.style.opacity = String(lit >= 0 && lit !== bucket ? dimmed : 1);
+					button.setAttribute('aria-pressed', String(locked === bucket));
+				});
+			}
+
+			if (config.legend) {
+				key.append('Less');
+				for (let bucket = 0; bucket <= steps; bucket++) {
+					const button = document.createElement('button');
+					button.type = 'button';
+					const canvas = document.createElement('canvas');
+					canvas.width = square;
+					canvas.height = square;
+					canvas.style.cssText = `width: ${square * base}px; height: ${square * base}px`;
+					canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(heatmap_swatch(bucket, steps, ink, light)), square, square), 0, 0);
+					button.append(canvas);
+					button.addEventListener('pointerenter', () => {
+						focus = bucket;
+						render();
+					});
+					button.addEventListener('pointerleave', () => {
+						focus = locked;
+						render();
+					});
+					button.addEventListener('click', () => {
+						locked = locked === bucket ? -1 : bucket;
+						focus = locked;
+						render();
+					});
+					key.append(button);
+				}
+				key.append('More');
+			}
+
+			const started = performance.now();
+			const tick = (now: number) => {
+				const linear = Math.min(1, (now - started) / revealMs);
+				reveal = 1 - (1 - linear) ** 2;
+				render();
+				if (linear < 1) requestAnimationFrame(tick);
+			};
+			new ResizeObserver(render).observe(stage);
+			requestAnimationFrame(tick);
+		}
+	});
+</script>

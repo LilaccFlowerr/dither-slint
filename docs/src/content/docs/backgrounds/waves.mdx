@@ -8,6 +8,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -22,9 +23,7 @@ import Background from '../../../components/Background.astro';
 
 Layered swells under a glowing horizon, or thin lines like a sound wave.
 
-| Property | Default | |
-| --- | --- | --- |
-| `variant` | `ocean` | `ocean` or `lines`. |
-| `horizon` | `0.62` | Height of the horizon, for `ocean`. |
-| `layers` | `6` | How many waves, 2 to 8. |
-| `amplitude` | `1` | Height of the waves. |
+## Properties
+
+<Api file="dither-waves" />
+

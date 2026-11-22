@@ -1,0 +1,50 @@
+import { DitherEngine, DitherMatrix, DitherTextFill, DitherTextInk } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export component DitherText inherits Rectangle {
+    in property <string> text;
+    in property <length> font-size: 48px;
+    in property <int> font-weight: 700;
+    in property <color> ink: DitherTheme.ink;
+    in property <color> backdrop: DitherTheme.background;
+    in property <DitherTextFill> fill: DitherTextFill.gradient;
+    in property <float> direction: 180;
+    in property <float> scale: 3;
+    in property <float> from: 1;
+    in property <float> to: 0.4;
+    in property <float> ghost: -1;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 0px;
+    in property <bool> animated: DitherTheme.animated;
+    in property <float> speed: 1;
+
+    property <length> step: root.cell > 0px ? Math.max(1phx, Math.round(root.cell / 1phx) * 1phx) : DitherEngine.text-cell(root.font-size / 1px) * 1px;
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+    property <float> time: 0;
+    property <float> frame-seconds: 1 / 12;
+
+    width: label.preferred-width;
+    height: label.preferred-height;
+
+    Timer {
+        interval: 83ms;
+        running: root.animated && root.fill != DitherTextFill.solid;
+        triggered => { root.time += root.speed * root.frame-seconds * 12; }
+    }
+
+    label := Text {
+        text: root.text;
+        color: root.ink;
+        font-size: root.font-size;
+        font-weight: root.font-weight;
+    }
+
+    if root.fill != DitherTextFill.solid: Image {
+        width: 100%;
+        height: 100%;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: DitherEngine.text-ink(root.columns, root.rows, { fill: root.fill, direction: root.direction, scale: root.scale, from: root.from, to: root.to, ghost: root.ghost, matrix: root.matrix }, root.time, root.backdrop);
+    }
+}

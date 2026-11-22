@@ -233,6 +233,370 @@ pub fn treemap_format(value: f32) -> String {
     dither_slint::treemap::format_value(value)
 }
 
+fn chart_of(series: &[f32], lines: usize, width: f32, height: f32, flags: u8, dashes: &[u8]) -> (dither_slint::chart::Chart, Vec<dither_slint::chart::Series>) {
+    let count = series.len() / lines.max(1);
+    let stack = [dither_slint::chart::Stack::None, dither_slint::chart::Stack::Stacked, dither_slint::chart::Stack::Percent][usize::from(flags >> 3 & 3)];
+    let chart = dither_slint::chart::Chart { band: flags & 32 != 0, stack, count, width, height, axes: flags & 1 != 0, zero: flags & 2 != 0, smooth: flags & 4 != 0 };
+    let lines = series
+        .chunks(count.max(1))
+        .enumerate()
+        .map(|(index, values)| dither_slint::chart::Series { values: values.to_vec(), low: Vec::new(), high: Vec::new(), dashed: dashes.get(index).is_some_and(|&dashed| dashed != 0) })
+        .collect();
+    (chart, lines)
+}
+
+#[wasm_bindgen]
+pub fn chart_layout(series: &[f32], band: &[f32], lines: usize, width: f32, height: f32, flags: u8, dashes: &[u8], unit: &str) -> String {
+    use dither_slint::chart;
+    let (chart, lines) = chart_of(series, lines, width, height, flags, dashes);
+    let edges = chart::edges(&lines, chart.stack);
+    let scaled = if chart.stack == chart::Stack::None { series.iter().chain(band).copied().collect() } else { chart::scale_values(&lines, &edges, chart.stack) };
+    let geometry = chart::geometry(&chart, &scaled, unit);
+    let plot = geometry.plot;
+    let ticks: Vec<String> = geometry
+        .scale
+        .ticks
+        .iter()
+        .zip(&geometry.tick_labels)
+        .map(|(&tick, label)| format!("[{:.1},\"{label}\"]", chart::y_at(&plot, &geometry.scale, tick)))
+        .collect();
+    let labels: Vec<String> = chart::labels(&plot, chart.count).iter().map(|label| format!("[{:.1},{},{}]", label.x, label.index, label.align)).collect();
+    let columns = chart.band.then(|| chart::bars(&chart, &geometry, &lines));
+    let paths: Vec<String> = lines
+        .iter()
+        .zip(&edges)
+        .enumerate()
+        .map(|(position, (line, edges))| {
+            let tops: Vec<f32> = edges.iter().map(|edge| edge.high).collect();
+            let points = match &columns {
+                Some(columns) => chart::bar_tops(&chart, &geometry, columns, position),
+                None => chart::points(&plot, &geometry.scale, &tops, chart.count),
+            };
+            let curve = chart::segments(&points, chart.smooth);
+            let path = if columns.is_some() { String::new() } else if line.dashed { chart::dashed_path(&curve) } else { chart::path(&points, &curve) };
+            let points: Vec<String> = points.iter().map(|point| format!("[{:.1},{:.1}]", point.x, point.y)).collect();
+            format!("{{\"path\":\"{path}\",\"points\":[{}]}}", points.join(","))
+        })
+        .collect();
+    let totals = chart::totals(&chart, &lines);
+    let listed: Vec<String> = totals.iter().map(|total| format!("{total:.2}")).collect();
+    format!(
+        "{{\"peak\":{},\"totals\":[{}],\"plot\":[{:.1},{:.1},{:.1},{:.1}],\"ticks\":[{}],\"labels\":[{}],\"lines\":[{}]}}",
+        chart::max_index(&totals),
+        listed.join(","),
+        plot.left,
+        plot.right,
+        plot.top,
+        plot.bottom,
+        ticks.join(","),
+        labels.join(","),
+        paths.join(",")
+    )
+}
+
+#[wasm_bindgen]
+pub fn chart_band(series: &[f32], band: &[f32], lines: usize, low: &[f32], high: &[f32], width: f32, height: f32, flags: u8, index: usize, cell: f32, level: f32, matrix: usize, color: &[u8]) -> Vec<u8> {
+    use dither_slint::chart;
+    let (chart, mut lines) = chart_of(series, lines, width, height, flags, &[]);
+    lines[index].low = low.to_vec();
+    lines[index].high = high.to_vec();
+    let values: Vec<f32> = series.iter().chain(band).copied().collect();
+    let geometry = chart::geometry(&chart, &values, "");
+    let options = chart::Band { chart: &chart, series: &lines[index], geometry: &geometry, cell, level, matrix: Matrix::ALL[matrix], color: colors(color)[0] };
+    bytes(chart::band(&options))
+}
+
+#[wasm_bindgen]
+pub fn chart_area(series: &[f32], lines: usize, width: f32, height: f32, flags: u8, colors: &[u8], cell: f32, level: f32, fill: usize, matrix: usize) -> Vec<u8> {
+    use dither_slint::chart;
+    let (chart, lines) = chart_of(series, lines, width, height, flags, &[]);
+    let edges = chart::edges(&lines, chart.stack);
+    let geometry = chart::geometry(&chart, &chart::scale_values(&lines, &edges, chart.stack), "");
+    let colors = self::colors(colors);
+    let options = chart::Area { chart: &chart, series: &lines, geometry: &geometry, colors: &colors, cell, level, matrix: Matrix::ALL[matrix], fill: FillVariant::ALL[fill] };
+    bytes(chart::area(&options))
+}
+
+#[wasm_bindgen]
+pub fn chart_bars(series: &[f32], lines: usize, width: f32, height: f32, flags: u8, colors: &[u8], cell: f32, level: f32, fill: usize, matrix: usize, solid: i32) -> Vec<u8> {
+    use dither_slint::chart;
+    let (chart, lines) = chart_of(series, lines, width, height, flags, &[]);
+    let edges = chart::edges(&lines, chart.stack);
+    let geometry = chart::geometry(&chart, &chart::scale_values(&lines, &edges, chart.stack), "");
+    let columns = chart::bars(&chart, &geometry, &lines);
+    let colors = self::colors(colors);
+    let options = chart::BarFill { chart: &chart, geometry: &geometry, bars: &columns, colors: &colors, cell, level, matrix: Matrix::ALL[matrix], fill: FillVariant::ALL[fill], solid: usize::try_from(solid).ok() };
+    bytes(chart::bars_image(&options))
+}
+
+#[wasm_bindgen]
+pub fn chart_readout(series: &[f32], lines: usize, flags: u8, index: usize, unit: &str) -> String {
+    use dither_slint::chart;
+    let (chart, lines) = chart_of(series, lines, 0.0, 0.0, flags, &[]);
+    let edges = chart::edges(&lines, chart.stack);
+    chart::readout(&lines, &edges, index, unit, chart.stack).join("|")
+}
+
+#[wasm_bindgen]
+pub fn chart_format(value: f32, unit: &str) -> String {
+    dither_slint::chart::format_value(value, unit)
+}
+
+fn donut_of(values: &[f32], fills: &[u8], colors: &[u8], size: f32, cell: f32, flags: u8, thickness: f32, gap: f32) -> (dither_slint::donut::Spec, Vec<dither_slint::donut::Slice>) {
+    use dither_slint::donut::{Mode, Slice, Spec};
+    let spec = Spec { size, cell, mode: if flags & 1 != 0 { Mode::Pie } else { Mode::Donut }, thickness, gap, matrix: Matrix::Bayer4 };
+    let colors = colors_from(colors);
+    let slices = values.iter().enumerate().map(|(index, &value)| Slice { value, color: colors[index % colors.len().max(1)], fill: FillVariant::ALL[usize::from(fills.get(index).copied().unwrap_or(0))] }).collect();
+    (spec, slices)
+}
+
+fn colors_from(rgba: &[u8]) -> Vec<Color> {
+    colors(rgba)
+}
+
+#[wasm_bindgen]
+pub fn donut_layout(values: &[f32], size: f32, cell: f32, flags: u8, thickness: f32, gap: f32) -> String {
+    let (spec, slices) = donut_of(values, &[], &[0, 0, 0, 255], size, cell, flags, thickness, gap);
+    let layout = dither_slint::donut::layout(&spec, &slices);
+    let shares: Vec<String> = layout.arcs.iter().map(|arc| format!("{:.5}", arc.share)).collect();
+    let middles: Vec<String> = layout.arcs.iter().map(|arc| format!("{:.5}", (arc.from + arc.to) / 2.0)).collect();
+    format!("{{\"side\":{},\"outer\":{:.2},\"inner\":{:.2},\"total\":{},\"shares\":[{}],\"middles\":[{}]}}", layout.side, layout.outer, layout.inner, layout.total, shares.join(","), middles.join(","))
+}
+
+#[wasm_bindgen]
+pub fn donut_image(values: &[f32], fills: &[u8], colors: &[u8], size: f32, cell: f32, flags: u8, thickness: f32, gap: f32, sweep: f32, focus: i32) -> Vec<u8> {
+    let (spec, slices) = donut_of(values, fills, colors, size, cell, flags, thickness, gap);
+    bytes(dither_slint::donut::image(&spec, &slices, sweep, usize::try_from(focus).ok()))
+}
+
+#[wasm_bindgen]
+pub fn donut_hit(values: &[f32], size: f32, cell: f32, flags: u8, thickness: f32, gap: f32, x: f32, y: f32) -> i32 {
+    let (spec, slices) = donut_of(values, &[], &[0, 0, 0, 255], size, cell, flags, thickness, gap);
+    dither_slint::donut::hit(&spec, &slices, x, y).map_or(-1, |index| index as i32)
+}
+
+#[wasm_bindgen]
+pub fn donut_value(value: f32, unit: &str) -> String {
+    dither_slint::donut::format_value(value, unit)
+}
+
+#[wasm_bindgen]
+pub fn donut_share(share: f32) -> String {
+    dither_slint::donut::format_share(share)
+}
+
+fn heatmap_of(spec: &[f32], dates: &str, values: &[f32], grid: &[f32], columns: &str, rows: &str) -> dither_slint::heatmap::Input {
+    use dither_slint::heatmap::{Input, Mode};
+    let lines = |text: &str| -> Vec<String> { text.split('\n').filter(|line| !line.is_empty()).map(String::from).collect() };
+    let (rows, columns) = (lines(rows), lines(columns));
+    let width = columns.len().max(1);
+    Input {
+        mode: if spec[0] == 1.0 { Mode::Matrix } else { Mode::Calendar },
+        entries: lines(dates).into_iter().zip(values.iter().copied()).collect(),
+        grid: grid.chunks(width).map(<[f32]>::to_vec).collect(),
+        rows,
+        columns,
+        weeks: spec[1] as usize,
+        week_start: spec[2] as usize,
+        steps: spec[3] as usize,
+        max: (spec[4] > 0.0).then_some(spec[4]),
+    }
+}
+
+fn heatmap_shown(spec: &[f32], input: &dither_slint::heatmap::Input) -> (dither_slint::heatmap::Model, dither_slint::heatmap::Fit) {
+    use dither_slint::heatmap;
+    let full = heatmap::model(input);
+    let widest = if input.mode == heatmap::Mode::Matrix { full.column_labels.iter().map(|(_, text)| text.chars().count()).max().unwrap_or(0) } else { 0 };
+    let fit = heatmap::fit(spec[5], spec[6], &full, widest);
+    let shown = heatmap::shifted(&full, full.columns - fit.columns);
+    (shown, fit)
+}
+
+#[wasm_bindgen]
+pub fn heatmap_layout(spec: &[f32], dates: &str, values: &[f32], grid: &[f32], columns: &str, rows: &str) -> String {
+    let input = heatmap_of(spec, dates, values, grid, columns, rows);
+    let (model, fit) = heatmap_shown(spec, &input);
+    let labels = |labels: &[(usize, String)]| labels.iter().map(|(position, text)| format!("[{position},\"{text}\"]")).collect::<Vec<_>>().join(",");
+    format!(
+        "{{\"cell\":{},\"columns\":{},\"rows\":{},\"left\":{},\"labelEvery\":{},\"peak\":{},\"columnLabels\":[{}],\"rowLabels\":[{}]}}",
+        fit.cell,
+        model.columns,
+        model.rows,
+        fit.left,
+        fit.label_every,
+        model.peak,
+        labels(&model.column_labels),
+        labels(&model.row_labels)
+    )
+}
+
+#[wasm_bindgen]
+pub fn heatmap_image(spec: &[f32], dates: &str, values: &[f32], grid: &[f32], columns: &str, rows: &str, color: &[u8], foreground: &[u8], focus: i32, reveal: f32) -> Vec<u8> {
+    use dither_slint::heatmap;
+    let input = heatmap_of(spec, dates, values, grid, columns, rows);
+    let (model, _) = heatmap_shown(spec, &input);
+    let options = heatmap::Paint { steps: heatmap::steps(input.steps), color: colors(color)[0], foreground: colors(foreground)[0], focus: usize::try_from(focus).ok(), reveal };
+    bytes(heatmap::image(&model, &options))
+}
+
+#[wasm_bindgen]
+pub fn heatmap_readout(spec: &[f32], dates: &str, values: &[f32], grid: &[f32], columns: &str, rows: &str, column: i32, row: i32, unit: &str, units: &str) -> String {
+    use dither_slint::heatmap;
+    let input = heatmap_of(spec, dates, values, grid, columns, rows);
+    let (model, _) = heatmap_shown(spec, &input);
+    heatmap::square_at(&model, column, row).map_or_else(String::new, |square| heatmap::readout(square, unit, units))
+}
+
+#[wasm_bindgen]
+pub fn heatmap_swatch(bucket: usize, steps: usize, color: &[u8], foreground: &[u8]) -> Vec<u8> {
+    use dither_slint::heatmap;
+    bytes(heatmap::swatch(bucket, heatmap::steps(steps), colors(color)[0], colors(foreground)[0]))
+}
+
+#[wasm_bindgen]
+pub fn pixel_area_side(pixels: f32, cell: f32) -> usize {
+    dither_slint::pixel_area::side(pixels, cell)
+}
+
+#[wasm_bindgen]
+pub fn pixel_area_image(values: &[f32], spec: &[f32], fill: usize, color: &[u8], marker: i32, stars: bool, winking: bool) -> Vec<u8> {
+    use dither_slint::pixel_area::{Area, image};
+    let area = Area {
+        columns: spec[0] as usize,
+        rows: spec[1] as usize,
+        min: spec[2],
+        max: (spec[3] != 0.0).then_some(spec[3]),
+        fill: FillVariant::ALL[fill],
+        color: colors(color)[0],
+        reveal: spec[4],
+        intensity: spec[5],
+        marker: usize::try_from(marker).ok(),
+        stars,
+        winking,
+        tick: spec[6],
+    };
+    bytes(image(values, &area))
+}
+
+#[wasm_bindgen]
+pub fn pixel_area_readout(label: &str, value: f32) -> String {
+    dither_slint::pixel_area::readout(label, value)
+}
+
+fn radar_of(values: &[f32], axes: usize, fills: &[u8], colors: &[u8], spec: &[f32]) -> (Vec<dither_slint::radar::Series>, dither_slint::radar::Spec) {
+    use dither_slint::radar::{Grid, Series, Spec};
+    let palette = colors_from(colors);
+    let series = values
+        .chunks(axes.max(1))
+        .enumerate()
+        .map(|(index, line)| Series { values: line.to_vec(), color: palette[index % palette.len().max(1)], fill: FillVariant::ALL[usize::from(fills.get(index).copied().unwrap_or(0))] })
+        .collect();
+    let spec = Spec { side: spec[0], cell: spec[1], max: (spec[2] > 0.0).then_some(spec[2]), rings: spec[3] as usize, grid: if spec[4] == 1.0 { Grid::Circle } else { Grid::Polygon }, matrix: Matrix::Bayer4 };
+    (series, spec)
+}
+
+#[wasm_bindgen]
+pub fn radar_layout(axes: &str, values: &[f32], fills: &[u8], spec: &[f32]) -> String {
+    use dither_slint::radar;
+    let labels: Vec<String> = axes.split('\n').filter(|line| !line.is_empty()).map(String::from).collect();
+    let (series, spec) = radar_of(values, labels.len(), fills, &[0, 0, 0, 255], spec);
+    let layout = radar::layout(&labels, &series, &spec);
+    let point = |vertex: &radar::Vec2| format!("[{:.2},{:.2}]", vertex.x, vertex.y);
+    let rings: Vec<String> = layout.rings.iter().map(|ring| format!("\"{ring}\"")).collect();
+    let spokes: Vec<String> = layout.spokes.iter().map(point).collect();
+    let texts: Vec<String> = layout.labels.iter().zip(&labels).map(|(label, text)| format!("[{:.2},{:.2},\"{text}\",{},{:.3}]", label.at.x, label.at.y, label.align, label.line)).collect();
+    let shapes: Vec<String> = layout.vertices.iter().map(|vertices| format!("[{}]", vertices.iter().map(point).collect::<Vec<_>>().join(","))).collect();
+    format!(
+        "{{\"radius\":{:.2},\"top\":{},\"rings\":[{}],\"spokes\":[{}],\"labels\":[{}],\"shapes\":[{}]}}",
+        layout.radius,
+        layout.top,
+        rings.join(","),
+        spokes.join(","),
+        texts.join(","),
+        shapes.join(",")
+    )
+}
+
+#[wasm_bindgen]
+pub fn radar_image(axes: usize, values: &[f32], fills: &[u8], colors: &[u8], spec: &[f32], scale: f32, focus: i32) -> Vec<u8> {
+    let (series, spec) = radar_of(values, axes, fills, colors, spec);
+    bytes(dither_slint::radar::image(axes, &series, &spec, scale, usize::try_from(focus).ok()))
+}
+
+#[wasm_bindgen]
+pub fn radar_axis(axes: usize, x: f32, y: f32, side: f32) -> i32 {
+    dither_slint::radar::axis_at(axes.max(1), dither_slint::radar::Vec2 { x, y }, side).map_or(-1, |axis| axis as i32)
+}
+
+#[wasm_bindgen]
+pub fn text_cell(font_size: f32) -> f32 {
+    dither_slint::text::cell_for(font_size)
+}
+
+#[wasm_bindgen]
+pub fn text_ink(columns: u32, rows: u32, spec: &[f32], backdrop: &[u8], time: f32) -> Vec<u8> {
+    use dither_slint::text::{Ink, InkFill, ink_overlay};
+    let fill = [InkFill::Gradient, InkFill::Noise, InkFill::Dotted, InkFill::Hatched, InkFill::Solid][spec[0] as usize];
+    let ink = Ink { fill, direction: spec[1], scale: spec[2], from: spec[3], to: spec[4], ghost: (spec[5] >= 0.0).then_some(spec[5]), matrix: Matrix::Bayer4 };
+    bytes(ink_overlay(columns, rows, &ink, time, colors(backdrop)[0]))
+}
+
+fn dissolve_of(spec: &[f32]) -> dither_slint::text::Dissolve {
+    use dither_slint::text::{Dissolve, DissolveFill};
+    Dissolve {
+        duration: spec[0],
+        stagger: spec[1],
+        delay: spec[2],
+        matrix: Matrix::Bayer4,
+        fill: [DissolveFill::Solid, DissolveFill::Gradient, DissolveFill::Dotted, DissolveFill::Hatched][spec[3] as usize],
+        level: spec[4],
+        showing: spec[5] != 0.0,
+    }
+}
+
+#[wasm_bindgen]
+pub fn dissolve_units(text: &str, word: bool) -> String {
+    let units: Vec<String> = dither_slint::text::units(text, word).into_iter().map(|(unit, index)| format!("[{:?},{}]", unit, index.map_or(-1, |index| index as i32))).collect();
+    format!("[{}]", units.join(","))
+}
+
+#[wasm_bindgen]
+pub fn dissolve_ranks(count: usize, order: usize) -> Vec<f32> {
+    use dither_slint::text::DissolveOrder;
+    dither_slint::text::ranks(count, [DissolveOrder::Start, DissolveOrder::End, DissolveOrder::Center, DissolveOrder::Edges, DissolveOrder::Random][order])
+}
+
+#[wasm_bindgen]
+pub fn dissolve_step(elapsed: f32, rank: f32, spec: &[f32]) -> usize {
+    dither_slint::text::dissolve_step(elapsed, rank, &dissolve_of(spec))
+}
+
+#[wasm_bindgen]
+pub fn dissolve_overlay(columns: u32, rows: u32, step: usize, spec: &[f32], backdrop: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::text::dissolve_overlay(columns, rows, step, &dissolve_of(spec), colors(backdrop)[0]))
+}
+
+fn scramble_of(spec: &[f32]) -> dither_slint::text::Scramble {
+    use dither_slint::text::{Scramble, ScrambleMode};
+    Scramble { mode: [ScrambleMode::Dither, ScrambleMode::Blocks, ScrambleMode::Glyphs][spec[0] as usize], duration: spec[1], stagger: spec[2], delay: spec[3], rate: spec[4] }
+}
+
+#[wasm_bindgen]
+pub fn scramble_slots(text: &str, from: &str, keep_same: bool, elapsed: f32, spec: &[f32], characters: &str) -> String {
+    use dither_slint::text;
+    let pool = text::glyph_pool(text, characters);
+    let slots: Vec<String> = text::slots(text, from, keep_same, elapsed, &scramble_of(spec), &pool)
+        .into_iter()
+        .map(|slot| format!("[{:?},{},{},{:?}]", slot.character, slot.phase as i32, slot.level, slot.glyph))
+        .collect();
+    format!("[{}]", slots.join(","))
+}
+
+#[wasm_bindgen]
+pub fn scramble_block(columns: u32, rows: u32, level: i32, color: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::text::block_overlay(columns, rows, level, colors(color)[0]))
+}
+
 #[wasm_bindgen]
 pub fn rule(
     columns: u32,

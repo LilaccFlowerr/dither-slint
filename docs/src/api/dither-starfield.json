@@ -1,0 +1,9 @@
+{
+ "DitherStarfield": {
+  "density": "How many stars, 0 to 2.",
+  "twinkle": "How much each star pulses, 0 (steady) to 1.",
+  "angle": "Direction the stars drift, in degrees as in CSS: 0 is up, 90 right.",
+  "drift": "Drift speed of the nearest layer, in cells per second. 0 holds them still.",
+  "nebula": "Strength of a faint dithered haze behind the stars, 0 to 1."
+ }
+}

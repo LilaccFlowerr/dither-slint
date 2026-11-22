@@ -1,0 +1,22 @@
+{
+ "DitherGauge": {
+  "value": "The reading, between <code>minimum</code> and <code>maximum</code>.",
+  "label": "What is measured. Shown under the value and used as the accessible name.",
+  "minimum": "The low end of the scale.",
+  "maximum": "The high end of the scale.",
+  "variant": "<code>half</code> (180°), <code>dial</code> (270°, like a speedometer) or <code>ring</code> (a full circle from the top).",
+  "size": "Width of the gauge.",
+  "segments": "Number of blocks the arc is split into. The default depends on the variant.",
+  "unit": "Shown after the value, such as <code>\"%\"</code> or <code>\" ms\"</code>.",
+  "decimals": "Most decimals in the value and the range.",
+  "value-text": "Text for the reading, instead of the value and unit.",
+  "show-range": "Shows <code>minimum</code> and <code>maximum</code> under the ends of the arc.",
+  "color": "Colour of the value arc.",
+  "track-color": "Colour of the empty track, drawn faint.",
+  "fill": "<code>gradient</code> (each block behind the value a step lighter), <code>dotted</code>, <code>hatched</code> or <code>solid</code>. The block at the value is always solid.",
+  "bloom": "<code>low</code> or <code>high</code> adds a glow behind the filled blocks.",
+  "animate": "Fades the blocks in one by one when the gauge appears.",
+  "matrix": "The dither pattern.",
+  "cell": "Size of one dither cell."
+ }
+}

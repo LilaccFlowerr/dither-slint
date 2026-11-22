@@ -6,6 +6,7 @@ description: "A generative avatar: a mirrored dither face drawn from a name."
 import Avatar from '../../../components/Avatar.astro';
 import AvatarGroup from '../../../components/AvatarGroup.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 The face is drawn from the name you give it, so the same name always gives the same face and colour. That makes it a placeholder for people without a photo, and for teams, bots and projects. It is a 5 by 5 grid of blocks, mirrored left to right, on a lit dithered disc.
 
@@ -29,6 +30,8 @@ DitherAvatar {
 	<Avatar name="Linus" size={56} label="Linus" />
 	<Avatar name="dither-bot" size={56} label="dither-bot" />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Fills, shape and ring"
@@ -81,22 +84,9 @@ DitherAvatarGroup {
 
 ### DitherAvatar
 
-| Property | Default | |
-| --- | --- | --- |
-| `name` | | The string the face is drawn from, usually a name, an email or an id. |
-| `size` | `40px` | Width and height. |
-| `color` | from `name` | Any colour. Without one, a hue is picked from the name. |
-| `fill` | `gradient` | How each block is drawn: `gradient`, `dotted`, `hatched` or `solid`. |
-| `shape` | `circle` | `circle` or `square` with rounded corners. |
-| `ring` | `false` | A ring in the avatar's colour, for the current user or a selection. |
-| `status` | `none` | A presence dot in the corner: `online`, `away`, `busy` or `offline`. |
-| `bloom` | `off` | `low` or `high` adds a glow in the avatar's colour. |
+## Properties
+
+<Api file="dither-avatar" />
 
 ### DitherAvatarGroup
 
-| Property | Default | |
-| --- | --- | --- |
-| `names` | | One avatar per name. |
-| `max` | `4` | Shows at most this many, then a "+N" chip for the rest. |
-| `size` | `32px` | Width and height of every avatar. |
-| `outline` | `DitherTheme.background` | Colour of the gap around each avatar. Match the surface behind the group. |

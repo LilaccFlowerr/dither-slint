@@ -1,0 +1,88 @@
+---
+title: DitherAreaChart
+description: Each series is a crisp line over a dithered fill that is densest under the line and thins out towards the axis.
+---
+
+import Demo from '../../../components/Demo.astro';
+import Chart from '../../../components/Chart.astro';
+import Api from '../../../components/Api.astro';
+
+The fill is densest just under the line and thins out step by step towards the baseline. A series that sits in front covers the ones behind it, so every area shows one texture. Series can overlap, stack on top of each other, or stack and scale to 100%. Move the pointer over the chart for a readout, and use the legend to spotlight a series.
+
+<Demo
+	title="Overlapping"
+	code={`DitherAreaChart {
+    categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    series: [
+        { label: "Revenue", color: DitherTheme.ink, values: [12, 18, 15, 24, 28, 26], low: [], high: [], dashed: false },
+        { label: "Costs", color: DitherPalette.pink, values: [10, 12, 13, 15, 17, 18], low: [], high: [], dashed: false },
+    ];
+}`}
+>
+	<Chart
+		kind="area"
+		categories={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+		series={[
+			{ label: 'Revenue', color: 'ink', values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52] },
+			{ label: 'Costs', color: 'pink', values: [10, 12, 13, 15, 17, 18, 21, 22, 24, 25, 27, 28] },
+		]}
+	/>
+</Demo>
+
+## Examples
+
+<Demo
+	title="Stacked"
+	code={`DitherAreaChart {
+    categories: root.months;
+    stack: DitherChartStack.stacked;
+    series: [
+        { label: "Web", color: DitherTheme.ink, values: [12, 18, 15, 24, 28, 26], low: [], high: [], dashed: false },
+        { label: "Mobile", color: DitherPalette.orange, values: [8, 10, 12, 14, 16, 18], low: [], high: [], dashed: false },
+    ];
+}`}
+>
+	<Chart
+		kind="area"
+		stack="stacked"
+		categories={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+		series={[
+			{ label: 'Web', color: 'ink', values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52] },
+			{ label: 'Mobile', color: 'orange', values: [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
+			{ label: 'Desktop', color: 'green', values: [4, 5, 5, 6, 7, 7, 8, 8, 9, 9, 10, 10] },
+		]}
+	/>
+</Demo>
+
+<Demo
+	title="Percent"
+	code={`DitherAreaChart {
+    categories: root.months;
+    stack: DitherChartStack.percent;
+    series: [
+        { label: "Web", color: DitherTheme.ink, values: [12, 18, 15, 24, 28, 26], low: [], high: [], dashed: false },
+        { label: "Mobile", color: DitherPalette.orange, values: [8, 10, 12, 14, 16, 18], low: [], high: [], dashed: false },
+    ];
+}`}
+>
+	<Chart
+		kind="area"
+		stack="percent"
+		categories={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+		series={[
+			{ label: 'Web', color: 'ink', values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52] },
+			{ label: 'Mobile', color: 'orange', values: [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] },
+			{ label: 'Desktop', color: 'green', values: [4, 5, 5, 6, 7, 7, 8, 8, 9, 9, 10, 10] },
+		]}
+	/>
+</Demo>
+
+## Data
+
+The data is the same as for [DitherLineChart](../line-chart/): `categories` and `series`, each with `values`. The `low`, `high` and `dashed` fields are not used by an area chart; leave them empty. A transparent `color` takes the next colour of the series.
+
+## Properties
+
+<Api file="dither-area-chart" inherits={["chart-frame"]} hide={["area-keys", "bars", "spec", "layout", "scrubbing", "scrubbed", "color-of", "opacity-of", "markers", "zero"]} />
+
+With `stack: percent` the value axis runs from 0 to 100% and the readout shows each value and its share.

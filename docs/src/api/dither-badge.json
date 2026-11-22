@@ -1,0 +1,17 @@
+{
+ "DitherBadge": {
+  "text": "The label.",
+  "variant": "<code>default</code>, <code>secondary</code>, <code>destructive</code> or <code>outline</code>. Destructive turns red unless you set a colour.",
+  "fill": "<code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "color": "Any colour, or one from <code>DitherPalette</code>.",
+  "size": "<code>sm</code>, <code>md</code> or <code>lg</code>, 20, 24 and 28px high.",
+  "corners": "<code>none</code>, <code>sm</code>, <code>md</code> or <code>lg</code>.",
+  "bloom": "<code>low</code> or <code>high</code>, for the filled variants.",
+  "cell": "Size of one dither cell.",
+  "dot": "Shows a status dot. <code>dot-color</code> sets its colour.",
+  "removable": "Shows a small cross. Clicking it calls <code>removed</code>.",
+  "interactive": "Brightens on hover and calls <code>clicked</code>.",
+  "dot-color": "Colour of the leading dot. Transparent draws no dot.",
+  "removed": "Called when the remove button of a removable badge is pressed."
+ }
+}

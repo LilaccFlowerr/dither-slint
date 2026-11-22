@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -34,23 +35,7 @@ import Background from '../../../components/Background.astro';
 
 Curtains of light that fold, sway and shimmer. Set `color`, `tip-color` and `background` for a quick palette, or pass `palette` from paper to brightest to take over.
 
-| Property | Default | |
-| --- | --- | --- |
-| `color` | `DitherTheme.ink` | The bright lower edge of each curtain. |
-| `tip-color` | `color` | The faint tops of the rays, for a two-tone sky. |
-| `background` | `DitherTheme.background` | The sky behind. |
-| `curtains` | `3` | Number of curtains, 1 to 6. |
-| `edge-height` | `0.42` | Where the lowest bright edge hangs, 0 (bottom) to 1 (top). |
-| `spread` | `0.11` | Vertical gap between curtains. |
-| `sway` | `1` | How far the edges fold, 0 to 3. |
-| `turbulence` | `0.6` | Fine ripples along the edges, 0 to 2. |
-| `rays` | `8` | How many rays fit across, 2 to 20. |
-| `length` | `0.45` | How far the rays reach, 0 to 1. |
-| `glow` | `0.9` | Brightness of the edge line, 0 to 2. |
-| `intensity` | `0.95` | Brightness of the curtains, 0 to 1. |
-| `shimmer` | `0.2` | Slow brightness ripple, 0 to 1. |
-| `scale` | `1` | Horizontal zoom: higher fits more folds across. |
-| `tilt` | `0` | Tilt in degrees, -45 to 45. |
-| `drift` | `0` | Sideways travel, -2 (left) to 2 (right). |
-| `direction` | `up` | `up`: rays rise from a bright lower edge. `down`: they hang from the top. |
-| `mask` | `none` | Fade it out where text sits: `none`, `top`, `bottom` or `edges`. |
+## Properties
+
+<Api file="dither-aurora" />
+

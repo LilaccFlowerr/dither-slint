@@ -1,0 +1,263 @@
+---
+interface Series {
+	label: string;
+	values: number[];
+	color: string;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+}
+
+interface Props {
+	axes: string[];
+	series: Series[];
+	max?: number;
+	rings?: number;
+	grid?: 'polygon' | 'circle';
+	size?: number;
+	unit?: string;
+}
+
+const { axes, series, max = 0, rings = 4, grid = 'polygon', size = 360, unit = '' } = Astro.props;
+const config = { axes, series, max, rings, grid, size, unit };
+---
+
+<div class="radar" data-config={JSON.stringify(config)}>
+	<div class="plot"></div>
+	<div class="legend"></div>
+</div>
+
+<style>
+	.radar {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		width: 100%;
+		user-select: none;
+	}
+	.plot {
+		position: relative;
+	}
+	.radar :global(svg),
+	.radar :global(canvas) {
+		position: absolute;
+		inset: 0;
+		margin: 0 !important;
+	}
+	.radar :global(canvas) {
+		image-rendering: pixelated;
+	}
+	.radar :global(.card) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 2;
+		padding: 8px 10px;
+		border: 1px solid var(--sl-color-gray-4);
+		border-radius: 8px;
+		background: var(--sl-color-bg-nav);
+		font-size: 12px;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms;
+	}
+	.radar :global(.card small) {
+		display: block;
+		margin-bottom: 4px;
+		color: var(--sl-color-gray-3);
+		font-size: 10px;
+		text-transform: uppercase;
+	}
+	.radar :global(.card div) {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 4px;
+	}
+	.radar :global(.card i),
+	.legend :global(i) {
+		width: 8px;
+		height: 8px;
+		border-radius: 2px;
+	}
+	.radar :global(.card b) {
+		margin-left: auto;
+		padding-left: 12px;
+		font-weight: 500;
+	}
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 4px;
+		margin-top: 12px;
+	}
+	.legend :global(button) {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		height: 28px;
+		padding: 0 8px;
+		border: 0;
+		border-radius: 6px;
+		background: none;
+		color: var(--sl-color-gray-2);
+		font: inherit;
+		font-size: 11px;
+		cursor: pointer;
+		transition: opacity 150ms;
+	}
+	.legend :global(button[aria-pressed='true']) {
+		background: var(--sl-color-gray-6);
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { chart_format, radar_axis, radar_image, radar_layout } from '../engine/dither_slint_engine_web.js';
+
+	const cell = 3;
+	const dimmed = 0.18;
+	const growMs = 840;
+	const growSteps = 24;
+	const font = 10;
+	const gap = 14;
+	const tau = Math.PI * 2;
+	const fills = { gradient: 0, dotted: 1, hatched: 2, solid: 3 } as const;
+	const seriesColors = ['ink', 'orange', 'green', 'pink', 'purple', 'blue', 'red', 'grey'];
+
+	interface Layout {
+		radius: number;
+		top: number;
+		rings: string[];
+		spokes: [number, number][];
+		labels: [number, number, string, number, number][];
+		shapes: [number, number][][];
+	}
+
+	ready.then(() => {
+		for (const radar of document.querySelectorAll<HTMLElement>('.radar')) {
+			const config = JSON.parse(radar.dataset.config!);
+			const plot = radar.querySelector<HTMLElement>('.plot')!;
+			const legend = radar.querySelector<HTMLElement>('.legend')!;
+			const axes: string[] = config.axes;
+			const series: { label: string; values: number[]; color: string; fill?: keyof typeof fills }[] = config.series;
+			const colorOf = (index: number) => series[index].color || seriesColors[index % seriesColors.length];
+			const css = (name: string) => `rgb(${rgba(name).slice(0, 3).join(' ')})`;
+			const values = new Float32Array(series.flatMap((line) => axes.map((_, axis) => line.values[axis] ?? 0)));
+			const fillBytes = new Uint8Array(series.map((line) => fills[line.fill ?? 'gradient']));
+			const colorBytes = new Uint8Array(series.flatMap((_, index) => rgba(colorOf(index))));
+			let grow = 0;
+			let hovered = -1;
+			let locked = -1;
+			let scrubbed = -1;
+			const spotlit = () => (hovered >= 0 ? hovered : locked);
+			const opacity = (index: number) => (spotlit() >= 0 && spotlit() !== index ? dimmed : 1);
+
+			function render() {
+				const side = Math.min(config.size, Math.floor(radar.clientWidth));
+				plot.style.width = `${side}px`;
+				plot.style.height = `${side}px`;
+				const spec = new Float32Array([side, cell, config.max, config.rings, config.grid === 'circle' ? 1 : 0]);
+				const layout: Layout = JSON.parse(radar_layout(axes.join('\n'), values, fillBytes, spec));
+				const centre = side / 2;
+				const stepped = Math.round(grow * growSteps) / growSteps;
+				const cells = Math.floor(side / cell);
+				const bytes = radar_image(axes.length, values, fillBytes, colorBytes, spec, stepped, spotlit());
+				const canvas = document.createElement('canvas');
+				canvas.width = cells;
+				canvas.height = cells;
+				canvas.style.cssText = `width: ${cells * cell}px; height: ${cells * cell}px`;
+				canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), cells, cells), 0, 0);
+				const ink = 'var(--sl-color-white)';
+				const rings = layout.rings.map((path, index) => `<path d="${path}" fill="none" stroke="${ink}" stroke-opacity="${index === layout.rings.length - 1 ? 0.25 : 0.18}"/>`).join('');
+				const spokes = layout.spokes.map(([x, y], index) => `<path d="M 0 0 L ${x} ${y}" stroke="${ink}" stroke-opacity="${scrubbed === index ? 0.6 : 0.18}"/>`).join('');
+				const markerSize = Math.max(4, cell * 2);
+				const markers = layout.shapes
+					.map((points, line) =>
+						points
+							.map(([x, y], axis) => {
+								const edge = scrubbed === axis ? markerSize + 4 : markerSize;
+								return `<rect x="${Math.round(x * stepped - edge / 2)}" y="${Math.round(y * stepped - edge / 2)}" width="${edge}" height="${edge}" fill="${css(colorOf(line))}" stroke="var(--sl-color-bg)" stroke-width="${scrubbed === axis ? 2 : 1}" opacity="${opacity(line)}"/>`;
+							})
+							.join(''),
+					)
+					.join('');
+				const labels = layout.labels
+					.map(([x, y, text, align, line], index) => `<text x="${x}" y="${y}" text-anchor="${align > 0 ? 'start' : align < 0 ? 'end' : 'middle'}" dy="${line.toFixed(2)}em" fill="${ink}" fill-opacity="${scrubbed === index ? 1 : 0.6}" style="font-size: ${font}px">${text}</text>`)
+					.join('');
+				const grid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				grid.setAttribute('width', String(side));
+				grid.setAttribute('height', String(side));
+				grid.innerHTML = `<g transform="translate(${centre} ${centre})" stroke-width="1">${rings}${spokes}</g>`;
+				const top = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				top.setAttribute('width', String(side));
+				top.setAttribute('height', String(side));
+				top.style.overflow = 'visible';
+				top.innerHTML = `<g transform="translate(${centre} ${centre})">${markers}${labels}</g>`;
+				const card = document.createElement('div');
+				card.className = 'card';
+				plot.replaceChildren(grid, canvas, top, card);
+				plot.onpointermove = (event) => {
+					const box = plot.getBoundingClientRect();
+					const axis = radar_axis(axes.length, event.clientX - box.left, event.clientY - box.top, side);
+					if (axis !== scrubbed) {
+						scrubbed = axis;
+						render();
+					}
+				};
+				plot.onpointerleave = () => {
+					scrubbed = -1;
+					render();
+				};
+				if (scrubbed >= 0) {
+					const angle = (scrubbed * tau) / axes.length;
+					const [tipX, tipY] = layout.spokes[scrubbed];
+					card.innerHTML =
+						`<small>${axes[scrubbed]}</small>` +
+						series.map((line, index) => `<div style="opacity: ${opacity(index)}"><i style="background: ${css(colorOf(index))}"></i>${line.label}<b>${chart_format(line.values[scrubbed] ?? 0, config.unit)}</b></div>`).join('');
+					const w = card.offsetWidth;
+					const h = card.offsetHeight;
+					const left = Math.min(Math.max(0, centre + tipX - w / 2 + Math.sin(angle) * (w / 2 + gap)), side - w);
+					const upper = Math.min(Math.max(0, centre + tipY - h / 2 - Math.cos(angle) * (h / 2 + gap)), side - h);
+					card.style.transform = `translate(${Math.round(left)}px, ${Math.round(upper)}px)`;
+					card.style.opacity = '1';
+				}
+				legend.querySelectorAll<HTMLElement>('button').forEach((button, index) => {
+					button.style.opacity = String(opacity(index));
+					button.setAttribute('aria-pressed', String(locked === index));
+				});
+			}
+
+			if (series.length > 1) {
+				series.forEach((line, index) => {
+					const button = document.createElement('button');
+					button.type = 'button';
+					button.innerHTML = `<i style="background: ${css(colorOf(index))}"></i>${line.label}`;
+					button.addEventListener('pointerenter', () => {
+						hovered = index;
+						render();
+					});
+					button.addEventListener('pointerleave', () => {
+						hovered = -1;
+						render();
+					});
+					button.addEventListener('click', () => {
+						locked = locked === index ? -1 : index;
+						render();
+					});
+					legend.append(button);
+				});
+			}
+
+			const started = performance.now();
+			const tick = (now: number) => {
+				const linear = Math.min(1, (now - started) / growMs);
+				grow = 1 - (1 - linear) ** 3;
+				render();
+				if (linear < 1) requestAnimationFrame(tick);
+			};
+			new ResizeObserver(render).observe(radar);
+			requestAnimationFrame(tick);
+		}
+	});
+</script>

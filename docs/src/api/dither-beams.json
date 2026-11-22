@@ -1,0 +1,10 @@
+{
+ "DitherBeams": {
+  "origin": "Where the light comes from, as fractions of the box from the top left. Put it outside the box for a light just out of frame, or far away for near-parallel rays from an edge.",
+  "angle": "Direction the light points, in degrees as in CSS: 180 is down.",
+  "spread": "Width of the cone of light, in degrees.",
+  "rays": "How many separate rays, roughly.",
+  "sweep": "How far the rays sweep back and forth, in degrees. 0 holds them still.",
+  "reach": "How far the light reaches from where it enters the box, as a share of the box diagonal."
+ }
+}

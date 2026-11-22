@@ -1,0 +1,10 @@
+{
+ "DitherTunnel": {
+  "shape": "The cross-section: <code>circle</code> or <code>square</code>.",
+  "rings": "How close together the rings are: 2 packs twice as many in.",
+  "spokes": "Lines running along the walls, 0 to 32. 0 leaves only the rings.",
+  "center": "The vanishing point, as fractions of the box from the top left.",
+  "sway": "How far the vanishing point wanders. 0 holds it still.",
+  "fog": "Size of the empty fog in the middle: 2 doubles it to clear room for text."
+ }
+}

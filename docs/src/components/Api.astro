@@ -1,0 +1,169 @@
+---
+import { componentsOf, descriptions, shared, typeNames, withInherited } from '../scripts/slint-api';
+
+interface Props {
+	file: string;
+	inherits?: string[];
+	hide?: string[];
+	only?: string;
+}
+
+const { file, inherits = [], hide = [], only } = Astro.props;
+const described = descriptions(file);
+const common = shared();
+const inheritedText = (base: string, name: string) => {
+	for (const parent of inherits) {
+		const found = descriptions(parent)[base]?.[name];
+		if (found !== undefined) return found;
+	}
+	return undefined;
+};
+const visible = (names: { name: string }[]) => names.filter((member) => !hide.includes(member.name));
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const components = componentsOf(file)
+	.filter((component) => !only || component.name === only)
+	.map((component) => withInherited(file, component, inherits))
+	.map((component) => ({
+		...component,
+		properties: visible(component.properties),
+		callbacks: visible(component.callbacks),
+		functions: visible(component.functions),
+	}));
+
+const missing: string[] = [];
+const describe = (component: string, name: string, base = '') => {
+	const text = described[component]?.[name] ?? inheritedText(base, name) ?? common[name];
+	if (text === undefined) missing.push(`${component}.${name}`);
+	return text ?? '';
+};
+const link = (type: string) => type.split(/([A-Z]\w*)/).map((part) => (typeNames(part).length ? { link: `${base}/reference/types/#${part.toLowerCase()}`, text: part } : { text: part }));
+const rows = (items: { name: string }[], component: string, base = '') => items.map((member) => ({ member, text: describe(component, member.name, base) }));
+if (missing.length && import.meta.env.DEV) console.warn(`[api] ${file}: no description for ${missing.join(', ')}`);
+---
+
+{components.map((component) => (
+	<section class="api">
+		{components.length > 1 && <h3>{component.name}</h3>}
+		{component.properties.length > 0 && (
+			<>
+			<p class="note">Set these on the component. A dash means there is no default, and the types link to the <a href={`${base}/reference/types/`}>type reference</a>.</p>
+			<div class="scroll">
+				<table>
+					<thead>
+						<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+					</thead>
+					<tbody>
+						{rows(component.properties, component.name, component.inherits).map(({ member, text }) => (
+							<tr id={`${component.name.toLowerCase()}-${member.name}`}>
+								<td><code>{member.name}</code>{member.access !== 'in' && <small>{member.access === 'out' ? 'read only' : 'two-way'}</small>}</td>
+								<td><code>{link(member.type).map((part) => (part.link ? <a href={part.link}>{part.text}</a> : part.text))}</code></td>
+								<td>{member.default ? <code>{member.default}</code> : <span class="none">–</span>}</td>
+								<td set:html={text} />
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+			</>
+		)}
+		{component.callbacks.length > 0 && (
+			<>
+				<h4>Callbacks</h4>
+				<div class="scroll">
+					<table>
+						<thead>
+							<tr><th>Callback</th><th>Arguments</th><th>Description</th></tr>
+						</thead>
+						<tbody>
+							{rows(component.callbacks, component.name, component.inherits).map(({ member, text }) => (
+								<tr>
+									<td><code>{member.name}</code></td>
+									<td>{(member as any).arguments ? <code>{(member as any).arguments}</code> : <span class="none">–</span>}</td>
+									<td set:html={text} />
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			</>
+		)}
+		{component.functions.length > 0 && (
+			<>
+				<h4>Functions</h4>
+				<div class="scroll">
+					<table>
+						<thead>
+							<tr><th>Function</th><th>Arguments</th><th>Description</th></tr>
+						</thead>
+						<tbody>
+							{rows(component.functions, component.name, component.inherits).map(({ member, text }) => (
+								<tr>
+									<td><code>{member.name}</code></td>
+									<td>{(member as any).arguments ? <code>{(member as any).arguments}</code> : <span class="none">–</span>}</td>
+									<td set:html={text} />
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			</>
+		)}
+	</section>
+))}
+
+<style>
+	.api {
+		margin: 1rem 0 2rem;
+	}
+	.scroll {
+		overflow-x: auto;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: var(--sl-text-sm);
+	}
+	th {
+		text-align: left;
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid var(--sl-color-gray-4);
+		color: var(--sl-color-gray-2);
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	td {
+		padding: 0.55rem 0.75rem;
+		border-bottom: 1px solid var(--sl-color-gray-5);
+		vertical-align: top;
+	}
+	td {
+		line-height: 1.5;
+	}
+	.api td:nth-child(-n + 3) code {
+		white-space: nowrap;
+	}
+	.api td:nth-child(3) {
+		min-width: 9rem;
+	}
+	.note {
+		margin: 0 0 0.75rem;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+	}
+	small {
+		display: block;
+		margin-top: 0.2rem;
+		color: var(--sl-color-gray-3);
+		font-size: 0.7rem;
+	}
+	.none {
+		color: var(--sl-color-gray-3);
+	}
+	h3 {
+		margin-top: 1.5rem;
+	}
+	h4 {
+		margin: 1.25rem 0 0.25rem;
+		font-size: var(--sl-text-base);
+	}
+</style>

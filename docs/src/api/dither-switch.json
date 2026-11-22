@@ -1,0 +1,13 @@
+{
+ "DitherSwitch": {
+  "checked": "Whether it is on.",
+  "fill": "Texture of the shade when on and of the track when off: <code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "color": "Colour of the ink when on.",
+  "size": "<code>sm</code>, <code>md</code> or <code>lg</code>: tracks of 34 by 20, 42 by 24 and 54 by 30 pixels, rounded to whole cells.",
+  "bloom": "<code>low</code> or <code>high</code> adds a glow in the ink's colour when on.",
+  "cell": "Size of one dither cell.",
+  "enabled": "Drops to 45% opacity and ignores clicks and keys when <code>false</code>.",
+  "animated": "A ripple from where you press.",
+  "toggled": "Called with the new state when the switch is toggled."
+ }
+}

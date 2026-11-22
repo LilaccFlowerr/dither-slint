@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -23,9 +24,7 @@ import Background from '../../../components/Background.astro';
 
 A topographic map: contour lines over slowly drifting hills, with every fifth line drawn heavier and a light hillshade. Thin lines use the middle palette colour, index lines the last. The hills keep their size in cells, so a small box shows a smaller piece of the same map.
 
-| Property | Default | |
-| --- | --- | --- |
-| `lines` | `14` | How many contour lines from the lowest ground to the highest, 4 to 32. |
-| `scale` | `1` | Size of the hills: higher packs more of them in. |
-| `index` | `5` | Every how many lines one is drawn heavier, as on a survey map. 0 draws them all the same. |
-| `relief` | `0.5` | How strongly the slopes facing away from the light are shaded, 0 to 1. |
+## Properties
+
+<Api file="dither-contours" />
+

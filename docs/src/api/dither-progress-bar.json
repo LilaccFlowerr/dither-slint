@@ -1,0 +1,19 @@
+{
+ "DitherProgressBar": {
+  "label": "What is in progress. Shown above the bar and used as its accessible name.",
+  "value": "Progress from 0 to <code>maximum</code>. A negative value makes the bar indeterminate.",
+  "maximum": "The value that means done, or the capacity when you use <code>parts</code>.",
+  "value-text": "Text for the readout, such as \"3 of 5\". Default is the percentage.",
+  "hide-label": "Hides the label and the readout, but keeps them for screen readers.",
+  "size": "<code>sm</code>, <code>md</code> or <code>lg</code>: 2, 4 and 6 cells high.",
+  "fill": "<code>gradient</code> (densest at the leading edge), <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "color": "Colour of the fill and the track.",
+  "bloom": "<code>low</code> or <code>high</code> adds a glow in the bar's colour.",
+  "segments": "Cuts the bar into this many blocks, a cell apart. Up to 32.",
+  "gap": "Colour of the cut between segments. Match the surface behind the bar.",
+  "cell": "Size of one dither cell.",
+  "animate": "Grows to the value when it appears, eases between values and sweeps the comet.",
+  "parts": "Several values stacked left to right. Each has <code>label</code>, <code>value</code>, an optional <code>color</code> and an optional <code>fill</code> with <code>custom-fill: true</code>.",
+  "unit": "Shown after each part's value in the legend, such as <code>\" GB\"</code>."
+ }
+}

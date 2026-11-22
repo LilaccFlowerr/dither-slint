@@ -1,0 +1,32 @@
+import { DitherFill, DitherPalette, DitherRadarChart, DitherRadarGrid, DitherTheme } from "../../ui/lib.slint";
+
+export component RadarPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 24px;
+    alignment: start;
+
+    HorizontalLayout {
+        spacing: 24px;
+        alignment: start;
+
+        DitherRadarChart {
+            width: 380px;
+            animated: false;
+            axes: ["Speed", "Power", "Range", "Armor", "Stealth", "Agility"];
+            series: [
+                { label: "Falcon", values: [82, 60, 74, 40, 55, 90], color: DitherTheme.ink, fill: DitherFill.gradient },
+                { label: "Bear", values: [40, 92, 50, 88, 20, 35], color: DitherPalette.orange, fill: DitherFill.dotted },
+            ];
+        }
+
+        DitherRadarChart {
+            width: 380px;
+            animated: false;
+            grid: DitherRadarGrid.circle;
+            axes: ["Design", "Code", "Docs", "Tests", "Speed"];
+            series: [
+                { label: "Q3", values: [70, 85, 60, 75, 90], color: DitherPalette.green, fill: DitherFill.hatched },
+            ];
+        }
+    }
+}

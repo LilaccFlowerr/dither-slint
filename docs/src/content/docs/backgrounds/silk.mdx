@@ -10,6 +10,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -24,9 +25,7 @@ import Background from '../../../components/Background.astro';
 
 Folds of silk catching the light, with a bright highlight along each crest.
 
-| Property | Default | |
-| --- | --- | --- |
-| `folds` | `6` | How many folds cross the box. |
-| `angle` | `110` | Direction the folds run, in degrees as in CSS: 90 runs them left to right. |
-| `sheen` | `0.6` | How narrow and bright the highlights are, 0 to 1. |
-| `intensity` | `1` | The brightest tone. Lower it to sit text on top. |
+## Properties
+
+<Api file="dither-silk" />
+

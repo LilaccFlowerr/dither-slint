@@ -1,0 +1,20 @@
+{
+ "DitherAvatar": {
+  "name": "The string the face is drawn from, usually a name, an email or an id.",
+  "size": "Width and height.",
+  "color": "Any colour. Without one, a hue is picked from the name.",
+  "fill": "How each block is drawn: <code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "shape": "<code>circle</code> or <code>square</code> with rounded corners.",
+  "ring": "A ring in the avatar's colour, for the current user or a selection.",
+  "status": "A presence dot in the corner: <code>online</code>, <code>away</code>, <code>busy</code> or <code>offline</code>.",
+  "bloom": "<code>low</code> or <code>high</code> adds a glow in the avatar's colour.",
+  "outline": "Colour of a ring around the avatar, such as the background colour when avatars overlap in a group.",
+  "outline-width": "Width of that ring. <code>0px</code> draws none."
+ },
+ "DitherAvatarGroup": {
+  "names": "One avatar per name.",
+  "max": "Shows at most this many, then a \"+N\" chip for the rest.",
+  "size": "Width and height of every avatar.",
+  "outline": "Colour of the gap around each avatar. Match the surface behind the group."
+ }
+}

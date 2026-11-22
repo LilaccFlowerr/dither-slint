@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -20,9 +21,7 @@ import Background from '../../../components/Background.astro';
 
 A dithered edge for the seam between two sections or the end of a clipped list. Put it inside the box whose edge it fades. It covers `size` along `side` and is solid at the edge, so give `color` the background of whatever comes next. The demo fills the whole box to show the shape, a real fade covers only `size` of it. Still by default, set `animated` to let the edge drift.
 
-| Property | Default | |
-| --- | --- | --- |
-| `side` | `bottom` | The edge to fade into: `bottom`, `top`, `right` or `left`. |
-| `size` | `160px` | How deep the fade runs from that edge. |
-| `color` | `DitherTheme.background` | The colour the content fades into. |
-| `animated` | `false` | Let the edge drift slowly. |
+## Properties
+
+<Api file="dither-fade" />
+

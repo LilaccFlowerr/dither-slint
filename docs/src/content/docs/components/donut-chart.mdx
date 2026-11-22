@@ -1,0 +1,65 @@
+---
+title: DitherDonutChart
+description: A donut or pie drawn in dither cells, with a solid rim on every slice and a sweep that draws it in clockwise.
+---
+
+import Demo from '../../../components/Demo.astro';
+import Donut from '../../../components/Donut.astro';
+import Api from '../../../components/Api.astro';
+
+Slices are drawn clockwise from 12 o'clock in the order you give them. Each takes a colour and a texture and is capped with a solid rim. Hover a slice, or a row of the legend, to step it out and dim the others, and click to keep it lit. In a donut the middle shows the total, or the slice you point at. In a pie a small card sits over the slice.
+
+<Demo
+	title="Donut"
+	code={`DitherDonutChart {
+    label: "Requests today";
+    slices: [
+        { label: "Web", value: 18420, color: DitherTheme.ink, fill: DitherFill.gradient },
+        { label: "Mobile", value: 12310, color: DitherPalette.orange, fill: DitherFill.gradient },
+        { label: "API", value: 8650, color: DitherPalette.green, fill: DitherFill.gradient },
+        { label: "Other", value: 2120, color: DitherPalette.pink, fill: DitherFill.dotted },
+    ];
+}`}
+>
+	<Donut
+		label="Requests today"
+		slices={[
+			{ label: 'Web', value: 18420, color: 'ink' },
+			{ label: 'Mobile', value: 12310, color: 'orange' },
+			{ label: 'API', value: 8650, color: 'green' },
+			{ label: 'Other', value: 2120, color: 'pink', fill: 'dotted' },
+		]}
+	/>
+</Demo>
+
+## Examples
+
+<Demo
+	title="Pie"
+	code={`DitherDonutChart {
+    label: "Storage";
+    unit: " GB";
+    mode: DitherDonutMode.pie;
+    slices: [
+        { label: "Apps", value: 142, color: DitherPalette.blue, fill: DitherFill.gradient },
+        { label: "System", value: 64, color: DitherPalette.purple, fill: DitherFill.hatched },
+        { label: "Media", value: 32, color: DitherPalette.pink, fill: DitherFill.gradient },
+    ];
+}`}
+>
+	<Donut
+		label="Storage"
+		unit=" GB"
+		mode="pie"
+		slices={[
+			{ label: 'Apps', value: 142, color: 'blue' },
+			{ label: 'System', value: 64, color: 'purple', fill: 'hatched' },
+			{ label: 'Media', value: 32, color: 'pink' },
+		]}
+	/>
+</Demo>
+
+## Properties
+
+<Api file="dither-donut-chart" />
+

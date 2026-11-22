@@ -1,0 +1,9 @@
+{
+ "DitherImage": {
+  "source": "The picture.",
+  "method": "<code>bayer4</code>, <code>bayer8</code>, <code>blue-noise</code>, <code>floyd-steinberg</code>, <code>atkinson</code> or <code>sierra-lite</code>.",
+  "threshold": "Brightness cut-off, 0 to 1.",
+  "cell": "Size of one dither cell.",
+  "palette": "Two or more colours. Pixels take the nearest one."
+ }
+}

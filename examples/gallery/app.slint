@@ -27,6 +27,12 @@ import { ImageComparePage } from "image-compare-page.slint";
 import { ScrollRevealPage } from "scroll-reveal-page.slint";
 import { LogoPage } from "logo-page.slint";
 import { TreemapPage } from "treemap-page.slint";
+import { ChartPage } from "chart-page.slint";
+import { DonutPage } from "donut-page.slint";
+import { HeatmapPage } from "heatmap-page.slint";
+import { PixelAreaPage } from "pixel-area-page.slint";
+import { RadarPage } from "radar-page.slint";
+import { TextPage } from "text-page.slint";
 
 export component Gallery inherits Window {
     title: "dither-slint";
@@ -36,7 +42,7 @@ export component Gallery inherits Window {
 
     in property <image> sample;
 
-    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch", "Slider", "Input", "Dropdown", "Avatar", "Loader", "Skeleton", "Empty state", "Progress", "Stat card", "Sparkline", "Uptime bar", "Gauge", "Number", "Image compare", "Scroll reveal", "Logo", "Treemap"];
+    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch", "Slider", "Input", "Dropdown", "Avatar", "Loader", "Skeleton", "Empty state", "Progress", "Stat card", "Sparkline", "Uptime bar", "Gauge", "Number", "Image compare", "Scroll reveal", "Logo", "Treemap", "Charts", "Donut", "Heatmap", "Pixel area", "Radar", "Text effects"];
     property <int> page: 0;
 
     HorizontalLayout {
@@ -92,6 +98,12 @@ export component Gallery inherits Window {
             if root.page == 24: ScrollRevealPage { window-height: root.height; }
             if root.page == 25: LogoPage { }
             if root.page == 26: TreemapPage { }
+            if root.page == 27: ChartPage { }
+            if root.page == 28: DonutPage { }
+            if root.page == 29: HeatmapPage { }
+            if root.page == 30: PixelAreaPage { }
+            if root.page == 31: RadarPage { }
+            if root.page == 32: TextPage { }
         }
     }
 }

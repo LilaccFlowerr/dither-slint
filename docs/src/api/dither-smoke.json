@@ -1,0 +1,8 @@
+{
+ "DitherSmoke": {
+  "scale": "Size of the billows: higher makes more, smaller ones.",
+  "climb": "How high the smoke climbs before it thins out, 0 to 1.",
+  "wind": "Sideways wind: negative blows left, positive right.",
+  "density": "How thick the smoke is, 0 to 1.5."
+ }
+}

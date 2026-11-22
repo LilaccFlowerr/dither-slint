@@ -1,0 +1,21 @@
+{
+ "DitherDissolveText": {
+  "text": "The text. It stays on one line.",
+  "word": "Dissolve each word instead of each character.",
+  "order": "<code>start</code>, <code>end</code>, <code>center</code>, <code>edges</code> or <code>random</code>.",
+  "showing": "<code>false</code> dissolves the text out, <code>true</code> brings it back. Changing it plays the dissolve again.",
+  "font-size": "The type.",
+  "font-weight": "The type.",
+  "ink": "The text colour and the flat colour behind it.",
+  "backdrop": "The text colour and the flat colour behind it.",
+  "fill": "What the letters settle into: <code>solid</code>, <code>gradient</code>, <code>dotted</code> or <code>hatched</code>.",
+  "level": "Gradient only: the coverage the letters settle at.",
+  "duration": "One character or word.",
+  "stagger": "The time between one unit and the next.",
+  "delay": "The time before the first unit starts.",
+  "speed": "Multiplies every timing. 2 plays twice as fast.",
+  "matrix": "The dither pattern.",
+  "cell": "Size of one dither cell.",
+  "animated": "<code>false</code> shows the finished text at once."
+ }
+}

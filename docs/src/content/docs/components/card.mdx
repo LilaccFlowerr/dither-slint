@@ -5,6 +5,7 @@ description: A card with a dithered glow in a corner or along an edge.
 
 import Card from '../../../components/Card.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 The glow is a stack of nine rings, each filled with a denser dither than the one under it, so it reads as one smooth falloff. A dithered rim runs along the border and is densest near the glow. Put your content inside.
 
@@ -29,6 +30,8 @@ DitherCard {
 	<Card title="Pricing" glow="bottom-right">A dithered glow, a dithered rim.</Card>
 	<Card title="Docs" glow="top">A dithered glow, a dithered rim.</Card>
 </Demo>
+
+## Examples
 
 <Demo
 	title="Fills, colour and hover"
@@ -56,19 +59,6 @@ DitherCard {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `glow` | `top-left` | `top-left`, `top-right`, `bottom-left`, `bottom-right`, `top` or `bottom`. |
-| `reach` | `240px` | How far the glow reaches from its origin. |
-| `strength` | `0.5` | Densest level, at the origin, 0 to 1. |
-| `interactive` | `false` | Grows the glow through the levels on hover. |
-| `color` | `DitherTheme.ink` | Colour of the glow. |
-| `fill` | `gradient` | Texture of the glow. |
-| `matrix` | `bayer4` | The dither pattern. |
-| `cell` | `3px` | Size of one dither cell. |
-| `rim` | `true` | Light the border with dither. |
-| `radius` | `14px` | Corner radius, which the rim follows. |
-| `inset` | `24px` | Space between the edge and your content. |
-| `spacing` | `16px` | Space between the children. |
+<Api file="dither-card" />
 
 While the pointer is over a child such as a button, the glow does not keep growing, because Slint only reports hover to the topmost element.

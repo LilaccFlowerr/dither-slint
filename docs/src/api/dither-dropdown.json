@@ -1,0 +1,16 @@
+{
+ "DitherDropdownMenu": {
+  "items": "The rows. Each has <code>text</code>, <code>shortcut</code>, <code>destructive</code>, <code>disabled</code>, <code>group</code> (a heading above the item) and <code>divider</code> (a line above the item).",
+  "variant": "Highlight of the active item: <code>pill</code>, <code>dither</code>, <code>glow</code>, <code>hatched</code>, <code>dotted</code> or <code>outline</code>.",
+  "menu": "The container: <code>card</code> with a dithered corner glow, <code>glow</code>, <code>pixel</code> or <code>solid</code>.",
+  "color": "Colour of the highlights and the glow.",
+  "matrix": "The dither pattern.",
+  "bloom": "<code>low</code> or <code>high</code> strengthens the textured highlights.",
+  "cell": "Size of one dither cell.",
+  "menu-width": "Width of the menu.",
+  "enabled": "Ignores clicks when <code>false</code>.",
+  "is-open": "Whether the menu is open. Read only.",
+  "selected": "The index of the item that was chosen last. Read only.",
+  "open": "Called when the menu opens."
+ }
+}

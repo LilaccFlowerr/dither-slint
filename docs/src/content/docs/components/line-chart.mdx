@@ -1,0 +1,65 @@
+---
+title: DitherLineChart
+description: One or more crisp lines over a dithered range band, with a readout that follows the pointer.
+---
+
+import Demo from '../../../components/Demo.astro';
+import LineChart from '../../../components/Chart.astro';
+import Api from '../../../components/Api.astro';
+
+Lines are drawn as smooth curves that never overshoot the data. A series can carry a range, such as p10 to p90 or a forecast interval, drawn as a dithered band around its line. Move the pointer over the chart for a readout, and use the legend to spotlight a series.
+
+<Demo
+	title="Two series"
+	code={`DitherLineChart {
+    categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    series: [
+        { label: "Revenue", color: DitherTheme.ink, values: [12, 18, 15, 24, 28, 26], low: [], high: [], dashed: false },
+        { label: "Costs", color: DitherPalette.orange, values: [10, 12, 13, 15, 17, 18], low: [], high: [], dashed: true },
+    ];
+}`}
+>
+	<LineChart
+		categories={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+		series={[
+			{ label: 'Revenue', color: 'ink', values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52] },
+			{ label: 'Costs', color: 'orange', values: [10, 12, 13, 15, 17, 18, 21, 22, 24, 25, 27, 28], dashed: true },
+		]}
+	/>
+</Demo>
+
+## Examples
+
+<Demo
+	title="A range band, markers on every point"
+	code={`DitherLineChart {
+    categories: root.months;
+    markers: DitherChartMarkers.all;
+    series: [
+        { label: "Latency", color: DitherPalette.green, values: [120, 118, 125, 140, 132, 128], low: [100, 98, 104, 118, 110, 106], high: [140, 138, 146, 162, 154, 150], dashed: false },
+    ];
+}`}
+>
+	<LineChart
+		categories={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+		markers="all"
+		series={[
+			{
+				label: 'Latency',
+				color: 'green',
+				values: [120, 118, 125, 140, 132, 128, 150, 145, 138, 130, 126, 122],
+				low: [100, 98, 104, 118, 110, 106, 126, 120, 114, 108, 104, 100],
+				high: [140, 138, 146, 162, 154, 150, 174, 170, 162, 152, 148, 144],
+			},
+		]}
+	/>
+</Demo>
+
+## Data
+
+`categories` is the label of every point along the x axis. Every series has `values`, one number per category. Leave `low` and `high` empty, or give both the same length as `values` for a band. A transparent `color` takes the next colour of the series: ink, orange, green, pink, purple, blue, red, grey.
+
+## Properties
+
+<Api file="dither-line-chart" inherits={["chart-frame"]} hide={["area-keys", "bars", "spec", "layout", "scrubbing", "scrubbed", "color-of", "opacity-of", "stack"]} />
+

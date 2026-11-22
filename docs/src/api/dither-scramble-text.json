@@ -1,0 +1,21 @@
+{
+ "DitherScrambleText": {
+  "text": "The final text.",
+  "trigger": "<code>mount</code> plays on its own, <code>hover</code> plays when the pointer enters, <code>change</code> plays only when <code>text</code> changes, <code>manual</code> plays when you call <code>replay()</code>. Every trigger also plays when <code>text</code> changes.",
+  "mode": "<code>dither</code> is a block, then glyphs, then the letter. <code>blocks</code> is only the block. <code>glyphs</code> is only glyphs.",
+  "characters": "The glyphs to cycle through.",
+  "font-size": "The type.",
+  "font-weight": "The type.",
+  "ink": "Colour of the blocks and glyphs.",
+  "text-color": "Colour of the settled letters.",
+  "duration": "One character.",
+  "stagger": "The time between one character starting and the next.",
+  "delay": "The time before the first character starts.",
+  "speed": "Multiplies every timing.",
+  "rate": "Glyph changes per second while a character is unsettled.",
+  "cell": "Size of one dither cell in a block.",
+  "animated": "<code>false</code> shows the text at once.",
+  "completed": "Called when every character has settled.",
+  "replay": "Plays the effect again from the start."
+ }
+}

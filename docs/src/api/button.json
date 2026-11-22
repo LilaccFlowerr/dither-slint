@@ -1,0 +1,14 @@
+{
+ "DitherButton": {
+  "text": "The label.",
+  "icon": "An image shown before the label, tinted like the text.",
+  "variant": "<code>filled</code> is the lit colour surface, <code>outline</code> a faint tint that fills in on hover.",
+  "fill": "Texture of the shade: <code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "color": "Any colour, or one from <code>DitherPalette</code>.",
+  "size": "<code>sm</code>, <code>md</code> and <code>lg</code> are 32, 36 and 44px high. <code>icon</code> is a 36px square.",
+  "bloom": "<code>low</code> or <code>high</code> adds a glow in the button's colour.",
+  "cell": "Size of one dither cell.",
+  "loading": "Steps three cells before the label and ignores clicks.",
+  "animated": "A dithered sweep on hover and a ripple from where you press."
+ }
+}

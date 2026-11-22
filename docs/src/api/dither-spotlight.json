@@ -1,0 +1,7 @@
+{
+ "DitherSpotlight": {
+  "position": "Where the light comes from, as fractions of the box from the top left. Just outside the box lights it from an edge.",
+  "radius": "How far the light reaches: 1 reaches the farthest corner.",
+  "intensity": "Brightness at the centre, 0 to 1."
+ }
+}

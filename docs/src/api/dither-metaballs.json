@@ -1,0 +1,7 @@
+{
+ "DitherMetaballs": {
+  "variant": "<code>solid</code> for shaded blobs, <code>rings</code> for contour lines.",
+  "count": "How many blobs, 2 to 8.",
+  "size": "Size of the blobs: 2 makes them twice as wide."
+ }
+}

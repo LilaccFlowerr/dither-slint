@@ -1,0 +1,12 @@
+{
+ "DitherLoader": {
+  "variant": "<code>ring</code>, <code>dots</code>, <code>pulse</code> or <code>bar</code>.",
+  "size": "<code>sm</code>, <code>md</code> or <code>lg</code>: 24, 40 and 64 pixels high. Dots are twice as wide, the bar three times.",
+  "color": "Any colour, or one from <code>DitherPalette</code>.",
+  "matrix": "The dither pattern.",
+  "cell": "Size of one dither cell.",
+  "speed": "Speed multiplier.",
+  "label": "What a screen reader announces.",
+  "animated": "When <code>false</code> it holds a still frame."
+ }
+}

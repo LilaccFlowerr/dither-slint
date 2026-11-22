@@ -8,6 +8,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -30,9 +31,7 @@ import Background from '../../../components/Background.astro';
 
 Concentric rings from one to four points that cross like drops on still water.
 
-| Property | Default | |
-| --- | --- | --- |
-| `sources` | `[0.28, 0.38, 0.74, 0.66]` | x and y pairs as fractions of the box, up to four. |
-| `rings` | `12` | How many rings fit in the height. |
-| `decay` | `1` | How quickly the rings fade. |
-| `intensity` | `1` | Brightest tone, 0 to 1. |
+## Properties
+
+<Api file="dither-ripples" />
+

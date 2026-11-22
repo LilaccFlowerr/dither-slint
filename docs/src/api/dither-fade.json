@@ -1,0 +1,8 @@
+{
+ "DitherFade": {
+  "side": "The edge to fade into: <code>bottom</code>, <code>top</code>, <code>right</code> or <code>left</code>.",
+  "size": "How deep the fade runs from that edge.",
+  "color": "The colour the content fades into.",
+  "animated": "Let the edge drift slowly."
+ }
+}

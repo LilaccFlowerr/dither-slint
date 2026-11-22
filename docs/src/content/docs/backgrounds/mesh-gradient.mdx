@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -21,7 +22,7 @@ import Background from '../../../components/Background.astro';
 
 Three to five colour blobs that drift and melt into each other. Blob `i` takes colour `i + 1` of the palette, so pass `blobs + 1` colours for one colour each.
 
-| Property | Default | |
-| --- | --- | --- |
-| `blobs` | `4` | How many blobs drift across the box, 3 to 5. |
-| `size` | `0.6` | Size of each blob, as a share of the box height. |
+## Properties
+
+<Api file="dither-mesh-gradient" />
+

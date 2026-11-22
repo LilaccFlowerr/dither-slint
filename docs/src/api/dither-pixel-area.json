@@ -1,0 +1,15 @@
+{
+ "DitherPixelArea": {
+  "values": "The values in order, oldest first. They are resampled to the width.",
+  "labels": "A label per value for the readout, such as dates. Default <code>#1</code>, <code>#2</code> and so on.",
+  "ink": "Colour of the area.",
+  "fill": "<code>gradient</code> dissolves upward, <code>dotted</code> keeps real gaps, <code>hatched</code> adds diagonals, <code>solid</code> is flat.",
+  "cell": "Size of one dither cell.",
+  "min": "The bottom and the top of the value axis. <code>max: 0</code> takes the largest value.",
+  "max": "The bottom and the top of the value axis. <code>max: 0</code> takes the largest value.",
+  "interactive": "The hover lift and the marker with its readout.",
+  "animated": "The area sweeps in from the left.",
+  "stars": "A few stars in the fill.",
+  "winking": "Whether the stars wink."
+ }
+}

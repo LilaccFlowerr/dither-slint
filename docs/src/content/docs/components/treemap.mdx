@@ -5,6 +5,7 @@ description: A treemap that shows how a whole splits into parts, with dithered t
 
 import Demo from '../../../components/Demo.astro';
 import Treemap from '../../../components/Treemap.astro';
+import Api from '../../../components/Api.astro';
 
 Each item is a tile, sized by its value in a squarified treemap. Use it for anything that adds up to a whole: headcount by team, revenue by region, disk space, the parts of a context window. When it appears the values grow in one after another. Hover a tile to dim the others and see its share.
 
@@ -87,21 +88,5 @@ Values of a thousand or more are shown in thousands, so use `unit: "k"` for numb
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `title` | | Headline on the top left. |
-| `items` | a sample | The tiles, each `{ label, value, color, fill, detail, remainder }`. A transparent `color` takes the next colour of the series. |
-| `capacity` | the sum of the values | The whole, in the same unit as the values. |
-| `unit` | | Shown after every number. |
-| `status` | | Text in the footer while nothing is hovered. |
-| `replay-label` | `Replay` | Text of the button that plays the animation again. |
-| `duration` | `6s` | How long the values take to grow in. |
-| `animated` | `DitherTheme.animated` | `false` shows the finished treemap at once. |
-| `interactive` | `true` | Hover a tile for the tooltip and the dimming. |
-| `spotlight` | `opacity` | `opacity` dims the other tiles, `none` leaves them. |
-| `cell` | `3px` | Size of one dither cell. |
-| `matrix` | `bayer4` | The dither pattern of the gradient fills. |
-| `header` | `true` | Show the title and the readout. |
-| `readout` | `true` | Show the used and total values and the percentage in the header. |
-| `footer` | `true` | Show the status line and the replay button. |
-| `stage-height` | `256px` | Height of the treemap. |
+<Api file="dither-treemap" />
+

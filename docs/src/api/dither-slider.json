@@ -1,0 +1,31 @@
+{
+ "DitherSlider": {
+  "value": "The current value (or lower value in range mode).",
+  "value-high": "The upper value in two-thumb range mode.",
+  "is-range": "When <code>true</code>, displays two lit notched thumbs and fills between them.",
+  "minimum": "Lowest value.",
+  "maximum": "Highest value.",
+  "step": "The value snaps to multiples of this from <code>minimum</code>. <code>0</code> is smooth.",
+  "variant": "<code>thumb</code> for notched lit thumb; <code>bar</code> for seamless draggable meter bar.",
+  "fill": "<code>gradient</code> (Bayer ramp), <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "segments": "When > 1, divides the track into discrete blocks with 1-cell gaps.",
+  "ticks": "When true, renders step tick marks under the track lit within active range.",
+  "label": "Label text displayed above the track.",
+  "hide-label": "Hides the label title while keeping the value readout.",
+  "unit": "Unit suffix displayed beside the readout (e.g. <code>\"%\"</code> or <code>\" dB\"</code>).",
+  "value-text": "Custom readout override string (e.g. <code>\"5 / 10\"</code>).",
+  "show-value": "Shows live numeric readout next to the label.",
+  "show-range": "Shows <code>minimum</code> and <code>maximum</code> values under the track edges.",
+  "color": "Colour of the fill and the thumb.",
+  "size": "<code>sm</code>, <code>md</code> or <code>lg</code>: tracks of 6, 8 and 12 pixels with thumbs 20, 24 and 30 pixels tall.",
+  "bloom": "<code>low</code> or <code>high</code> adds a glow in the slider's colour.",
+  "matrix": "The dither pattern of the fill.",
+  "cell": "Size of one dither cell.",
+  "animated": "Enables smooth 180ms ease-out glide on clicks, steps, and value changes, with 0ms drag latency.",
+  "enabled": "Drops to 45% opacity and ignores the pointer and keys when <code>false</code>.",
+  "range-start-text": "Text for the low end of a range slider, in place of the value.",
+  "range-end-text": "Text for the high end of a range slider, in place of the value.",
+  "dragging": "Whether the thumb is being dragged. Read only.",
+  "changed": "Called with the new value while dragging and on key presses."
+ }
+}

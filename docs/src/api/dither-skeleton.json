@@ -1,0 +1,15 @@
+{
+ "DitherSkeleton": {
+  "shape": "<code>block</code> is a rectangle you size yourself. <code>text</code> draws lines and <code>circle</code> an avatar.",
+  "lines": "How many lines for <code>text</code>. The last one is shorter.",
+  "size": "Diameter of a <code>circle</code>.",
+  "color": "Any colour, or one from <code>DitherPalette</code>.",
+  "fill": "Texture at rest: a dither ramp from the left, a dot lattice, diagonals or a flat tint.",
+  "animation": "<code>sweep</code> runs a dense band across, <code>pulse</code> steps the dither up and down, <code>none</code> holds still.",
+  "matrix": "The dither pattern.",
+  "cell": "Size of one dither cell.",
+  "duration": "Seconds for one sweep or pulse, including the pause after it.",
+  "delay": "Seconds to wait before the first sweep.",
+  "animated": "When <code>false</code> it holds a still frame."
+ }
+}

@@ -1,0 +1,11 @@
+{
+ "DitherHorizon": {
+  "horizon": "Height of the horizon's highest point from the bottom, 0 to 1.",
+  "curve": "How round the planet is, 0 (nearly flat) to 1 (a small globe).",
+  "glow": "Strength of the glow above the horizon, 0 to 1.",
+  "aurora": "How much the glow ripples into aurora curtains, 0 (a smooth band) to 1.",
+  "stars": "How many stars, 0 to 3.",
+  "glow-color": "Colour of the glow, rim and stars.",
+  "sky-color": "Colour of the sky and the planet."
+ }
+}

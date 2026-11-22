@@ -1,0 +1,20 @@
+{
+ "DitherHeatmap": {
+  "mode": "<code>calendar</code> or <code>matrix</code>.",
+  "entries": "Calendar: the days and their values.",
+  "weeks": "Calendar: the columns shown, ending with the latest day.",
+  "week-start": "Calendar: the first row, 0 for Sunday or 1 for Monday.",
+  "grid": "Matrix: the values by row, and the labels.",
+  "rows": "Matrix: the values by row, and the labels.",
+  "columns": "Matrix: the values by row, and the labels.",
+  "steps": "How many densities values map to, above empty, 2 to 6.",
+  "max": "The value drawn solid. Larger values draw solid too. <code>0</code> takes the largest.",
+  "unit": "What a value counts, singular and plural, for the readout.",
+  "units": "What a value counts, singular and plural, for the readout.",
+  "ink": "Colour of the squares.",
+  "cell": "The largest dither cell. It shrinks to 2 to fit.",
+  "legend": "Show the Less to More scale. Hover a density to spotlight it, click to lock it.",
+  "interactive": "The readout and the legend spotlight.",
+  "animated": "The squares ripple in from the left."
+ }
+}

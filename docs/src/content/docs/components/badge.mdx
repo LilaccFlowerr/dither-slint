@@ -5,6 +5,7 @@ description: A compact badge with a lit, dithered surface.
 
 import Badge from '../../../components/Badge.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 <Demo
 	title="Variants"
@@ -32,6 +33,8 @@ DitherBadge {
 	<Badge text="Destructive" variant="destructive" />
 	<Badge text="Outline" variant="outline" />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Fills"
@@ -154,18 +157,6 @@ DitherBadge {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `text` | | The label. |
-| `variant` | `default` | `default`, `secondary`, `destructive` or `outline`. Destructive turns red unless you set a colour. |
-| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
-| `color` | `DitherTheme.ink` | Any colour, or one from `DitherPalette`. |
-| `size` | `md` | `sm`, `md` or `lg`, 20, 24 and 28px high. |
-| `corners` | `md` | `none`, `sm`, `md` or `lg`. |
-| `bloom` | `off` | `low` or `high`, for the filled variants. |
-| `cell` | `2px` | Size of one dither cell. |
-| `dot` | `false` | Shows a status dot. `dot-color` sets its colour. |
-| `removable` | `false` | Shows a small cross. Clicking it calls `removed`. |
-| `interactive` | `false` | Brightens on hover and calls `clicked`. |
+<Api file="dither-badge" />
 
 Callbacks: `clicked` and `removed`.

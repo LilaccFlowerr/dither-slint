@@ -1,0 +1,150 @@
+---
+interface Props {
+	values?: number[];
+	labels?: string[];
+	color?: string;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	height?: number;
+	stars?: boolean;
+	max?: number;
+}
+
+const signups = [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52, 47, 55, 61, 58, 66, 72, 69, 80];
+const { values = signups, labels = values.map((_, index) => `Day ${index + 1}`), color = 'blue', fill = 'gradient', height = 120, stars = true, max = 0 } = Astro.props;
+const config = { values, labels, color, fill, height, stars, max };
+---
+
+<div class="pixel-area" data-config={JSON.stringify(config)}>
+	<canvas></canvas>
+	<div class="readout"></div>
+</div>
+
+<style>
+	.pixel-area {
+		position: relative;
+		width: 100%;
+		cursor: crosshair;
+		user-select: none;
+	}
+	.pixel-area :global(canvas) {
+		display: block;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+	.readout {
+		position: absolute;
+		top: -8px;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 4px 8px;
+		border: 1px solid var(--sl-color-gray-4);
+		border-radius: 6px;
+		background: var(--sl-color-bg-nav);
+		font-size: 11px;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transform: translate(-50%, -100%);
+		transition: left 150ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms;
+	}
+	.readout :global(i) {
+		width: 8px;
+		height: 8px;
+		border-radius: 2px;
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { pixel_area_image, pixel_area_readout, pixel_area_side } from '../engine/dither_slint_engine_web.js';
+
+	const cell = 2;
+	const entranceMs = 900;
+	const starMs = 100;
+	const easing = 0.16;
+	const fills = { gradient: 0, dotted: 1, hatched: 2, solid: 3 } as const;
+
+	ready.then(() => {
+		for (const area of document.querySelectorAll<HTMLElement>('.pixel-area')) {
+			const config = JSON.parse(area.dataset.config!);
+			const canvas = area.querySelector<HTMLCanvasElement>('canvas')!;
+			const readout = area.querySelector<HTMLElement>('.readout')!;
+			const values = new Float32Array(config.values);
+			const color = new Uint8Array(rgba(config.color));
+			const css = `rgb(${rgba(config.color).slice(0, 3).join(' ')})`;
+			let reveal = 0;
+			let intensity = 0;
+			let target = 0;
+			let marker = -1;
+			let tick = 0;
+			let width = 0;
+			let frame = 0;
+			let started = 0;
+
+			function draw() {
+				frame = 0;
+				const columns = pixel_area_side(width, cell);
+				const rows = pixel_area_side(config.height, cell);
+				const spec = new Float32Array([columns, rows, 0, config.max, reveal, intensity, tick]);
+				const bytes = pixel_area_image(values, spec, fills[config.fill as keyof typeof fills], color, marker, config.stars, true);
+				canvas.width = columns;
+				canvas.height = rows;
+				canvas.style.width = `${columns * cell}px`;
+				canvas.style.height = `${rows * cell}px`;
+				canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+			}
+			const schedule = () => {
+				if (!frame) frame = requestAnimationFrame(step);
+			};
+			function step(now: number) {
+				frame = 0;
+				if (!started) started = now;
+				let again = false;
+				if (reveal < 1) {
+					reveal = Math.min(1, (now - started) / entranceMs);
+					again = true;
+				}
+				if (Math.abs(intensity - target) > 0.002) {
+					intensity += (target - intensity) * easing;
+					again = true;
+				} else {
+					intensity = target;
+				}
+				draw();
+				if (again) schedule();
+			}
+
+			new ResizeObserver(() => {
+				width = Math.floor(area.clientWidth);
+				schedule();
+			}).observe(area);
+			area.addEventListener('pointerenter', () => {
+				target = 1;
+				schedule();
+			});
+			area.addEventListener('pointermove', (event) => {
+				const box = area.getBoundingClientRect();
+				marker = Math.round(Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)) * (values.length - 1));
+				const column = Math.round((marker / Math.max(values.length - 1, 1)) * (pixel_area_side(width, cell) - 1));
+				readout.style.left = `${(column + 0.5) * cell}px`;
+				readout.style.opacity = reveal >= 1 ? '1' : '0';
+				readout.innerHTML = `<span style="color: var(--sl-color-gray-3)">${config.labels[marker]}</span><i style="background: ${css}"></i>${pixel_area_readout('', values[marker]).trim()}`;
+				schedule();
+			});
+			area.addEventListener('pointerleave', () => {
+				target = 0;
+				marker = -1;
+				readout.style.opacity = '0';
+				schedule();
+			});
+			if (config.stars) {
+				setInterval(() => {
+					tick += 1;
+					schedule();
+				}, starMs);
+			}
+		}
+	});
+</script>

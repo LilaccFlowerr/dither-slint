@@ -1,0 +1,175 @@
+import { DitherEngine, DitherHeatmapEntry, DitherHeatmapLayout, DitherHeatmapMode, DitherHeatmapRow, DitherHeatmapSpec } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export component DitherHeatmap inherits Rectangle {
+    in property <DitherHeatmapMode> mode: DitherHeatmapMode.calendar;
+    in property <[DitherHeatmapEntry]> entries;
+    in property <[DitherHeatmapRow]> grid;
+    in property <[string]> rows;
+    in property <[string]> columns;
+    in property <int> weeks: 53;
+    in property <int> week-start: 0;
+    in property <int> steps: 4;
+    in property <float> max: 0;
+    in property <string> unit;
+    in property <string> units;
+    in property <color> ink: DitherTheme.ink;
+    in property <bool> legend: true;
+    in property <bool> interactive: true;
+    in property <bool> animated: DitherTheme.animated;
+    in property <length> cell: 3px;
+
+    property <DitherHeatmapSpec> spec: { mode: root.mode, weeks: root.weeks, week-start: root.week-start, steps: root.steps, max: root.max, unit: root.unit, units: root.units, width: root.width / 1px, cell: root.cell / 1px };
+    property <DitherHeatmapLayout> layout: DitherEngine.heatmap-layout(root.spec, root.entries, root.grid, root.rows, root.columns);
+    property <length> pitch: root.layout.cell * 1px * 5;
+    property <length> square: root.layout.cell * 1px * 4;
+    property <length> top: 20px;
+    property <length> grid-width: root.layout.columns * root.pitch - root.layout.cell * 1px;
+    property <length> grid-height: root.layout.rows * root.pitch - root.layout.cell * 1px;
+    property <float> reveal: root.animated ? 0 : 1;
+    property <int> hovered-bucket: -1;
+    property <int> locked-bucket: -1;
+    property <int> spotlit: !root.interactive ? -1 : root.hovered-bucket >= 0 ? root.hovered-bucket : root.locked-bucket;
+    property <int> hot-column: -1;
+    property <int> hot-row: -1;
+    property <string> readout: root.interactive && root.hot-column >= 0 ? DitherEngine.heatmap-readout(root.spec, root.entries, root.grid, root.rows, root.columns, root.hot-column, root.hot-row) : "";
+    property <float> reveal-steps: 30;
+    property <length> readout-gap: 8px;
+    property <length> legend-height: 36px;
+    property <length> swatch-padding: 4px;
+    property <length> outline-grow: 1.5px;
+
+    init => {
+        if root.animated {
+            root.reveal = 1;
+        }
+    }
+
+    animate reveal { duration: 1080ms; easing: ease-out; }
+
+    height: root.top + root.grid-height + (root.legend ? root.legend-height : 0px);
+
+    for label in root.layout.column-labels: Text {
+        visible: Math.mod(label.position, root.layout.label-every) == 0;
+        x: root.layout.left * 1px + label.position * root.pitch;
+        y: 0;
+        text: label.text;
+        color: DitherTheme.foreground.with-alpha(0.6);
+        font-size: 10px;
+    }
+
+    for label in root.layout.row-labels: Text {
+        x: 0;
+        y: root.top + label.position * root.pitch + root.square / 2 - self.height / 2;
+        text: label.text;
+        color: DitherTheme.foreground.with-alpha(0.6);
+        font-size: 10px;
+    }
+
+    Image {
+        x: root.layout.left * 1px;
+        y: root.top;
+        width: root.grid-width;
+        height: root.grid-height;
+        image-rendering: pixelated;
+        source: DitherEngine.heatmap-image(root.spec, root.entries, root.grid, root.rows, root.columns, root.ink, DitherTheme.foreground, root.spotlit, Math.round(root.reveal * root.reveal-steps) / root.reveal-steps);
+    }
+
+    if root.interactive && root.readout != "": Rectangle {
+        x: root.layout.left * 1px + root.hot-column * root.pitch - root.outline-grow;
+        y: root.top + root.hot-row * root.pitch - root.outline-grow;
+        width: root.square + 2 * root.outline-grow;
+        height: root.square + 2 * root.outline-grow;
+        border-radius: 1px;
+        border-width: 1px;
+        border-color: DitherTheme.foreground;
+        animate x, y { duration: 200ms; easing: ease-out; }
+    }
+
+    if root.interactive && root.readout != "": Rectangle {
+        x: Math.min(Math.max(0px, root.layout.left * 1px + root.hot-column * root.pitch + root.square / 2 - self.width / 2), root.width - self.width);
+        y: root.top + root.hot-row * root.pitch - 2px - self.height - root.readout-gap;
+        width: card.preferred-width + 20px;
+        height: card.preferred-height + 16px;
+        border-radius: 8px;
+        background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.08);
+        border-width: 1px;
+        border-color: DitherTheme.foreground.with-alpha(0.2);
+        animate x, y { duration: 200ms; easing: ease-out; }
+
+        card := Text {
+            x: 10px;
+            y: 8px;
+            text: root.readout;
+            color: DitherTheme.foreground;
+            font-size: 12px;
+        }
+    }
+
+    TouchArea {
+        x: root.layout.left * 1px;
+        y: root.top;
+        width: root.grid-width;
+        height: root.grid-height;
+        enabled: root.interactive;
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.move {
+                root.hot-column = Math.floor(self.mouse-x / root.pitch);
+                root.hot-row = Math.floor(self.mouse-y / root.pitch);
+            }
+        }
+        changed has-hover => {
+            if !self.has-hover {
+                root.hot-column = -1;
+            }
+        }
+    }
+
+    if root.legend: HorizontalLayout {
+        x: 0;
+        y: root.top + root.grid-height + 12px;
+        width: root.width;
+        height: 24px;
+        alignment: end;
+        spacing: 6px;
+
+        Text {
+            text: "Less";
+            color: DitherTheme.foreground.with-alpha(0.6);
+            font-size: 10px;
+            vertical-alignment: center;
+        }
+
+        for bucket in root.steps + 1: Rectangle {
+            width: root.square + 2 * root.swatch-padding;
+            height: root.square + 2 * root.swatch-padding;
+            border-radius: 3px;
+            border-width: root.locked-bucket == bucket ? 1px : 0px;
+            border-color: DitherTheme.foreground.with-alpha(0.4);
+            opacity: root.spotlit >= 0 && root.spotlit != bucket ? 0.35 : 1;
+            animate opacity { duration: 150ms; easing: ease-out; }
+
+            Image {
+                x: root.swatch-padding;
+                y: root.swatch-padding;
+                width: root.square;
+                height: root.square;
+                image-rendering: pixelated;
+                source: DitherEngine.heatmap-swatch(bucket, root.steps, root.ink, DitherTheme.foreground);
+            }
+
+            TouchArea {
+                enabled: root.interactive;
+                changed has-hover => { root.hovered-bucket = self.has-hover ? bucket : -1; }
+                clicked => { root.locked-bucket = root.locked-bucket == bucket ? -1 : bucket; }
+            }
+        }
+
+        Text {
+            text: "More";
+            color: DitherTheme.foreground.with-alpha(0.6);
+            font-size: 10px;
+            vertical-alignment: center;
+        }
+    }
+}

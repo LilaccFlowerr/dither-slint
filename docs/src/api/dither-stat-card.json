@@ -1,0 +1,13 @@
+{
+ "DitherStatCard": {
+  "label": "What the number is, such as \"Monthly revenue\".",
+  "value": "The headline number, as text. <code>DitherEngine.format-number(float)</code> adds thousands separators.",
+  "has-delta": "Shows the delta row.",
+  "delta": "Change since the last period, in percent: <code>12.4</code> reads as +12.4%.",
+  "delta-label": "What the change compares with, such as \"vs last month\".",
+  "good": "<code>DitherStatDirection.up</code> or <code>down</code>: which direction counts as good, for the delta colour.",
+  "trend": "Recent values, oldest first, drawn as a dithered area. Needs at least two.",
+  "trend-fill": "Texture under the trend: <code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "bloom": "<code>low</code> or <code>high</code> adds a soft glow under the trend."
+ }
+}

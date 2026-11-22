@@ -1,0 +1,32 @@
+import { DitherDonutChart, DitherDonutMode, DitherFill, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+export component DonutPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 24px;
+    alignment: start;
+
+    Text { text: "donut"; color: DitherTheme.foreground; }
+    DitherDonutChart {
+        label: "Requests today";
+        animated: false;
+        slices: [
+            { label: "Web", value: 18420, color: DitherTheme.ink, fill: DitherFill.gradient },
+            { label: "Mobile", value: 12310, color: DitherPalette.orange, fill: DitherFill.gradient },
+            { label: "API", value: 8650, color: DitherPalette.green, fill: DitherFill.gradient },
+            { label: "Other", value: 2120, color: DitherPalette.pink, fill: DitherFill.dotted },
+        ];
+    }
+
+    Text { text: "pie"; color: DitherTheme.foreground; }
+    DitherDonutChart {
+        label: "Storage";
+        unit: " GB";
+        mode: DitherDonutMode.pie;
+        animated: false;
+        slices: [
+            { label: "Apps", value: 142, color: DitherPalette.blue, fill: DitherFill.gradient },
+            { label: "System", value: 64, color: DitherPalette.purple, fill: DitherFill.hatched },
+            { label: "Media", value: 32, color: DitherPalette.pink, fill: DitherFill.gradient },
+        ];
+    }
+}

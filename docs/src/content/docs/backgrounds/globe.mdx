@@ -4,6 +4,7 @@ description: "A rotating dithered globe with land, a lit terminator and optional
 ---
 
 import EarthDemo from '../../../components/EarthDemo.astro';
+import Api from '../../../components/Api.astro';
 
 <EarthDemo kind="globe" name="DitherGlobe" />
 
@@ -16,21 +17,8 @@ DitherGlobe {
 }
 ```
 
-| Property | Default | |
-| --- | --- | --- |
-| `color` | `DitherTheme.ink` | Colour of the land and the atmosphere. |
-| `accent` | `DitherPalette.orange` | Colour of markers and arcs unless they set their own. |
-| `markers` | none | Places to mark, each with `lat`, `lon` (degrees, north and east positive) and an optional `color`. Markers on the far side are hidden. |
-| `arcs` | none | Lines lifted off the surface, each with `from-lat`, `from-lon`, `to-lat`, `to-lon` and an optional `color`. |
-| `speed` | `6` | Degrees of rotation per second. Negative spins the other way. |
-| `start` | `10` | The longitude facing the viewer at the start. |
-| `tilt` | `18` | How far the north pole leans towards the viewer, in degrees. |
-| `light` | `300` | Where the light comes from, in degrees clockwise from the top. 300 is the upper left. |
-| `ocean` | `0.18` | Brightness of the sea on the lit side, 0 to 1. |
-| `atmosphere` | `true` | A thin dithered glow around the lit rim. |
-| `draggable` | `true` | Let people drag or use the arrow keys to turn the globe. |
-| `cell` | `2px` | Size of one dither cell. |
-| `matrix` | `bayer4` | The dither pattern. |
-| `animated` | `DitherTheme.animated` | Spin and pulse. `false` draws one still frame. |
+## Properties
+
+<Api file="dither-globe" />
 
 The land comes from [Natural Earth](https://www.naturalearthdata.com) (public domain), stored as a 3.8 KB mask in the crate. Nothing is fetched.

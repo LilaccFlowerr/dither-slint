@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -24,11 +25,7 @@ import Background from '../../../components/Background.astro';
 
 A slow flight down a tunnel of rings. The rings come out of the fog at the vanishing point and grow as they pass, and every other panel between rings and spokes is lit, like tiles on the walls.
 
-| Property | Default | |
-| --- | --- | --- |
-| `shape` | `circle` | The cross-section: `circle` or `square`. |
-| `rings` | `1` | How close together the rings are: 2 packs twice as many in. |
-| `spokes` | `12` | Lines running along the walls, 0 to 32. 0 leaves only the rings. |
-| `center` | `{ x: 0.5, y: 0.5 }` | The vanishing point, as fractions of the box from the top left. |
-| `sway` | `1` | How far the vanishing point wanders. 0 holds it still. |
-| `fog` | `1` | Size of the empty fog in the middle: 2 doubles it to clear room for text. |
+## Properties
+
+<Api file="dither-tunnel" />
+

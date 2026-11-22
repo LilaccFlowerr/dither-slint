@@ -1,0 +1,18 @@
+---
+title: Theme
+description: "The globals that set the colours and the default motion of every component."
+---
+
+import ThemeApi from '../../../components/ThemeApi.astro';
+
+Three globals hold what is shared. Set them once at start-up and every component follows. Each component still has its own property for the same thing, and that one wins.
+
+```slint
+DitherTheme.background = #1b1a19;
+DitherTheme.foreground = #ebe5d9;
+DitherTheme.ink = #5471f5;
+DitherTheme.animated = false;
+DitherMotion.hover = DitherHover.spotlight;
+```
+
+<ThemeApi />

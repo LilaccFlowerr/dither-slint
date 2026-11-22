@@ -5,6 +5,7 @@ description: A dithered rule whose ends fade out, with an optional label in the 
 
 import Divider from '../../../components/Divider.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 The rule is solid in the middle and fades towards each tip in ten steps of dither. `fade` sets how much of each half is spent fading.
 
@@ -15,6 +16,8 @@ The rule is solid in the middle and fades towards each tip in ten steps of dithe
 >
 	<Divider />
 </Demo>
+
+## Examples
 
 <Demo
 	title="With a label"
@@ -68,14 +71,5 @@ DitherDivider {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `orientation` | `horizontal` | `horizontal` or `vertical`. A vertical rule fills the height of its container. |
-| `label` | | Text in the middle of the rule, which splits around it. Horizontal only. |
-| `thickness` | `2` | Thickness in cells. |
-| `fade` | `0.6` | Share of each half that fades out, from 0 to 1. |
-| `strength` | `0.6` | Densest dither level, at the middle of the rule. |
-| `color` | `DitherTheme.ink` | Colour of the rule. |
-| `fill` | `gradient` | `gradient` fades through dither levels, the others fade by opacity. |
-| `matrix` | `bayer4` | The dither pattern. |
-| `cell` | `2px` | Size of one dither cell. |
+<Api file="dither-divider" />
+

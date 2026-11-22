@@ -1,0 +1,257 @@
+---
+interface Slice {
+	label: string;
+	value: number;
+	color: string;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+}
+
+interface Props {
+	slices: Slice[];
+	label?: string;
+	mode?: 'donut' | 'pie';
+	unit?: string;
+	size?: number;
+	thickness?: number;
+	gap?: number;
+	legend?: boolean;
+}
+
+const { slices, label = '', mode = 'donut', unit = '', size = 220, thickness = 0.36, gap = 1, legend = true } = Astro.props;
+const config = { slices, label, mode, unit, size, thickness, gap, legend };
+---
+
+<figure class="donut" data-config={JSON.stringify(config)}>
+	<div class="ring">
+		<canvas></canvas>
+		<div class="centre"></div>
+		<div class="readout" hidden></div>
+	</div>
+	<div class="rows"></div>
+</figure>
+
+<style>
+	.donut {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 24px 40px;
+		margin: 0;
+		user-select: none;
+	}
+	.ring {
+		position: relative;
+		cursor: pointer;
+	}
+	.ring :global(canvas) {
+		display: block;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+	.centre {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		text-align: center;
+		pointer-events: none;
+	}
+	.centre :global(small) {
+		color: var(--sl-color-gray-3);
+		font-size: 10px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	.centre :global(strong) {
+		font-weight: 600;
+		line-height: 1;
+	}
+	.readout {
+		position: absolute;
+		padding: 8px 10px;
+		border: 1px solid var(--sl-color-gray-4);
+		border-radius: 8px;
+		background: var(--sl-color-bg-nav);
+		font-size: 12px;
+		pointer-events: none;
+		white-space: nowrap;
+		transform: translate(-50%, -50%);
+	}
+	.rows {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 208px;
+	}
+	.rows :global(button) {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		height: 32px;
+		padding: 0 8px;
+		border: 0;
+		border-radius: 6px;
+		background: none;
+		color: inherit;
+		font: inherit;
+		cursor: pointer;
+		transition: opacity 150ms;
+	}
+	.rows :global(button[aria-pressed='true']) {
+		background: var(--sl-color-gray-6);
+	}
+	.rows :global(i) {
+		width: 10px;
+		height: 10px;
+		border-radius: 2px;
+	}
+	.rows :global(span:nth-of-type(1)) {
+		flex: 1;
+		text-align: left;
+	}
+	.rows :global(span:nth-of-type(2)) {
+		font-size: 12px;
+	}
+	.rows :global(span:nth-of-type(3)) {
+		width: 48px;
+		text-align: right;
+		color: var(--sl-color-gray-3);
+		font-size: 12px;
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { donut_hit, donut_image, donut_layout, donut_share, donut_value } from '../engine/dither_slint_engine_web.js';
+
+	const cell = 3;
+	const dimmed = 0.45;
+	const sweepMs = 1080;
+	const sweepSteps = 60;
+	const tau = Math.PI * 2;
+	const fills = { gradient: 0, dotted: 1, hatched: 2, solid: 3 } as const;
+	const seriesColors = ['ink', 'orange', 'green', 'pink', 'purple', 'blue', 'red', 'grey'];
+	const bigSlice = 0.5;
+	const centreReach = 0.3;
+	const edgeReach = 0.58;
+	const valueShare = 0.19;
+
+	interface Layout {
+		side: number;
+		outer: number;
+		inner: number;
+		total: number;
+		shares: number[];
+		middles: number[];
+	}
+
+	ready.then(() => {
+		for (const donut of document.querySelectorAll<HTMLElement>('.donut')) {
+			const config = JSON.parse(donut.dataset.config!);
+			const slices: { label: string; value: number; color: string; fill?: keyof typeof fills }[] = config.slices;
+			const canvas = donut.querySelector<HTMLCanvasElement>('canvas')!;
+			const ring = donut.querySelector<HTMLElement>('.ring')!;
+			const centre = donut.querySelector<HTMLElement>('.centre')!;
+			const readout = donut.querySelector<HTMLElement>('.readout')!;
+			const rows = donut.querySelector<HTMLElement>('.rows')!;
+			const pie = config.mode === 'pie';
+			const flags = pie ? 1 : 0;
+			const colorOf = (index: number) => slices[index].color || seriesColors[index % seriesColors.length];
+			const css = (name: string) => `rgb(${rgba(name).slice(0, 3).join(' ')})`;
+			const values = new Float32Array(slices.map((slice) => slice.value));
+			const fillBytes = new Uint8Array(slices.map((slice) => fills[slice.fill ?? 'gradient']));
+			const colorBytes = new Uint8Array(slices.flatMap((_, index) => rgba(colorOf(index))));
+			const layout: Layout = JSON.parse(donut_layout(values, config.size, cell, flags, config.thickness, config.gap));
+			let sweep = 0;
+			let hovered = -1;
+			let locked = -1;
+			const spotlit = () => (hovered >= 0 ? hovered : locked);
+
+			canvas.width = layout.side;
+			canvas.height = layout.side;
+			canvas.style.width = `${layout.side * cell}px`;
+			canvas.style.height = `${layout.side * cell}px`;
+			const context = canvas.getContext('2d')!;
+
+			function draw() {
+				const stepped = (Math.round((sweep / tau) * sweepSteps) / sweepSteps) * tau;
+				const bytes = donut_image(values, fillBytes, colorBytes, config.size, cell, flags, config.thickness, config.gap, stepped, spotlit());
+				context.putImageData(new ImageData(new Uint8ClampedArray(bytes), layout.side, layout.side), 0, 0);
+				const focus = spotlit();
+				const diameter = layout.inner * 2 * cell;
+				if (!pie) {
+					const slice = focus >= 0 ? slices[focus] : undefined;
+					const text = donut_value(slice ? slice.value : layout.total, config.unit);
+					centre.style.padding = `0 ${(layout.side * cell - diameter * 0.86) / 2}px`;
+					centre.innerHTML = `<small>${slice ? slice.label : config.label}</small><strong style="font-size: ${Math.max(14, diameter * valueShare)}px">${text}</strong><small style="text-transform: none; font-size: 11px">${focus >= 0 ? donut_share(layout.shares[focus]) : '100%'}</small>`;
+				} else if (focus >= 0) {
+					const middle = layout.middles[focus];
+					const reach = layout.shares[focus] > bigSlice ? centreReach : edgeReach;
+					const half = (layout.side / 2) * cell;
+					readout.hidden = false;
+					readout.style.left = `${half + Math.sin(middle) * layout.outer * reach * cell}px`;
+					readout.style.top = `${half - Math.cos(middle) * layout.outer * reach * cell}px`;
+					readout.innerHTML = `<small style="color: var(--sl-color-gray-3); font-size: 10px; text-transform: uppercase">${slices[focus].label}</small><br>${donut_value(slices[focus].value, config.unit)} ${donut_share(layout.shares[focus])}`;
+				} else {
+					readout.hidden = true;
+				}
+				rows.querySelectorAll<HTMLElement>('button').forEach((row, index) => {
+					row.style.opacity = String(focus >= 0 && focus !== index ? dimmed : 1);
+					row.setAttribute('aria-pressed', String(locked === index));
+				});
+			}
+
+			if (config.legend) {
+				slices.forEach((slice, index) => {
+					const row = document.createElement('button');
+					row.type = 'button';
+					row.innerHTML = `<i style="background: ${css(colorOf(index))}"></i><span>${slice.label}</span><span>${donut_value(slice.value, config.unit)}</span><span>${donut_share(layout.shares[index])}</span>`;
+					row.addEventListener('pointerenter', () => {
+						hovered = index;
+						draw();
+					});
+					row.addEventListener('pointerleave', () => {
+						hovered = -1;
+						draw();
+					});
+					row.addEventListener('click', () => {
+						locked = locked === index ? -1 : index;
+						draw();
+					});
+					rows.append(row);
+				});
+			}
+
+			const at = (event: PointerEvent) => {
+				const box = canvas.getBoundingClientRect();
+				return donut_hit(values, config.size, cell, flags, config.thickness, config.gap, event.clientX - box.left, event.clientY - box.top);
+			};
+			ring.addEventListener('pointermove', (event) => {
+				hovered = at(event);
+				draw();
+			});
+			ring.addEventListener('pointerleave', () => {
+				hovered = -1;
+				draw();
+			});
+			ring.addEventListener('click', (event) => {
+				const index = at(event);
+				locked = index === locked ? -1 : index;
+				draw();
+			});
+
+			const started = performance.now();
+			const tick = (now: number) => {
+				const linear = Math.min(1, (now - started) / sweepMs);
+				sweep = linear >= 1 ? tau : (1 - (1 - linear) ** 3) * tau;
+				draw();
+				if (linear < 1) requestAnimationFrame(tick);
+			};
+			requestAnimationFrame(tick);
+		}
+	});
+</script>

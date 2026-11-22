@@ -1,0 +1,19 @@
+{
+ "DitherAreaChart": {
+  "categories": "The label of every point on the x axis.",
+  "series": "The areas, each <code>{ label, color, values, low, high, dashed }</code>. Later series draw in front.",
+  "stack": "<code>none</code>: the areas overlap, each from the baseline. <code>stacked</code>: each sits on the ones before it. <code>percent</code>: stacked and scaled to 100%.",
+  "fill": "<code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "level": "Gradient only: coverage of the densest band, just under the line, 0 to 1.",
+  "matrix": "Gradient only: the dither pattern.",
+  "cell": "Size of one dither cell.",
+  "smooth": "A smooth curve that never overshoots, or straight segments.",
+  "axes": "Show the axes, the readout and the legend spotlight.",
+  "tooltip": "Show the axes, the readout and the legend spotlight.",
+  "interactive": "Show the axes, the readout and the legend spotlight.",
+  "legend": "Show the legend.",
+  "animated": "The chart is drawn in from the left when it appears.",
+  "unit": "Written after every value. Values are shortened to 1.2K.",
+  "chart-height": "Height of the chart, axes included."
+ }
+}

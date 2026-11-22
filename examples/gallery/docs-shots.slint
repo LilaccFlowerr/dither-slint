@@ -25,6 +25,12 @@ import { ImageComparePage } from "image-compare-page.slint";
 import { ScrollRevealPage } from "scroll-reveal-page.slint";
 import { LogoPage } from "logo-page.slint";
 import { TreemapPage } from "treemap-page.slint";
+import { ChartPage } from "chart-page.slint";
+import { DonutPage } from "donut-page.slint";
+import { HeatmapPage } from "heatmap-page.slint";
+import { PixelAreaPage } from "pixel-area-page.slint";
+import { RadarPage } from "radar-page.slint";
+import { TextPage } from "text-page.slint";
 
 export component Shots inherits Window {
     in property <int> which;
@@ -58,5 +64,11 @@ export component Shots inherits Window {
         if root.which == 22: ScrollRevealPage { window-height: root.height; }
         if root.which == 23: LogoPage { }
         if root.which == 24: TreemapPage { }
+        if root.which == 25: ChartPage { }
+        if root.which == 26: DonutPage { }
+        if root.which == 27: HeatmapPage { }
+        if root.which == 28: PixelAreaPage { }
+        if root.which == 29: RadarPage { }
+        if root.which == 30: TextPage { }
     }
 }

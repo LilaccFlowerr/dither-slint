@@ -1,0 +1,18 @@
+{
+ "DitherSparkline": {
+  "data": "Values in order, oldest first.",
+  "label": "What the trend shows, such as \"Revenue, last 30 days\". Starts the accessible summary.",
+  "height": "Height of the sparkline.",
+  "color": "Colour of the line, the fill and the dot.",
+  "area": "Fills the area under the line.",
+  "fill": "<code>gradient</code> (densest just under the line), <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "level": "Gradient only: coverage of the fill just under the line, 0 to 1.",
+  "bloom": "<code>low</code> or <code>high</code> adds a soft glow under the line and the fill.",
+  "dot": "A dot on the latest value.",
+  "interactive": "Scrub with the pointer or the arrow keys to read single values. <code>Escape</code> lets go.",
+  "domain": "The value range the height covers, as <code>{ min, max }</code>. Give a row of sparklines one domain to compare them.",
+  "animate": "The line draws in and the fill fades in.",
+  "matrix": "The dither pattern.",
+  "cell": "Size of one dither cell."
+ }
+}

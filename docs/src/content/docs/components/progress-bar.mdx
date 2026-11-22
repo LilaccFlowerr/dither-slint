@@ -5,6 +5,7 @@ description: "A progress bar built from dither cells: determinate, indeterminate
 
 import ProgressBar from '../../../components/ProgressBar.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 With a `value` the fill grows to it, densest at its leading edge and capped with one solid cell so the value reads exactly, even in the sparse textures. Without a value a dithered comet sweeps the track. `parts` stacks several values side by side, each in its own colour, with a legend. `segments` cuts the bar into blocks, like a step meter.
 
@@ -22,6 +23,8 @@ DitherProgressBar {
 	<ProgressBar label="Uploading" value={64} />
 	<ProgressBar label="Loading" />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Sizes"
@@ -105,23 +108,7 @@ DitherProgressBar {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `label` | | What is in progress. Shown above the bar and used as its accessible name. |
-| `value` | `-1` | Progress from 0 to `maximum`. A negative value makes the bar indeterminate. |
-| `maximum` | `100` | The value that means done, or the capacity when you use `parts`. |
-| `value-text` | | Text for the readout, such as "3 of 5". Default is the percentage. |
-| `hide-label` | `false` | Hides the label and the readout, but keeps them for screen readers. |
-| `size` | `md` | `sm`, `md` or `lg`: 2, 4 and 6 cells high. |
-| `fill` | `gradient` | `gradient` (densest at the leading edge), `dotted`, `hatched` or `solid`. |
-| `color` | `DitherTheme.ink` | Colour of the fill and the track. |
-| `bloom` | `off` | `low` or `high` adds a glow in the bar's colour. |
-| `segments` | `0` | Cuts the bar into this many blocks, a cell apart. Up to 32. |
-| `gap` | `DitherTheme.background` | Colour of the cut between segments. Match the surface behind the bar. |
-| `cell` | `2px` | Size of one dither cell. |
-| `animate` | `DitherTheme.animated` | Grows to the value when it appears, eases between values and sweeps the comet. |
-| `parts` | | Several values stacked left to right. Each has `label`, `value`, an optional `color` and an optional `fill` with `custom-fill: true`. |
-| `unit` | | Shown after each part's value in the legend, such as `" GB"`. |
+<Api file="dither-progress-bar" />
 
 Parts that add up to more than `maximum` are cut off at the end of the bar. Without a `color` a part takes the next colour of the series: ink, orange, green, pink, purple, blue, red and grey.
 

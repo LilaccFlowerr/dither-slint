@@ -1,0 +1,18 @@
+{
+ "DitherGlobe": {
+  "color": "Colour of the land and the atmosphere.",
+  "accent": "Colour of markers and arcs unless they set their own.",
+  "markers": "Places to mark, each with <code>lat</code>, <code>lon</code> (degrees, north and east positive) and an optional <code>color</code>. Markers on the far side are hidden.",
+  "arcs": "Lines lifted off the surface, each with <code>from-lat</code>, <code>from-lon</code>, <code>to-lat</code>, <code>to-lon</code> and an optional <code>color</code>.",
+  "speed": "Degrees of rotation per second. Negative spins the other way.",
+  "start": "The longitude facing the viewer at the start.",
+  "tilt": "How far the north pole leans towards the viewer, in degrees.",
+  "light": "Where the light comes from, in degrees clockwise from the top. 300 is the upper left.",
+  "ocean": "Brightness of the sea on the lit side, 0 to 1.",
+  "atmosphere": "A thin dithered glow around the lit rim.",
+  "draggable": "Let people drag or use the arrow keys to turn the globe.",
+  "cell": "Size of one dither cell.",
+  "matrix": "The dither pattern.",
+  "animated": "Spin and pulse. <code>false</code> draws one still frame."
+ }
+}

@@ -1,0 +1,80 @@
+import { DitherDissolveFill, DitherDissolveOrder, DitherDissolveSpec, DitherDissolveUnit, DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export component DitherDissolveText inherits Rectangle {
+    in property <string> text;
+    in property <bool> word;
+    in property <DitherDissolveOrder> order: DitherDissolveOrder.start;
+    in property <bool> showing: true;
+    in property <length> font-size: 32px;
+    in property <int> font-weight: 600;
+    in property <color> ink: DitherTheme.foreground;
+    in property <color> backdrop: DitherTheme.background;
+    in property <DitherDissolveFill> fill: DitherDissolveFill.solid;
+    in property <float> level: 0.625;
+    in property <duration> duration: 600ms;
+    in property <duration> stagger: -1ms;
+    in property <duration> delay: 0ms;
+    in property <float> speed: 1;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 0px;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <[DitherDissolveUnit]> units: DitherEngine.dissolve-units(root.text, root.word);
+    property <int> count: root.counted(root.units);
+    property <[float]> ranks: DitherEngine.dissolve-ranks(root.count, root.order);
+    property <length> step: root.cell > 0px ? Math.max(1phx, Math.round(root.cell / 1phx) * 1phx) : DitherEngine.text-cell(root.font-size / 1px) * 1px;
+    property <float> pace: Math.max(0.05, root.speed);
+    property <float> unit-stagger: (root.stagger >= 0ms ? root.stagger / 1ms : root.word ? 90 : 28) / root.pace;
+    property <float> elapsed: root.animated ? 0 : 1000000;
+    property <DitherDissolveSpec> spec: { duration: root.duration / 1ms / root.pace, stagger: root.unit-stagger, delay: root.delay / 1ms / root.pace, matrix: root.matrix, fill: root.fill, level: root.level, showing: root.showing };
+    property <int> steps: DitherEngine.dissolve-steps(root.matrix);
+    property <float> tick: 16;
+
+    pure function counted(units: [DitherDissolveUnit]) -> int {
+        units.length > 0 ? units[units.length - 1].index + 1 : 0
+    }
+
+    function replay() {
+        root.elapsed = 0;
+    }
+
+    changed showing => { root.replay(); }
+
+    Timer {
+        interval: 16ms;
+        running: root.animated && root.elapsed < root.duration / 1ms + root.count * root.unit-stagger + root.delay / 1ms + 100;
+        triggered => { root.elapsed += root.tick * root.pace; }
+    }
+
+    width: row.preferred-width;
+    height: row.preferred-height;
+
+    row := HorizontalLayout {
+        alignment: start;
+        spacing: 0;
+
+        for unit in root.units: unit-box := Rectangle {
+            property <int> reached: unit.index >= 0 ? DitherEngine.dissolve-step(root.elapsed, root.ranks[unit.index], root.spec) : root.steps;
+            property <bool> plain: root.fill == DitherDissolveFill.solid && self.reached >= root.steps;
+
+            width: glyph.preferred-width;
+            height: glyph.preferred-height;
+
+            glyph := Text {
+                text: unit.text;
+                color: root.ink;
+                font-size: root.font-size;
+                font-weight: root.font-weight;
+            }
+
+            if unit.index >= 0 && !self.plain: Image {
+                width: 100%;
+                height: 100%;
+                image-fit: ImageFit.fill;
+                image-rendering: pixelated;
+                source: DitherEngine.dissolve-overlay(Math.ceil(glyph.preferred-width / root.step), Math.ceil(glyph.preferred-height / root.step), unit-box.reached, root.spec, root.backdrop);
+            }
+        }
+    }
+}

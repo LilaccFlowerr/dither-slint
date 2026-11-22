@@ -1,22 +1,27 @@
 pub mod avatar;
 pub mod backgrounds;
 pub mod bloom;
+pub mod chart;
 pub mod color;
 pub mod diffuse;
+pub mod donut;
 pub mod dot_map;
 pub mod empty;
 pub mod export;
 pub mod field;
 pub mod gauge;
 pub mod globe;
+pub mod heatmap;
 pub mod glow;
 pub mod lively;
 pub mod loader;
 pub mod logo;
 pub mod matrix;
 pub mod noise;
+pub mod pixel_area;
 pub mod number;
 pub mod progress;
+pub mod radar;
 pub mod render;
 pub mod reveal;
 pub mod skeleton;
@@ -26,6 +31,7 @@ pub mod treemap;
 pub mod style;
 pub mod switch;
 pub mod tabs;
+pub mod text;
 pub mod trend;
 pub mod uptime;
 pub mod world;
@@ -88,6 +94,136 @@ macro_rules! install {
 
         fn number_roll(roll: &DitherNumberRoll) -> $crate::number::Roll {
             $crate::number::Roll { from: roll.from, to: roll.to, decimals: roll.decimals.max(0) as usize, duration: roll.duration, stagger: roll.stagger }
+        }
+
+        fn donut_slices(slices: &$crate::slint::ModelRc<DitherDonutSlice>) -> Vec<$crate::donut::Slice> {
+            slices.iter().map(|slice| $crate::donut::Slice { value: slice.value, color: slice.color, fill: FillVariant::ALL[slice.fill as usize] }).collect()
+        }
+
+        fn donut_spec(spec: &DitherDonutSpec) -> $crate::donut::Spec {
+            $crate::donut::Spec {
+                size: spec.size,
+                cell: spec.cell,
+                mode: match spec.mode {
+                    DitherDonutMode::Donut => $crate::donut::Mode::Donut,
+                    DitherDonutMode::Pie => $crate::donut::Mode::Pie,
+                },
+                thickness: spec.thickness,
+                gap: spec.gap,
+                matrix: Matrix::ALL[spec.matrix as usize],
+            }
+        }
+
+        fn heatmap_input(
+            spec: &DitherHeatmapSpec,
+            entries: &$crate::slint::ModelRc<DitherHeatmapEntry>,
+            grid: &$crate::slint::ModelRc<DitherHeatmapRow>,
+            rows: &$crate::slint::ModelRc<$crate::slint::SharedString>,
+            columns: &$crate::slint::ModelRc<$crate::slint::SharedString>,
+        ) -> $crate::heatmap::Input {
+            $crate::heatmap::Input {
+                mode: match spec.mode {
+                    DitherHeatmapMode::Calendar => $crate::heatmap::Mode::Calendar,
+                    DitherHeatmapMode::Matrix => $crate::heatmap::Mode::Matrix,
+                },
+                entries: entries.iter().map(|entry| (entry.date.to_string(), entry.value)).collect(),
+                grid: grid.iter().map(|row| row.values.iter().collect()).collect(),
+                rows: rows.iter().map(|row| row.to_string()).collect(),
+                columns: columns.iter().map(|column| column.to_string()).collect(),
+                weeks: spec.weeks.max(1) as usize,
+                week_start: spec.week_start.clamp(0, 1) as usize,
+                steps: spec.steps.max(0) as usize,
+                max: (spec.max > 0.0).then_some(spec.max),
+            }
+        }
+
+        fn heatmap_fitted(spec: &DitherHeatmapSpec, input: &$crate::heatmap::Input) -> ($crate::heatmap::Model, $crate::heatmap::Fit) {
+            let full = $crate::heatmap::model(input);
+            let widest = if input.mode == $crate::heatmap::Mode::Matrix { full.column_labels.iter().map(|(_, text)| text.chars().count()).max().unwrap_or(0) } else { 0 };
+            let fit = $crate::heatmap::fit(spec.width, spec.cell, &full, widest);
+            let shown = $crate::heatmap::shifted(&full, full.columns - fit.columns);
+            (shown, fit)
+        }
+
+        fn radar_series(series: &$crate::slint::ModelRc<DitherRadarSeries>, colors: Option<&$crate::slint::ModelRc<$crate::slint::Color>>) -> Vec<$crate::radar::Series> {
+            series
+                .iter()
+                .enumerate()
+                .map(|(index, line)| $crate::radar::Series {
+                    values: line.values.iter().collect(),
+                    color: colors.and_then(|colors| colors.row_data(index)).unwrap_or(line.color),
+                    fill: FillVariant::ALL[line.fill as usize],
+                })
+                .collect()
+        }
+
+        fn radar_spec(spec: &DitherRadarSpec) -> $crate::radar::Spec {
+            $crate::radar::Spec {
+                side: spec.side,
+                cell: spec.cell,
+                max: (spec.max > 0.0).then_some(spec.max),
+                rings: spec.rings.max(1) as usize,
+                grid: match spec.grid {
+                    DitherRadarGrid::Polygon => $crate::radar::Grid::Polygon,
+                    DitherRadarGrid::Circle => $crate::radar::Grid::Circle,
+                },
+                matrix: Matrix::ALL[spec.matrix as usize],
+            }
+        }
+
+        fn dissolve_spec(spec: &DitherDissolveSpec) -> $crate::text::Dissolve {
+            $crate::text::Dissolve {
+                duration: spec.duration,
+                stagger: spec.stagger,
+                delay: spec.delay,
+                matrix: Matrix::ALL[spec.matrix as usize],
+                fill: match spec.fill {
+                    DitherDissolveFill::Solid => $crate::text::DissolveFill::Solid,
+                    DitherDissolveFill::Gradient => $crate::text::DissolveFill::Gradient,
+                    DitherDissolveFill::Dotted => $crate::text::DissolveFill::Dotted,
+                    DitherDissolveFill::Hatched => $crate::text::DissolveFill::Hatched,
+                },
+                level: spec.level,
+                showing: spec.showing,
+            }
+        }
+
+        fn scramble_spec(spec: &DitherScrambleSpec) -> $crate::text::Scramble {
+            $crate::text::Scramble {
+                mode: match spec.mode {
+                    DitherScrambleMode::Dither => $crate::text::ScrambleMode::Dither,
+                    DitherScrambleMode::Blocks => $crate::text::ScrambleMode::Blocks,
+                    DitherScrambleMode::Glyphs => $crate::text::ScrambleMode::Glyphs,
+                },
+                duration: spec.duration,
+                stagger: spec.stagger,
+                delay: spec.delay,
+                rate: spec.rate,
+            }
+        }
+
+        fn chart_of(categories: &$crate::slint::ModelRc<$crate::slint::SharedString>, spec: &DitherChartSpec) -> $crate::chart::Chart {
+            $crate::chart::Chart {
+                band: spec.band,
+                stack: match spec.stack {
+                    DitherChartStack::None => $crate::chart::Stack::None,
+                    DitherChartStack::Stacked => $crate::chart::Stack::Stacked,
+                    DitherChartStack::Percent => $crate::chart::Stack::Percent,
+                },
+                count: categories.row_count(),
+                width: spec.width,
+                height: spec.height,
+                axes: spec.axes,
+                zero: spec.zero,
+                smooth: spec.smooth,
+            }
+        }
+
+        fn chart_series(series: &$crate::slint::ModelRc<DitherChartSeries>) -> Vec<$crate::chart::Series> {
+            series
+                .iter()
+                .map(|line| $crate::chart::Series { values: line.values.iter().collect(), low: line.low.iter().collect(), high: line.high.iter().collect(), dashed: line.dashed })
+                .collect()
         }
 
         fn markers(markers: &$crate::slint::ModelRc<DitherMarker>) -> Vec<$crate::world::Marker> {
@@ -357,6 +493,253 @@ macro_rules! install {
             DitherTreemapLayout { tiles: $crate::slint::ModelRc::new($crate::slint::VecModel::from(tiles)), used: layout.used, capacity }
         });
         engine.on_treemap_format(|value| $crate::treemap::format_value(value).into());
+        engine.on_chart_layout(|categories, series, spec| {
+            let (chart, series) = (chart_of(&categories, &spec), chart_series(&series));
+            let edges = $crate::chart::edges(&series, chart.stack);
+            let geometry = $crate::chart::geometry(&chart, &$crate::chart::scale_values(&series, &edges, chart.stack), &spec.unit);
+            let ticks: Vec<DitherChartTick> = geometry
+                .scale
+                .ticks
+                .iter()
+                .zip(&geometry.tick_labels)
+                .map(|(&tick, label)| DitherChartTick { y: $crate::chart::y_at(&geometry.plot, &geometry.scale, tick), label: label.as_str().into() })
+                .collect();
+            let labels: Vec<DitherChartLabel> = $crate::chart::labels(&geometry.plot, chart.count)
+                .into_iter()
+                .map(|label| DitherChartLabel { x: label.x, text: categories.row_data(label.index).unwrap_or_default(), align: label.align })
+                .collect();
+            let columns = chart.band.then(|| $crate::chart::bars(&chart, &geometry, &series));
+            let lines: Vec<DitherChartLine> = series
+                .iter()
+                .zip(&edges)
+                .enumerate()
+                .map(|(position, (line, edges))| {
+                    let tops: Vec<f32> = edges.iter().map(|edge| edge.high).collect();
+                    let points = match &columns {
+                        Some(columns) => $crate::chart::bar_tops(&chart, &geometry, columns, position),
+                        None => $crate::chart::points(&geometry.plot, &geometry.scale, &tops, chart.count),
+                    };
+                    let curve = $crate::chart::segments(&points, chart.smooth);
+                    let path = if columns.is_some() { String::new() } else if line.dashed { $crate::chart::dashed_path(&curve) } else { $crate::chart::path(&points, &curve) };
+                    let points: Vec<DitherChartPoint> = points.iter().map(|point| DitherChartPoint { x: point.x, y: point.y }).collect();
+                    DitherChartLine { path: path.into(), points: $crate::slint::ModelRc::new($crate::slint::VecModel::from(points)) }
+                })
+                .collect();
+            let tops: Vec<f32> = (0..chart.count)
+                .map(|index| edges.iter().filter_map(|row| row.get(index)).map(|edge| $crate::chart::y_at(&geometry.plot, &geometry.scale, edge.high)).fold(f32::INFINITY, f32::min))
+                .collect();
+            let totals_of = $crate::chart::totals(&chart, &series);
+            let totals = totals_of.clone();
+            DitherChartLayout {
+                left: geometry.plot.left,
+                right: geometry.plot.right,
+                top: geometry.plot.top,
+                bottom: geometry.plot.bottom,
+                ticks: $crate::slint::ModelRc::new($crate::slint::VecModel::from(ticks)),
+                labels: $crate::slint::ModelRc::new($crate::slint::VecModel::from(labels)),
+                lines: $crate::slint::ModelRc::new($crate::slint::VecModel::from(lines)),
+                tops: $crate::slint::ModelRc::new($crate::slint::VecModel::from(tops)),
+                totals: $crate::slint::ModelRc::new($crate::slint::VecModel::from(totals)),
+                peak: $crate::chart::max_index(&totals_of) as i32,
+            }
+        });
+        engine.on_chart_band(|categories, series, spec, index, cell, level, matrix, color| {
+            let (chart, series) = (chart_of(&categories, &spec), chart_series(&series));
+            let edges = $crate::chart::edges(&series, chart.stack);
+            let geometry = $crate::chart::geometry(&chart, &$crate::chart::scale_values(&series, &edges, chart.stack), &spec.unit);
+            let Some(line) = series.get(index as usize) else { return $crate::slint::Image::default() };
+            let options = $crate::chart::Band { chart: &chart, series: line, geometry: &geometry, cell, level, matrix: Matrix::ALL[matrix as usize], color };
+            $crate::chart::band(&options)
+        });
+        engine.on_chart_area(|categories, series, spec, colors, fill| {
+            let (chart, series) = (chart_of(&categories, &spec), chart_series(&series));
+            let edges = $crate::chart::edges(&series, chart.stack);
+            let geometry = $crate::chart::geometry(&chart, &$crate::chart::scale_values(&series, &edges, chart.stack), &spec.unit);
+            let colors: Vec<$crate::slint::Color> = colors.iter().collect();
+            let options = $crate::chart::Area {
+                chart: &chart,
+                series: &series,
+                geometry: &geometry,
+                colors: &colors,
+                cell: fill.cell,
+                level: fill.level,
+                matrix: Matrix::ALL[fill.matrix as usize],
+                fill: FillVariant::ALL[fill.fill as usize],
+            };
+            $crate::chart::area(&options)
+        });
+        engine.on_chart_bars(|categories, series, spec, colors, fill, solid| {
+            let (chart, series) = (chart_of(&categories, &spec), chart_series(&series));
+            let edges = $crate::chart::edges(&series, chart.stack);
+            let geometry = $crate::chart::geometry(&chart, &$crate::chart::scale_values(&series, &edges, chart.stack), &spec.unit);
+            let columns = $crate::chart::bars(&chart, &geometry, &series);
+            let colors: Vec<$crate::slint::Color> = colors.iter().collect();
+            let options = $crate::chart::BarFill {
+                chart: &chart,
+                geometry: &geometry,
+                bars: &columns,
+                colors: &colors,
+                cell: fill.cell,
+                level: fill.level,
+                matrix: Matrix::ALL[fill.matrix as usize],
+                fill: FillVariant::ALL[fill.fill as usize],
+                solid: usize::try_from(solid).ok(),
+            };
+            $crate::chart::bars_image(&options)
+        });
+        engine.on_chart_readout(|categories, series, spec, index| {
+            let (chart, series) = (chart_of(&categories, &spec), chart_series(&series));
+            let edges = $crate::chart::edges(&series, chart.stack);
+            let rows: Vec<$crate::slint::SharedString> = $crate::chart::readout(&series, &edges, index as usize, &spec.unit, chart.stack).into_iter().map(Into::into).collect();
+            $crate::slint::ModelRc::new($crate::slint::VecModel::from(rows))
+        });
+        engine.on_chart_format(|value, unit| $crate::chart::format_value(value, &unit).into());
+        engine.on_donut_layout(|slices, spec| {
+            let layout = $crate::donut::layout(&donut_spec(&spec), &donut_slices(&slices));
+            let shares: Vec<f32> = layout.arcs.iter().map(|arc| arc.share).collect();
+            let middles: Vec<f32> = layout.arcs.iter().map(|arc| (arc.from + arc.to) / 2.0).collect();
+            DitherDonutLayout {
+                side: layout.side as i32,
+                outer: layout.outer,
+                inner: layout.inner,
+                total: layout.total,
+                shares: $crate::slint::ModelRc::new($crate::slint::VecModel::from(shares)),
+                middles: $crate::slint::ModelRc::new($crate::slint::VecModel::from(middles)),
+            }
+        });
+        engine.on_donut_image(|slices, colors, spec, sweep, focus| {
+            let mut drawn = donut_slices(&slices);
+            for (slice, color) in drawn.iter_mut().zip(colors.iter()) {
+                slice.color = color;
+            }
+            $crate::donut::image(&donut_spec(&spec), &drawn, sweep, usize::try_from(focus).ok())
+        });
+        engine.on_donut_hit(|slices, spec, x, y| $crate::donut::hit(&donut_spec(&spec), &donut_slices(&slices), x, y).map_or(-1, |index| index as i32));
+        engine.on_donut_value(|value, unit| $crate::donut::format_value(value, &unit).into());
+        engine.on_donut_share(|share| $crate::donut::format_share(share).into());
+        engine.on_heatmap_layout(|spec, entries, grid, rows, columns| {
+            let input = heatmap_input(&spec, &entries, &grid, &rows, &columns);
+            let (model, fit) = heatmap_fitted(&spec, &input);
+            let label = |(position, text): &(usize, String)| DitherHeatmapLabel { position: *position as i32, text: text.as_str().into() };
+            let column_labels: Vec<DitherHeatmapLabel> = model.column_labels.iter().map(label).collect();
+            let row_labels: Vec<DitherHeatmapLabel> = model.row_labels.iter().map(label).collect();
+            DitherHeatmapLayout {
+                cell: fit.cell,
+                columns: model.columns as i32,
+                rows: model.rows as i32,
+                left: fit.left,
+                label_every: fit.label_every as i32,
+                peak: model.peak,
+                column_labels: $crate::slint::ModelRc::new($crate::slint::VecModel::from(column_labels)),
+                row_labels: $crate::slint::ModelRc::new($crate::slint::VecModel::from(row_labels)),
+            }
+        });
+        engine.on_heatmap_image(|spec, entries, grid, rows, columns, color, foreground, focus, reveal| {
+            let input = heatmap_input(&spec, &entries, &grid, &rows, &columns);
+            let (model, _) = heatmap_fitted(&spec, &input);
+            let options = $crate::heatmap::Paint { steps: $crate::heatmap::steps(input.steps), color, foreground, focus: usize::try_from(focus).ok(), reveal };
+            $crate::heatmap::image(&model, &options)
+        });
+        engine.on_heatmap_readout(|spec, entries, grid, rows, columns, column, row| {
+            let input = heatmap_input(&spec, &entries, &grid, &rows, &columns);
+            let (model, _) = heatmap_fitted(&spec, &input);
+            $crate::heatmap::square_at(&model, column, row).map_or_else(Default::default, |square| $crate::heatmap::readout(square, &spec.unit, &spec.units).into())
+        });
+        engine.on_heatmap_swatch(|bucket, steps, color, foreground| $crate::heatmap::swatch(bucket.max(0) as usize, $crate::heatmap::steps(steps.max(0) as usize), color, foreground));
+        engine.on_pixel_area_image(|values, spec, color| {
+            let values: Vec<f32> = values.iter().collect();
+            let area = $crate::pixel_area::Area {
+                columns: spec.columns.max(1) as usize,
+                rows: spec.rows.max(1) as usize,
+                min: spec.min,
+                max: (spec.max != 0.0).then_some(spec.max),
+                fill: FillVariant::ALL[spec.fill as usize],
+                color,
+                reveal: spec.reveal,
+                intensity: spec.intensity,
+                marker: usize::try_from(spec.marker).ok(),
+                stars: spec.stars,
+                winking: spec.winking,
+                tick: spec.tick,
+            };
+            $crate::pixel_area::image(&values, &area)
+        });
+        engine.on_pixel_area_side(|pixels, cell| $crate::pixel_area::side(pixels, cell) as i32);
+        engine.on_pixel_area_readout(|label, value| $crate::pixel_area::readout(&label, value).into());
+        engine.on_radar_layout(|axes, series, spec| {
+            let labels: Vec<String> = axes.iter().map(|axis| axis.to_string()).collect();
+            let layout = $crate::radar::layout(&labels, &radar_series(&series, None), &radar_spec(&spec));
+            let point = |vertex: &$crate::radar::Vec2| DitherRadarPoint { x: vertex.x, y: vertex.y };
+            let rings: Vec<$crate::slint::SharedString> = layout.rings.iter().map(|ring| ring.as_str().into()).collect();
+            let spokes: Vec<DitherRadarPoint> = layout.spokes.iter().map(point).collect();
+            let axis_labels: Vec<DitherRadarLabel> = layout
+                .labels
+                .iter()
+                .zip(&labels)
+                .map(|(label, text)| DitherRadarLabel { x: label.at.x, y: label.at.y, text: text.as_str().into(), align: label.align, line: label.line })
+                .collect();
+            let shapes: Vec<DitherRadarShape> = layout
+                .vertices
+                .iter()
+                .map(|vertices| DitherRadarShape { points: $crate::slint::ModelRc::new($crate::slint::VecModel::from(vertices.iter().map(point).collect::<Vec<_>>())) })
+                .collect();
+            DitherRadarLayout {
+                radius: layout.radius,
+                top: layout.top,
+                rings: $crate::slint::ModelRc::new($crate::slint::VecModel::from(rings)),
+                spokes: $crate::slint::ModelRc::new($crate::slint::VecModel::from(spokes)),
+                labels: $crate::slint::ModelRc::new($crate::slint::VecModel::from(axis_labels)),
+                shapes: $crate::slint::ModelRc::new($crate::slint::VecModel::from(shapes)),
+            }
+        });
+        engine.on_radar_image(|axes, series, colors, spec, scale, focus| $crate::radar::image(axes.row_count(), &radar_series(&series, Some(&colors)), &radar_spec(&spec), scale, usize::try_from(focus).ok()));
+        engine.on_radar_axis(|axes, x, y, side| $crate::radar::axis_at(axes.max(1) as usize, $crate::radar::Vec2 { x, y }, side).map_or(-1, |axis| axis as i32));
+        engine.on_text_cell(|font_size| $crate::text::cell_for(font_size));
+        engine.on_text_ink(|columns, rows, ink, time, backdrop| {
+            let ink = $crate::text::Ink {
+                fill: match ink.fill {
+                    DitherTextFill::Gradient => $crate::text::InkFill::Gradient,
+                    DitherTextFill::Noise => $crate::text::InkFill::Noise,
+                    DitherTextFill::Dotted => $crate::text::InkFill::Dotted,
+                    DitherTextFill::Hatched => $crate::text::InkFill::Hatched,
+                    DitherTextFill::Solid => $crate::text::InkFill::Solid,
+                },
+                direction: ink.direction,
+                scale: ink.scale,
+                from: ink.from,
+                to: ink.to,
+                ghost: (ink.ghost >= 0.0).then_some(ink.ghost),
+                matrix: Matrix::ALL[ink.matrix as usize],
+            };
+            $crate::text::ink_overlay(cells(columns), cells(rows), &ink, time, backdrop)
+        });
+        engine.on_dissolve_units(|text, word| {
+            let units: Vec<DitherDissolveUnit> = $crate::text::units(&text, word).into_iter().map(|(text, index)| DitherDissolveUnit { text: text.into(), index: index.map_or(-1, |index| index as i32) }).collect();
+            $crate::slint::ModelRc::new($crate::slint::VecModel::from(units))
+        });
+        engine.on_dissolve_ranks(|count, order| {
+            let order = match order {
+                DitherDissolveOrder::Start => $crate::text::DissolveOrder::Start,
+                DitherDissolveOrder::End => $crate::text::DissolveOrder::End,
+                DitherDissolveOrder::Center => $crate::text::DissolveOrder::Center,
+                DitherDissolveOrder::Edges => $crate::text::DissolveOrder::Edges,
+                DitherDissolveOrder::Random => $crate::text::DissolveOrder::Random,
+            };
+            $crate::slint::ModelRc::new($crate::slint::VecModel::from($crate::text::ranks(count.max(0) as usize, order)))
+        });
+        engine.on_dissolve_step(|elapsed, rank, spec| $crate::text::dissolve_step(elapsed, rank, &dissolve_spec(&spec)) as i32);
+        engine.on_dissolve_overlay(|columns, rows, step, spec, backdrop| $crate::text::dissolve_overlay(cells(columns), cells(rows), step.max(0) as usize, &dissolve_spec(&spec), backdrop));
+        engine.on_dissolve_steps(|matrix| $crate::text::dissolve_steps(Matrix::ALL[matrix as usize]) as i32);
+        engine.on_scramble_slots(|text, from, keep_same, elapsed, spec, characters| {
+            let pool = $crate::text::glyph_pool(&text, &characters);
+            let slots: Vec<DitherScrambleSlot> = $crate::text::slots(&text, &from, keep_same, elapsed, &scramble_spec(&spec), &pool)
+                .into_iter()
+                .map(|slot| DitherScrambleSlot { character: slot.character.into(), phase: slot.phase as i32, level: slot.level, glyph: slot.glyph.into() })
+                .collect();
+            $crate::slint::ModelRc::new($crate::slint::VecModel::from(slots))
+        });
+        engine.on_scramble_block(|columns, rows, level, color| $crate::text::block_overlay(cells(columns), cells(rows), level, color));
+        engine.on_scramble_settled(|text, from, keep_same, elapsed, spec| $crate::text::settled(&text, &from, keep_same, elapsed, &scramble_spec(&spec)));
         engine.on_card_glow(|columns, rows, glow, reach, strength, boost, rim, radius, fill, matrix, color| {
             let options = $crate::glow::GlowOptions {
                 glow: Glow::ALL[glow as usize],

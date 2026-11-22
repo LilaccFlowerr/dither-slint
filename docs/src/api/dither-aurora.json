@@ -1,0 +1,22 @@
+{
+ "DitherAurora": {
+  "color": "The bright lower edge of each curtain.",
+  "tip-color": "The faint tops of the rays, for a two-tone sky.",
+  "background": "The sky behind.",
+  "curtains": "Number of curtains, 1 to 6.",
+  "edge-height": "Where the lowest bright edge hangs, 0 (bottom) to 1 (top).",
+  "spread": "Vertical gap between curtains.",
+  "sway": "How far the edges fold, 0 to 3.",
+  "turbulence": "Fine ripples along the edges, 0 to 2.",
+  "rays": "How many rays fit across, 2 to 20.",
+  "length": "How far the rays reach, 0 to 1.",
+  "glow": "Brightness of the edge line, 0 to 2.",
+  "intensity": "Brightness of the curtains, 0 to 1.",
+  "shimmer": "Slow brightness ripple, 0 to 1.",
+  "scale": "Horizontal zoom: higher fits more folds across.",
+  "tilt": "Tilt in degrees, -45 to 45.",
+  "drift": "Sideways travel, -2 (left) to 2 (right).",
+  "direction": "<code>up</code>: rays rise from a bright lower edge. <code>down</code>: they hang from the top.",
+  "mask": "Fade it out where text sits: <code>none</code>, <code>top</code>, <code>bottom</code> or <code>edges</code>."
+ }
+}

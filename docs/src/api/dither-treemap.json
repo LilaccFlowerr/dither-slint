@@ -1,0 +1,20 @@
+{
+ "DitherTreemap": {
+  "title": "Headline on the top left.",
+  "items": "The tiles, each <code>{ label, value, color, fill, detail, remainder }</code>. A transparent <code>color</code> takes the next colour of the series.",
+  "capacity": "The whole, in the same unit as the values.",
+  "unit": "Shown after every number.",
+  "status": "Text in the footer while nothing is hovered.",
+  "replay-label": "Text of the button that plays the animation again.",
+  "duration": "How long the values take to grow in.",
+  "animated": "<code>false</code> shows the finished treemap at once.",
+  "interactive": "Hover a tile for the tooltip and the dimming.",
+  "spotlight": "<code>opacity</code> dims the other tiles, <code>none</code> leaves them.",
+  "cell": "Size of one dither cell.",
+  "matrix": "The dither pattern of the gradient fills.",
+  "header": "Show the title and the readout.",
+  "readout": "Show the used and total values and the percentage in the header.",
+  "footer": "Show the status line and the replay button.",
+  "stage-height": "Height of the treemap."
+ }
+}

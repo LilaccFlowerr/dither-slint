@@ -1,0 +1,8 @@
+{
+ "DitherSilk": {
+  "folds": "How many folds cross the box.",
+  "angle": "Direction the folds run, in degrees as in CSS: 90 runs them left to right.",
+  "sheen": "How narrow and bright the highlights are, 0 to 1.",
+  "intensity": "The brightest tone. Lower it to sit text on top."
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "cell": "Size of one dither cell. Larger cells give a chunkier, more pixelated look and are cheaper to draw.",
+ "matrix": "The threshold pattern that decides which cells are inked: <code>bayer2</code>, <code>bayer4</code>, <code>bayer8</code> or <code>blue-noise</code>. See <a href=\"../../engine/matrices/\">Matrices</a>.",
+ "animated": "Turn the motion on or off. Follows <code>DitherTheme.animated</code> by default, so one switch stills the whole app.",
+ "speed": "Multiplies the speed of the animation. 2 plays twice as fast.",
+ "still-time": "The moment, in seconds, that is drawn while <code>animated</code> is <code>false</code>.",
+ "palette": "The colours, from the background to the ink. Cells take the nearest colour in the list. Two or more colours.",
+ "bloom": "A soft glow in the ink colour around the dither: <code>off</code>, <code>low</code> or <code>high</code>.",
+ "enabled": "Whether the component takes input. A disabled one is dimmed.",
+ "fill": "The texture: <code>gradient</code> steps through dither levels, <code>dotted</code> and <code>hatched</code> are fixed patterns and <code>solid</code> is flat.",
+ "interactive": "Hover and click behaviour. Turn it off for a decorative component.",
+ "unit": "Written after every value, such as <code>%</code> or <code> GB</code>.",
+ "hover-effect": "What it does when the pointer comes in: <code>sweep</code>, <code>spotlight</code>, <code>scan</code>, <code>trace</code>, <code>rise</code>, <code>noise</code> or <code>none</code>. Follows <code>DitherMotion.hover</code> by default. See <a href=\"../../motion/overview/\">Motion</a>.",
+ "press-effect": "What it does when it is pressed: <code>ripple</code>, <code>burst</code>, <code>flash</code>, <code>pulse</code>, <code>glitch</code> or <code>none</code>. Follows <code>DitherMotion.press</code> by default.",
+ "idle-effect": "What it does on its own while on screen: <code>none</code>, <code>shimmer</code>, <code>breathe</code> or <code>twinkle</code>. Follows <code>DitherMotion.idle</code> by default.",
+ "effect-matrix": "The dither pattern of the motion effects. Follows <code>DitherMotion.matrix</code> by default.",
+ "has-hover": "Whether the pointer is over it. Read only.",
+ "pressed": "Whether it is being pressed. Read only.",
+ "has-focus": "Whether it has keyboard focus. Read only.",
+ "clicked": "Called when it is clicked, or activated with the keyboard."
+}

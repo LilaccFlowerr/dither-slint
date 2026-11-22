@@ -1,0 +1,16 @@
+{
+ "DitherRadarChart": {
+  "axes": "The axis labels, clockwise from 12 o'clock. Three or more read best.",
+  "series": "The series, drawn in order with later ones on top, each <code>{ label, values, color, fill }</code>. Missing values count as 0. A transparent <code>color</code> takes the next colour of the series.",
+  "max": "The value at the outer ring. <code>0</code> picks it.",
+  "rings": "Grid rings, which also set the steps of the gradient fill.",
+  "grid": "<code>polygon</code> for straight edges or <code>circle</code> for round rings.",
+  "size": "The largest width and height. The chart shrinks to fit its container.",
+  "unit": "Written after every value in the readout.",
+  "legend": "Show the legend. Hover a key to spotlight a series, click to lock it.",
+  "interactive": "The axis readout and the legend spotlight.",
+  "animated": "The series grow out from the centre.",
+  "matrix": "The dither pattern of the gradient fills.",
+  "cell": "Size of one dither cell."
+ }
+}

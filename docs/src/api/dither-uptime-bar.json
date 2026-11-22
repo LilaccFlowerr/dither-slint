@@ -1,0 +1,14 @@
+{
+ "DitherUptimeBar": {
+  "label": "The service, such as \"API\".",
+  "days": "One entry per day, oldest first. Each has a <code>date</code> (<code>\"2026-10-13\"</code>), an <code>uptime</code> from 0 to 1 (negative for no data) and an optional <code>note</code> for the tooltip.",
+  "fill": "Texture of the up days. Degraded days are always hatched, outages solid and days without data dotted.",
+  "bloom": "<code>low</code> or <code>high</code> adds a glow behind degraded days and outages, so incidents stand out.",
+  "up-color": "Colour of the up days.",
+  "degraded-color": "Colour of the degraded days.",
+  "down-color": "Colour of the outages.",
+  "none-color": "Colour of the days without data.",
+  "matrix": "The dither pattern.",
+  "cell": "Size of one dither cell."
+ }
+}

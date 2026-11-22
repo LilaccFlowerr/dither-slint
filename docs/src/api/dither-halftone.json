@@ -1,0 +1,17 @@
+{
+ "DitherHalftone": {
+  "source": "What sizes the dots: <code>noise</code> (drifting clouds), <code>radial</code> (largest at <code>center</code>) or <code>linear</code> (growing towards <code>direction</code>).",
+  "center": "Radial only: where the dots are largest, and where they run out. 1 reaches the farthest corner.",
+  "radius": "Radial only: where the dots are largest, and where they run out. 1 reaches the farthest corner.",
+  "direction": "Linear only: the direction the dots grow towards, in degrees as in CSS.",
+  "scale": "Noise only: size of the clouds.",
+  "size": "Distance between dot centres.",
+  "angle": "Screen angle in degrees. Extra channels add 30° each.",
+  "intensity": "Size of the largest dot, 0 to 1. At 1 the biggest dots just touch.",
+  "drift": "How fast the screen slides. 0 holds it still.",
+  "color": "Colour of the dots.",
+  "channels": "Two or three inks, each on its own screen. Where dots overlap their colours mix. Replaces <code>color</code>.",
+  "background": "Colour behind the dots.",
+  "cell": "Size of one rendered pixel. One device pixel keeps dot edges crisp."
+ }
+}

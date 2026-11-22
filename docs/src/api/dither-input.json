@@ -1,0 +1,22 @@
+{
+ "DitherInput": {
+  "text": "The current text.",
+  "placeholder": "Shown while the field is empty.",
+  "label": "A label above the field.",
+  "description": "Muted help text below the field.",
+  "error": "An error below the field. Turns it red.",
+  "icon": "An image before the text, such as a magnifier for search.",
+  "password": "Hides the text and adds a show and hide button.",
+  "clearable": "A clear button while there is text. Escape clears too.",
+  "fill": "Texture of the floor: <code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "color": "Colour of the tint, floor and focus edge.",
+  "matrix": "The dither pattern.",
+  "size": "<code>sm</code>, <code>md</code> or <code>lg</code>: 32, 40 and 44 pixels high.",
+  "bloom": "A soft glow in the colour while focused.",
+  "cell": "Size of one dither cell.",
+  "enabled": "Drops to 45% opacity and ignores input when <code>false</code>.",
+  "edited": "Called with the new text on every change.",
+  "accepted": "Called with the text when Enter is pressed.",
+  "cleared": "Called when the clear button empties the field."
+ }
+}

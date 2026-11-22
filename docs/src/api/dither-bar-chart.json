@@ -1,0 +1,20 @@
+{
+ "DitherBarChart": {
+  "categories": "The label of every bar, or group of bars.",
+  "series": "The bars, each <code>{ label, color, values, low, high, dashed }</code>.",
+  "stack": "<code>none</code>: the series sit side by side. <code>stacked</code>: on top of each other. <code>percent</code>: stacked and scaled to 100%.",
+  "highlight": "The bar drawn solid while nothing is hovered: <code>last</code>, <code>max</code> or <code>none</code>.",
+  "highlight-at": "The index of the bar to highlight. Overrides <code>highlight</code> when it is 0 or more.",
+  "fill": "<code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "level": "Gradient only: coverage at the top of each bar, 0 to 1.",
+  "matrix": "Gradient only: the dither pattern.",
+  "cell": "Size of one dither cell.",
+  "axes": "Show the axes, the readout and the legend spotlight.",
+  "tooltip": "Show the axes, the readout and the legend spotlight.",
+  "interactive": "Show the axes, the readout and the legend spotlight.",
+  "legend": "Show the legend.",
+  "animated": "The bars are drawn in from the left when the chart appears.",
+  "unit": "Written after every value. Values are shortened to 1.2K.",
+  "chart-height": "Height of the chart, axes included."
+ }
+}

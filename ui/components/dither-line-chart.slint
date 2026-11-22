@@ -1,0 +1,32 @@
+import { DitherEngine, DitherMatrix } from "../engine.slint";
+import { ChartFrame, DitherChartMarkers } from "chart-frame.slint";
+
+export { DitherChartMarkers }
+
+export component DitherLineChart inherits ChartFrame {
+    in property <float> level: 0.25;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+
+    for line[index] in root.layout.lines: Rectangle {
+        if root.series[index].high.length > 0: Image {
+            width: root.width;
+            height: root.chart-height;
+            image-rendering: pixelated;
+            opacity: root.opacity-of(index);
+            source: DitherEngine.chart-band(root.categories, root.series, root.spec, index, root.cell / 1px, root.level, root.matrix, root.color-of(index));
+        }
+    }
+
+    for line[index] in root.layout.lines: Path {
+        width: root.width;
+        height: root.chart-height;
+        viewbox-width: root.width / 1px;
+        viewbox-height: root.chart-height / 1px;
+        commands: line.path;
+        stroke: root.color-of(index);
+        stroke-width: 2px;
+        stroke-line-cap: round;
+        opacity: root.opacity-of(index);
+    }
+}

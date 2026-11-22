@@ -1,0 +1,84 @@
+---
+title: DitherHeatmap
+description: A calendar or a grid of values drawn as squares of dither cells, from dots to solid.
+---
+
+import Demo from '../../../components/Demo.astro';
+import Heatmap from '../../../components/Heatmap.astro';
+import Api from '../../../components/Api.astro';
+
+Every square is a block of 4×4 dither cells with one cell of gap, so its density steps cleanly from dots to a checkerboard, a hollow frame and solid. Hover a square for its value and use the legend to spotlight one density. When the width runs out the grid shrinks its cells, down to 2 px, and then drops the oldest columns.
+
+<Demo
+	title="Calendar"
+	code={`DitherHeatmap {
+    unit: "deploy";
+    units: "deploys";
+    entries: [
+        { date: "2026-11-20", value: 3 },
+        { date: "2026-11-21", value: 7 },
+        { date: "2026-11-22", value: 10 },
+    ];
+}`}
+>
+	<Heatmap />
+</Demo>
+
+## Examples
+
+<Demo
+	title="Matrix: weekday by hour"
+	code={`DitherHeatmap {
+    mode: DitherHeatmapMode.matrix;
+    ink: DitherPalette.green;
+    unit: "request";
+    units: "requests";
+    rows: ["Mon", "Tue", "Wed"];
+    columns: ["8", "9", "10", "11"];
+    grid: [
+        { values: [2, 6, 9, 8] },
+        { values: [3, 7, 10, 9] },
+        { values: [1, 5, 8, 7] },
+    ];
+}`}
+>
+	<Heatmap
+		mode="matrix"
+		color="green"
+		unit="request"
+		units="requests"
+		rows={['Mon', 'Tue', 'Wed', 'Thu', 'Fri']}
+		columns={['8', '9', '10', '11', '12', '13', '14', '15', '16', '17']}
+		grid={[
+			[2, 6, 9, 8, 4, 3, 7, 9, 6, 3],
+			[3, 7, 10, 9, 5, 4, 8, 10, 7, 2],
+			[1, 5, 8, 7, 4, 2, 6, 8, 5, 2],
+			[2, 6, 9, 10, 6, 3, 7, 9, 6, 3],
+			[1, 4, 6, 6, 3, 2, 4, 5, 3, 1],
+		]}
+	/>
+</Demo>
+
+<Demo
+	title="Six densities, weeks starting on Monday"
+	code={`DitherHeatmap {
+    steps: 6;
+    week-start: 1;
+    weeks: 26;
+    ink: DitherPalette.orange;
+    entries: [ /* ... */ ];
+}`}
+>
+	<Heatmap steps={6} weekStart={1} weeks={26} color="orange" />
+</Demo>
+
+## Data
+
+In `calendar` mode `entries` is a list of `{ date, value }` with dates as `YYYY-MM-DD`. Several entries for one day add up, and days without an entry count as 0. The chart ends with the latest day and shows `weeks` columns, one per week.
+
+In `matrix` mode `grid` holds one `{ values }` per row, with `rows` and `columns` as the labels. A missing value draws nothing.
+
+## Properties
+
+<Api file="dither-heatmap" />
+

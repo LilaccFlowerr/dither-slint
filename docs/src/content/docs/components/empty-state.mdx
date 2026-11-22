@@ -6,6 +6,7 @@ description: "A placeholder for a view with nothing in it yet: a lit dithered il
 import EmptyState from '../../../components/EmptyState.astro';
 import Button from '../../../components/Button.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 Above the text sits a small lit object drawn in dither cells. Each surface takes its tone from a light up and to the left, so faces turned to the light are dense, faces turned away are sparse, and curved surfaces step through every dither level. A one-cell seam splits the parts of the object, and a faint halo and floor shadow sit behind it. The object bobs up and down a whole cell every so often. Put buttons inside and they become the action under the text.
 
@@ -46,13 +47,6 @@ DitherEmptyState {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `title` | | The heading. Say plainly what is empty. |
-| `description` | | One or two sentences: why it is empty and what to do next. |
-| `illustration` | `box` | `box` for lists and orders, `search` for no results, `folder` for files and documents, `planet` for anything still to arrive. |
-| `color` | `DitherTheme.ink` | Colour of the illustration. |
-| `matrix` | `bayer4` | `bayer4` for crisp steps, `bayer8` for finer ones, `blue-noise` for an even grain. |
-| `animate` | `DitherTheme.animated` | Bobs the object a cell up and down. |
+<Api file="dither-empty-state" />
 
 Anything you put inside is shown under the text, usually one or two buttons.

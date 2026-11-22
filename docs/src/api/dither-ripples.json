@@ -1,0 +1,8 @@
+{
+ "DitherRipples": {
+  "sources": "x and y pairs as fractions of the box, up to four.",
+  "rings": "How many rings fit in the height.",
+  "decay": "How quickly the rings fade.",
+  "intensity": "Brightest tone, 0 to 1."
+ }
+}

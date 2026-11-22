@@ -1,0 +1,17 @@
+{
+ "DitherLogo": {
+  "source": "The logo, a PNG with a transparent background.",
+  "ink": "Colour of the ink when <code>tone</code> is <code>mono</code>.",
+  "tone": "<code>mono</code> is one ink, <code>original</code> keeps the file's own colours.",
+  "logo-source": "<code>alpha</code> reads the transparent background, <code>dark</code> reads a dark logo on a light, opaque background.",
+  "fill": "<code>gradient</code>, <code>dotted</code>, <code>hatched</code> or <code>solid</code>.",
+  "outline": "Keep a solid outline one cell wide, so the shapes stay exact however open the fill is.",
+  "floor": "Gradient fill: how much ink is left at the bottom, 0 to 1.",
+  "matrix": "Threshold pattern of the gradient fill.",
+  "cell": "Size of one cell. Larger cells give a chunkier mark.",
+  "effect": "<code>none</code>, <code>shimmer</code> or <code>scan</code>.",
+  "period": "Time per sweep.",
+  "phase": "Where in the sweep this logo starts, 0 to 1.",
+  "animate": "Turn the effect off."
+ }
+}

@@ -10,6 +10,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -23,12 +24,7 @@ import Background from '../../../components/Background.astro';
 
 A sphere whose outline breathes slowly, with a soft shadow side, a specular highlight and a dithered glow. The orb stays round and centred in any box. Move `lean` and the orb and its light tilt towards that side, easing there over a third of a second.
 
-| Property | Default | |
-| --- | --- | --- |
-| `color` | `DitherTheme.ink` | Colour of the orb. |
-| `highlight` | transparent | A third, brighter colour for the specular highlight. Transparent keeps the highlight in `color`. |
-| `background` | `DitherTheme.background` | Colour behind the orb. Transparent floats it over what is behind. |
-| `size` | `0.26` | Radius as a share of the box's shorter side, 0.1 to 0.5. |
-| `morph` | `1` | How much the outline wobbles. 0 is a perfect sphere. |
-| `lean` | `{ x: 0, y: 0 }` | Where the orb and its light tilt to, each axis -1 to 1 from the centre. Drive it from a `TouchArea` to follow the pointer. |
-| `glow` | `0.5` | Strength of the dithered glow around the orb, 0 to 1. |
+## Properties
+
+<Api file="dither-orb" />
+

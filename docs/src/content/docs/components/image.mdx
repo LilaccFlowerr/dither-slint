@@ -4,9 +4,9 @@ description: Any photo dithered to your palette.
 ---
 
 import ImageDemo from '../../../components/ImageDemo.astro';
+import Api from '../../../components/Api.astro';
 
 <ImageDemo />
-
 
 ```slint
 DitherImage {
@@ -21,12 +21,6 @@ The picture keeps its aspect ratio and fits inside the box.
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `source` | | The picture. |
-| `method` | `floyd-steinberg` | `bayer4`, `bayer8`, `blue-noise`, `floyd-steinberg`, `atkinson` or `sierra-lite`. |
-| `threshold` | `0.5` | Brightness cut-off, 0 to 1. |
-| `cell` | `2px` | Size of one dither cell. |
-| `palette` | background, foreground | Two or more colours. Pixels take the nearest one. |
+<Api file="dither-image" />
 
 Bayer and blue noise show a regular pattern. Floyd–Steinberg, Atkinson and Sierra-lite spread the error to the neighbours, which keeps more detail in photos and logos.

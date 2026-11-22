@@ -1,0 +1,52 @@
+---
+title: DitherPixelArea
+description: A stepped area chart painted one pixel per dither cell, solid at the floor and dissolving up to a soft edge at the value.
+---
+
+import Demo from '../../../components/Demo.astro';
+import PixelArea from '../../../components/PixelArea.astro';
+import Api from '../../../components/Api.astro';
+
+An area chart in the style of dither-kit: an ordered dither that is solid at the floor and dissolves upward, capped by a soft stepped edge at the value. Every pixel is the one colour at a different opacity, so it sits on light and dark backgrounds alike. Hovering lifts the whole fill a little and a marker reads the value under the pointer. A few stars sit in the fill and wink while the page is animated.
+
+<Demo
+	title="Gradient"
+	code={`DitherPixelArea {
+    values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52];
+    labels: ["Mon", "Tue", "Wed"];
+}`}
+>
+	<PixelArea />
+</Demo>
+
+## Examples
+
+<Demo
+	title="Dotted, with real gaps"
+	code={`DitherPixelArea {
+    values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52];
+    fill: DitherFill.dotted;
+    ink: DitherPalette.orange;
+    height: 90px;
+}`}
+>
+	<PixelArea fill="dotted" color="orange" height={90} />
+</Demo>
+
+<Demo
+	title="Hatched, without stars"
+	code={`DitherPixelArea {
+    values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52];
+    fill: DitherFill.hatched;
+    ink: DitherPalette.green;
+    stars: false;
+}`}
+>
+	<PixelArea fill="hatched" color="green" stars={false} height={90} />
+</Demo>
+
+## Properties
+
+<Api file="dither-pixel-area" />
+
+The height is set like any element's, `120px` by default, and the width follows the element.

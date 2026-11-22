@@ -1,0 +1,40 @@
+---
+title: DitherDissolveText
+description: Text that dissolves in through the levels of a Bayer matrix, one character or word at a time.
+---
+
+import Demo from '../../../components/Demo.astro';
+import TextEffect from '../../../components/TextEffect.astro';
+import Api from '../../../components/Api.astro';
+
+Each character, or word, is hidden by a dither that fills in over `duration` and settles solid, at a dither level, or into a dotted or hatched texture. Units dissolve in reading order, reversed, from the middle out, from both ends in, or shuffled. Set `showing: false` to dissolve the text out again.
+
+As for [DitherText](../dither-text/), the dither is a layer over the text, so set `backdrop` to the flat colour behind it.
+
+<Demo
+	title="By character, from the middle out"
+	code={`DitherDissolveText {
+    text: "Dissolves in from the middle";
+    order: DitherDissolveOrder.center;
+}`}
+>
+	<TextEffect kind="dissolve" text="Dissolves in from the middle" order="center" size={36} />
+</Demo>
+
+## Examples
+
+<Demo
+	title="By word, settling into dots"
+	code={`DitherDissolveText {
+    text: "Word by word into dots";
+    word: true;
+    fill: DitherDissolveFill.dotted;
+}`}
+>
+	<TextEffect kind="dissolve" text="Word by word into dots" word fill="dotted" size={36} />
+</Demo>
+
+## Properties
+
+<Api file="dither-dissolve-text" />
+

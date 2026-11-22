@@ -10,6 +10,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -33,13 +34,7 @@ import Background from '../../../components/Background.astro';
 
 A slow, folding noise texture, with four shapes.
 
-| Property | Default | |
-| --- | --- | --- |
-| `variant` | `smoke` | `smoke`, `ridges`, `contours` or `marble`. |
-| `color`, `highlight`, `background` | ink, none, paper | `highlight` adds a third colour for the peaks. |
-| `scale`, `warp`, `detail` | `1.3`, `1.7`, `4` | Size, folding and octaves of the noise. |
-| `contrast`, `coverage`, `intensity` | `1.2`, `0`, `0.9` | |
-| `bands` | `8` | Lines for `contours`, stripes for `marble`. |
-| `angle`, `flow` | `90deg`, `1` | Direction and speed of the drift. |
-| `invert` | `false` | Swap paper and ink. |
-| `mask`, `mask-size` | `none`, `0.5` | Clear space for text: `center`, `top`, `bottom` or `edges`. |
+## Properties
+
+<Api file="dither-noise-field" />
+

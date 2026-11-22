@@ -10,6 +10,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -24,12 +25,7 @@ import Background from '../../../components/Background.astro';
 
 A dark disc with a glowing rim and a corona that streams outwards and breathes slowly.
 
-| Property | Default | |
-| --- | --- | --- |
-| `center` | `{ x: 0.5, y: 0.5 }` | Centre of the disc, as fractions of the box from the top left. |
-| `size` | `0.24` | Radius of the disc, as a share of the box height. |
-| `corona` | `0.5` | How far the corona reaches past the rim, 0 to 1. |
-| `light` | `315` | Where the rim is brightest, in degrees as in CSS: 0 is the top. |
-| `pulse` | `0.5` | How much the glow breathes, 0 (steady) to 1. |
-| `rim-color` | `DitherTheme.ink` | Colour of the rim and corona. |
-| `sky-color` | `DitherTheme.background` | Colour of the sky and the disc. |
+## Properties
+
+<Api file="dither-eclipse" />
+

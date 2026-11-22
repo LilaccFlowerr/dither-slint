@@ -5,6 +5,7 @@ description: "A KPI card with a headline value, a delta coloured by whether the 
 
 import StatCard from '../../../components/StatCard.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 A label, a headline value and a delta that is green when the metric moved the way you want and red when it did not. A `trend` draws the recent values as a dithered area along the bottom, in bands that thin out below the line and end in a solid marker.
 
@@ -21,6 +22,8 @@ A label, a headline value and a delta that is green when the metric moved the wa
 >
 	<StatCard label="Monthly revenue" value="48,210" delta={12.4} deltaLabel="vs last month" trend={[12, 14, 13, 18, 17, 22, 21, 27, 31]} />
 </Demo>
+
+## Examples
 
 <Demo
 	title="When down is good"
@@ -74,14 +77,7 @@ DitherStatCard {
 
 `DitherStatCard` is a `DitherCard`, so it also takes `color`, `matrix`, `cell`, `radius` and the other card properties.
 
-| Property | Default | |
-| --- | --- | --- |
-| `label` | | What the number is, such as "Monthly revenue". |
-| `value` | | The headline number, as text. `DitherEngine.format-number(float)` adds thousands separators. |
-| `has-delta` | `false` | Shows the delta row. |
-| `delta` | `0` | Change since the last period, in percent: `12.4` reads as +12.4%. |
-| `delta-label` | | What the change compares with, such as "vs last month". |
-| `good` | `up` | `DitherStatDirection.up` or `down`: which direction counts as good, for the delta colour. |
-| `trend` | | Recent values, oldest first, drawn as a dithered area. Needs at least two. |
-| `trend-fill` | `gradient` | Texture under the trend: `gradient`, `dotted`, `hatched` or `solid`. |
-| `bloom` | `off` | `low` or `high` adds a soft glow under the trend. |
+## Properties
+
+<Api file="dither-stat-card" inherits={["dither-card"]} />
+

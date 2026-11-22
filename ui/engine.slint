@@ -17,6 +17,42 @@ export enum DitherIllustration { box, search, folder, planet }
 export enum DitherTabsVariant { pill, underline }
 export enum DitherRevealEnd { photo, dither }
 export struct DitherLogoItem { source: image }
+export enum DitherTextFill { gradient, noise, dotted, hatched, solid }
+export enum DitherDissolveOrder { start, end, center, edges, random }
+export enum DitherDissolveFill { solid, gradient, dotted, hatched }
+export enum DitherScrambleMode { dither, blocks, glyphs }
+export struct DitherTextInk { fill: DitherTextFill, direction: float, scale: float, from: float, to: float, ghost: float, matrix: DitherMatrix }
+export struct DitherDissolveSpec { duration: float, stagger: float, delay: float, matrix: DitherMatrix, fill: DitherDissolveFill, level: float, showing: bool }
+export struct DitherScrambleSpec { mode: DitherScrambleMode, duration: float, stagger: float, delay: float, rate: float }
+export struct DitherDissolveUnit { text: string, index: int }
+export struct DitherScrambleSlot { character: string, phase: int, level: int, glyph: string }
+export enum DitherRadarGrid { polygon, circle }
+export struct DitherRadarSeries { label: string, values: [float], color: color, fill: DitherFill }
+export struct DitherRadarSpec { side: float, cell: float, max: float, rings: int, grid: DitherRadarGrid, matrix: DitherMatrix }
+export struct DitherRadarPoint { x: float, y: float }
+export struct DitherRadarLabel { x: float, y: float, text: string, align: int, line: float }
+export struct DitherRadarShape { points: [DitherRadarPoint] }
+export struct DitherRadarLayout { radius: float, top: float, rings: [string], spokes: [DitherRadarPoint], labels: [DitherRadarLabel], shapes: [DitherRadarShape] }
+export struct DitherPixelAreaSpec { columns: int, rows: int, min: float, max: float, fill: DitherFill, reveal: float, intensity: float, marker: int, stars: bool, winking: bool, tick: float }
+export enum DitherHeatmapMode { calendar, matrix }
+export struct DitherHeatmapEntry { date: string, value: float }
+export struct DitherHeatmapRow { values: [float] }
+export struct DitherHeatmapSpec { mode: DitherHeatmapMode, weeks: int, week-start: int, steps: int, max: float, unit: string, units: string, width: float, cell: float }
+export struct DitherHeatmapLabel { position: int, text: string }
+export struct DitherHeatmapLayout { cell: float, columns: int, rows: int, left: float, label-every: int, peak: float, column-labels: [DitherHeatmapLabel], row-labels: [DitherHeatmapLabel] }
+export enum DitherDonutMode { donut, pie }
+export struct DitherDonutSlice { label: string, value: float, color: color, fill: DitherFill }
+export struct DitherDonutSpec { size: float, cell: float, mode: DitherDonutMode, thickness: float, gap: float, matrix: DitherMatrix }
+export struct DitherDonutLayout { side: int, outer: float, inner: float, total: float, shares: [float], middles: [float] }
+export struct DitherChartSeries { label: string, color: color, values: [float], low: [float], high: [float], dashed: bool }
+export enum DitherChartStack { none, stacked, percent }
+export struct DitherChartSpec { width: float, height: float, axes: bool, zero: bool, smooth: bool, unit: string, stack: DitherChartStack, band: bool }
+export struct DitherAreaFill { cell: float, level: float, matrix: DitherMatrix, fill: DitherFill }
+export struct DitherChartTick { y: float, label: string }
+export struct DitherChartLabel { x: float, text: string, align: int }
+export struct DitherChartPoint { x: float, y: float }
+export struct DitherChartLine { path: string, points: [DitherChartPoint] }
+export struct DitherChartLayout { left: float, right: float, top: float, bottom: float, ticks: [DitherChartTick], labels: [DitherChartLabel], lines: [DitherChartLine], tops: [float], totals: [float], peak: int }
 export struct DitherTreemapItem { label: string, value: float, color: color, fill: DitherFill, detail: string, remainder: bool }
 export struct DitherTreemapTile { x: float, y: float, w: float, h: float, value: float }
 export struct DitherTreemapLayout { tiles: [DitherTreemapTile], used: float, capacity: float }
@@ -244,6 +280,37 @@ export global DitherEngine {
     pure callback logo-width(source: image, height: float) -> float;
     pure callback treemap-layout(items: [DitherTreemapItem], capacity: float, progress: float) -> DitherTreemapLayout;
     pure callback treemap-format(value: float) -> string;
+    pure callback chart-layout(categories: [string], series: [DitherChartSeries], spec: DitherChartSpec) -> DitherChartLayout;
+    pure callback chart-band(categories: [string], series: [DitherChartSeries], spec: DitherChartSpec, index: int, cell: float, level: float, matrix: DitherMatrix, color: color) -> image;
+    pure callback chart-area(categories: [string], series: [DitherChartSeries], spec: DitherChartSpec, colors: [color], fill: DitherAreaFill) -> image;
+    pure callback chart-bars(categories: [string], series: [DitherChartSeries], spec: DitherChartSpec, colors: [color], fill: DitherAreaFill, solid: int) -> image;
+    pure callback chart-readout(categories: [string], series: [DitherChartSeries], spec: DitherChartSpec, index: int) -> [string];
+    pure callback chart-format(value: float, unit: string) -> string;
+    pure callback donut-layout(slices: [DitherDonutSlice], spec: DitherDonutSpec) -> DitherDonutLayout;
+    pure callback donut-image(slices: [DitherDonutSlice], colors: [color], spec: DitherDonutSpec, sweep: float, focus: int) -> image;
+    pure callback donut-hit(slices: [DitherDonutSlice], spec: DitherDonutSpec, x: float, y: float) -> int;
+    pure callback donut-value(value: float, unit: string) -> string;
+    pure callback donut-share(share: float) -> string;
+    pure callback heatmap-layout(spec: DitherHeatmapSpec, entries: [DitherHeatmapEntry], grid: [DitherHeatmapRow], rows: [string], columns: [string]) -> DitherHeatmapLayout;
+    pure callback heatmap-image(spec: DitherHeatmapSpec, entries: [DitherHeatmapEntry], grid: [DitherHeatmapRow], rows: [string], columns: [string], color: color, foreground: color, focus: int, reveal: float) -> image;
+    pure callback heatmap-readout(spec: DitherHeatmapSpec, entries: [DitherHeatmapEntry], grid: [DitherHeatmapRow], rows: [string], columns: [string], column: int, row: int) -> string;
+    pure callback heatmap-swatch(bucket: int, steps: int, color: color, foreground: color) -> image;
+    pure callback pixel-area-image(values: [float], spec: DitherPixelAreaSpec, color: color) -> image;
+    pure callback pixel-area-side(pixels: float, cell: float) -> int;
+    pure callback pixel-area-readout(label: string, value: float) -> string;
+    pure callback radar-layout(axes: [string], series: [DitherRadarSeries], spec: DitherRadarSpec) -> DitherRadarLayout;
+    pure callback radar-image(axes: [string], series: [DitherRadarSeries], colors: [color], spec: DitherRadarSpec, scale: float, focus: int) -> image;
+    pure callback radar-axis(axes: int, x: float, y: float, side: float) -> int;
+    pure callback text-cell(font-size: float) -> float;
+    pure callback text-ink(columns: int, rows: int, ink: DitherTextInk, time: float, backdrop: color) -> image;
+    pure callback dissolve-units(text: string, word: bool) -> [DitherDissolveUnit];
+    pure callback dissolve-ranks(count: int, order: DitherDissolveOrder) -> [float];
+    pure callback dissolve-step(elapsed: float, rank: float, spec: DitherDissolveSpec) -> int;
+    pure callback dissolve-overlay(columns: int, rows: int, step: int, spec: DitherDissolveSpec, backdrop: color) -> image;
+    pure callback dissolve-steps(matrix: DitherMatrix) -> int;
+    pure callback scramble-slots(text: string, from: string, keep-same: bool, elapsed: float, spec: DitherScrambleSpec, characters: string) -> [DitherScrambleSlot];
+    pure callback scramble-block(columns: int, rows: int, level: int, color: color) -> image;
+    pure callback scramble-settled(text: string, from: string, keep-same: bool, elapsed: float, spec: DitherScrambleSpec) -> bool;
     pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;
     pure callback shader(field: string, columns: int, rows: int, time: float, params: [float], palette: [color], matrix: DitherMatrix, levels: int) -> image;

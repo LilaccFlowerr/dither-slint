@@ -1,0 +1,53 @@
+---
+title: DitherRadarChart
+description: A radar chart drawn in dither cells, with each series a polygon of whole cells and a solid outline.
+---
+
+import Demo from '../../../components/Demo.astro';
+import Radar from '../../../components/Radar.astro';
+import Api from '../../../components/Api.astro';
+
+Each series is a polygon of whole cells with a solid outline. The gradient fill steps up in density ring by ring, so the grid reads straight through it. Where series overlap the cells interleave, and an outline always wins. Move the pointer around the chart to read one axis, and use the legend to spotlight a series.
+
+<Demo
+	title="Two series"
+	code={`DitherRadarChart {
+    axes: ["Speed", "Power", "Range", "Armor", "Stealth", "Agility"];
+    series: [
+        { label: "Falcon", values: [82, 60, 74, 40, 55, 90], color: DitherTheme.ink, fill: DitherFill.gradient },
+        { label: "Bear", values: [40, 92, 50, 88, 20, 35], color: DitherPalette.orange, fill: DitherFill.dotted },
+    ];
+}`}
+>
+	<Radar
+		axes={['Speed', 'Power', 'Range', 'Armor', 'Stealth', 'Agility']}
+		series={[
+			{ label: 'Falcon', values: [82, 60, 74, 40, 55, 90], color: 'ink' },
+			{ label: 'Bear', values: [40, 92, 50, 88, 20, 35], color: 'orange', fill: 'dotted' },
+		]}
+	/>
+</Demo>
+
+## Examples
+
+<Demo
+	title="A round grid"
+	code={`DitherRadarChart {
+    grid: DitherRadarGrid.circle;
+    axes: ["Design", "Code", "Docs", "Tests", "Speed"];
+    series: [
+        { label: "Q3", values: [70, 85, 60, 75, 90], color: DitherPalette.green, fill: DitherFill.hatched },
+    ];
+}`}
+>
+	<Radar
+		grid="circle"
+		axes={['Design', 'Code', 'Docs', 'Tests', 'Speed']}
+		series={[{ label: 'Q3', values: [70, 85, 60, 75, 90], color: 'green', fill: 'hatched' }]}
+	/>
+</Demo>
+
+## Properties
+
+<Api file="dither-radar-chart" />
+

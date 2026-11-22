@@ -5,6 +5,7 @@ description: A toggle whose track fills with dither behind the thumb.
 
 import Switch from '../../../components/Switch.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 Off, the track is a faint grey tint with a sparse texture inside a hairline. Turning it on fills the track from the left in five layers: four copies of the colour masked to denser and denser dither levels, then the full lit surface. Each layer starts a beat after the one below it, so the sparse cells run just behind the thumb and the dense ones fill in after. Turning it off runs the wave backwards. Click one.
 
@@ -21,6 +22,8 @@ DitherSwitch {
 	<Switch checked label="On" />
 	<Switch label="Off" />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Sizes"
@@ -87,16 +90,7 @@ DitherSwitch {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `checked` | `false` | Whether it is on. |
-| `fill` | `gradient` | Texture of the shade when on and of the track when off: `gradient`, `dotted`, `hatched` or `solid`. |
-| `color` | `DitherTheme.ink` | Colour of the ink when on. |
-| `size` | `md` | `sm`, `md` or `lg`: tracks of 34 by 20, 42 by 24 and 54 by 30 pixels, rounded to whole cells. |
-| `bloom` | `off` | `low` or `high` adds a glow in the ink's colour when on. |
-| `cell` | `2px` | Size of one dither cell. |
-| `enabled` | `true` | Drops to 45% opacity and ignores clicks and keys when `false`. |
-| `animated` | `DitherTheme.animated` | A ripple from where you press. |
+<Api file="dither-switch" />
 
 `toggled(bool)` is called with the new state. Space and Enter toggle it when it has focus.
 

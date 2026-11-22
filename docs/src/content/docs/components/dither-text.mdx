@@ -1,0 +1,42 @@
+---
+title: DitherText
+description: "Display text whose letters are filled with a dither: a gradient, noise, dots or hatching."
+---
+
+import Demo from '../../../components/Demo.astro';
+import TextEffect from '../../../components/TextEffect.astro';
+import Api from '../../../components/Api.astro';
+
+Letters take a dither in any colour: a gradient that thins out in one direction, drifting noise, dots or hatching. The fill moves slowly. Set `fill: solid` for plain text.
+
+Slint cannot clip a picture to the shape of letters, so the dither is drawn as a layer over the text that hides the cells that should be empty. This works on a flat background: set `backdrop` to the colour behind the text, which is the theme background by default.
+
+<Demo
+	title="Gradient"
+	code={`DitherText {
+    text: "Gradient";
+    fill: DitherTextFill.gradient;
+}`}
+>
+	<TextEffect kind="dither" text="Gradient" />
+</Demo>
+
+## Examples
+
+<Demo
+	title="Noise, dotted and hatched"
+	code={`DitherText { text: "Noise"; fill: DitherTextFill.noise; ink: DitherPalette.pink; }
+DitherText { text: "Dotted"; fill: DitherTextFill.dotted; ink: DitherPalette.green; }
+DitherText { text: "Hatched"; fill: DitherTextFill.hatched; ink: DitherPalette.orange; }`}
+>
+	<div style="display: flex; flex-wrap: wrap; gap: 8px 32px">
+		<TextEffect kind="dither" text="Noise" fill="noise" color="pink" />
+		<TextEffect kind="dither" text="Dotted" fill="dotted" color="green" />
+		<TextEffect kind="dither" text="Hatched" fill="hatched" color="orange" />
+	</div>
+</Demo>
+
+## Properties
+
+<Api file="dither-text" />
+

@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -24,11 +25,7 @@ import Background from '../../../components/Background.astro';
 
 God rays: shafts of light from a point or an edge that sweep slowly and fade with distance.
 
-| Property | Default | |
-| --- | --- | --- |
-| `origin` | `{ x: 0.18, y: -0.12 }` | Where the light comes from, as fractions of the box from the top left. Put it outside the box for a light just out of frame, or far away for near-parallel rays from an edge. |
-| `angle` | `160` | Direction the light points, in degrees as in CSS: 180 is down. |
-| `spread` | `80` | Width of the cone of light, in degrees. |
-| `rays` | `9` | How many separate rays, roughly. |
-| `sweep` | `6` | How far the rays sweep back and forth, in degrees. 0 holds them still. |
-| `reach` | `1` | How far the light reaches from where it enters the box, as a share of the box diagonal. |
+## Properties
+
+<Api file="dither-beams" />
+

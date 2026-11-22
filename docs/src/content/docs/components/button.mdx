@@ -5,6 +5,7 @@ description: A button with a lit, dithered surface.
 
 import Button from '../../../components/Button.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 A highlight is dithered down from the top and a shade is dithered up from the bottom. Hover brightens it and a press shades it from the top.
 
@@ -22,6 +23,8 @@ DitherButton {
 	<Button text="Deploy" />
 	<Button text="View logs" variant="outline" />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Fills"
@@ -114,18 +117,6 @@ DitherButton {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `text` | | The label. |
-| `icon` | | An image shown before the label, tinted like the text. |
-| `variant` | `filled` | `filled` is the lit colour surface, `outline` a faint tint that fills in on hover. |
-| `fill` | `gradient` | Texture of the shade: `gradient`, `dotted`, `hatched` or `solid`. |
-| `color` | `DitherTheme.ink` | Any colour, or one from `DitherPalette`. |
-| `size` | `md` | `sm`, `md` and `lg` are 32, 36 and 44px high. `icon` is a 36px square. |
-| `bloom` | `off` | `low` or `high` adds a glow in the button's colour. |
-| `cell` | `2px` | Size of one dither cell. |
-| `loading` | `false` | Steps three cells before the label and ignores clicks. |
-| `enabled` | `true` | |
-| `animated` | `DitherTheme.animated` | A dithered sweep on hover and a ripple from where you press. |
+<Api file="button" />
 
 Turn the motion off everywhere with `DitherTheme.animated = false`, or per button with `animated: false`. `DitherFx` is the layer behind it, so other components can use the same sweep and ripple.

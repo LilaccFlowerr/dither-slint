@@ -1,0 +1,72 @@
+---
+import { getCollection } from 'astro:content';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const pages = await getCollection('docs');
+const byId = new Map(pages.map((page) => [page.id, page]));
+
+const groups: { title: string; note: string; ids: string[] }[] = [
+	{ title: 'Interface', note: 'Controls and the small pieces around them.', ids: ['button', 'badge', 'avatar', 'card', 'divider', 'dropdown', 'empty-state', 'gradient', 'input', 'loader', 'skeleton', 'slider', 'switch', 'tabs'] },
+	{ title: 'Charts and data', note: 'Charts, and the components that show one number well.', ids: ['line-chart', 'area-chart', 'bar-chart', 'donut-chart', 'radar-chart', 'heatmap', 'pixel-area', 'treemap', 'sparkline', 'gauge', 'progress-bar', 'stat-card', 'uptime-bar'] },
+	{ title: 'Images', note: 'Photos and logos in dither.', ids: ['image', 'image-compare', 'scroll-reveal', 'logo', 'logo-marquee'] },
+	{ title: 'Text', note: 'Display text with a dithered fill, and text that decodes.', ids: ['dither-text', 'dissolve-text', 'scramble-text', 'number'] },
+];
+const section = (id: string) => `components/${id}`;
+---
+
+{groups.map((group) => (
+	<section>
+		<h2>{group.title}</h2>
+		<p>{group.note}</p>
+		<ul>
+			{group.ids.map((id) => {
+				const page = byId.get(section(id));
+				return (
+					page && (
+						<li>
+							<a href={`${base}/${section(id)}/`}><strong>{page.data.title}</strong></a>
+							<span>{page.data.description}</span>
+						</li>
+					)
+				);
+			})}
+		</ul>
+	</section>
+))}
+
+<style>
+	ul {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+		gap: 0.75rem;
+		padding: 0;
+		margin: 1rem 0 2rem;
+		list-style: none;
+	}
+	li {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		padding: 0.85rem 1rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		margin: 0 !important;
+	}
+	li:hover {
+		border-color: var(--sl-color-accent);
+	}
+	a {
+		text-decoration: none;
+	}
+	span {
+		color: var(--sl-color-gray-3);
+		font-size: var(--sl-text-sm);
+		line-height: 1.45;
+	}
+	h2 {
+		margin-bottom: 0.25rem;
+	}
+	p {
+		margin: 0;
+	}
+</style>

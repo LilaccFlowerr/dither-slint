@@ -1,0 +1,8 @@
+{
+ "DitherContours": {
+  "lines": "How many contour lines from the lowest ground to the highest, 4 to 32.",
+  "scale": "Size of the hills: higher packs more of them in.",
+  "index": "Every how many lines one is drawn heavier, as on a survey map. 0 draws them all the same.",
+  "relief": "How strongly the slopes facing away from the light are shaded, 0 to 1."
+ }
+}

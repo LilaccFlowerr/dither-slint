@@ -1,0 +1,264 @@
+import { DitherChartLayout, DitherChartSeries, DitherChartSpec, DitherChartStack, DitherEngine } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+
+export enum DitherChartMarkers { all, last, none }
+
+export component ChartFrame inherits Rectangle {
+    in property <[string]> categories;
+    in property <[DitherChartSeries]> series;
+    in property <DitherChartMarkers> markers: DitherChartMarkers.last;
+    in property <bool> zero;
+    in property <bool> smooth: true;
+    in property <bool> axes: true;
+    in property <bool> tooltip: true;
+    in property <bool> legend: root.series.length > 1;
+    in property <bool> interactive: true;
+    in property <bool> animated: DitherTheme.animated;
+    in property <string> unit;
+    in property <DitherChartStack> stack: DitherChartStack.none;
+    in property <bool> area-keys;
+    in property <bool> bars;
+    in property <length> chart-height: 240px;
+
+    property <[color]> series-colors: [DitherTheme.ink, DitherPalette.orange, DitherPalette.green, DitherPalette.pink, DitherPalette.purple, DitherPalette.blue, DitherPalette.red, DitherPalette.grey];
+    out property <DitherChartSpec> spec: { width: stage.width / 1px, height: stage.height / 1px, axes: root.axes, zero: root.zero, smooth: root.smooth, unit: root.unit, stack: root.stack, band: root.bars };
+    out property <DitherChartLayout> layout: DitherEngine.chart-layout(root.categories, root.series, root.spec);
+    out property <bool> scrubbing: root.interactive && root.scrubbed >= 0 && area.has-hover;
+    property <float> reveal: root.animated ? 0 : 1;
+    out property <int> scrubbed: -1;
+    property <int> locked: -1;
+    property <int> hovered-series: -1;
+    property <int> spotlit: root.hovered-series >= 0 ? root.hovered-series : root.locked;
+    property <float> dimmed: 0.18;
+    property <duration> glide: 200ms;
+    property <length> readout-gap: 12px;
+    property <length> marker-radius: 4px;
+    property <length> grid-inset: 10px;
+
+    public pure function color-of(index: int) -> color {
+        root.series[index].color.alpha == 0 ? root.series-colors[Math.mod(index, root.series-colors.length)] : root.series[index].color
+    }
+
+    public pure function opacity-of(index: int) -> float {
+        root.spotlit >= 0 && root.spotlit != index ? root.dimmed : 1
+    }
+
+    function scrub-to(x: length) {
+        if root.categories.length > 0 && root.bars {
+            root.scrubbed = Math.min(root.categories.length - 1, Math.max(0, Math.floor((x / 1px - root.layout.left) / Math.max(1, root.layout.right - root.layout.left) * root.categories.length)));
+        } else if root.categories.length > 0 {
+            root.scrubbed = Math.min(root.categories.length - 1, Math.max(0, Math.round((x / 1px - root.layout.left) / Math.max(1, root.layout.right - root.layout.left) * (root.categories.length - 1))));
+        }
+    }
+
+    init => {
+        if root.animated {
+            root.reveal = 1;
+        }
+    }
+
+    animate reveal { duration: 700ms; easing: ease-out; }
+
+    height: root.chart-height + (root.legend ? 36px : 0px);
+
+    VerticalLayout {
+        spacing: 12px;
+
+        stage := Rectangle {
+            height: root.chart-height;
+
+            for tick in root.layout.ticks: Rectangle {
+                x: root.layout.left * 1px;
+                y: tick.y * 1px;
+                width: (root.layout.right - root.layout.left) * 1px;
+                height: 1px;
+                background: DitherTheme.foreground.with-alpha(0.12);
+            }
+
+            if root.axes: Rectangle {
+                for tick in root.layout.ticks: Text {
+                    x: 0;
+                    y: tick.y * 1px - self.height / 2;
+                    width: root.layout.left * 1px - root.grid-inset;
+                    text: tick.label;
+                    color: DitherTheme.foreground.with-alpha(0.6);
+                    font-size: 10px;
+                    horizontal-alignment: right;
+                }
+
+                for label in root.layout.labels: Text {
+                    x: label.align < 0 ? label.x * 1px : label.align > 0 ? label.x * 1px - self.width : label.x * 1px - self.width / 2;
+                    y: stage.height - 16px;
+                    text: label.text;
+                    color: DitherTheme.foreground.with-alpha(0.6);
+                    font-size: 10px;
+                }
+            }
+
+            Rectangle {
+                x: 0;
+                width: root.layout.left * 1px + (root.layout.right - root.layout.left) * 1px * root.reveal;
+                clip: true;
+
+                @children
+            }
+
+            for line[index] in root.layout.lines: Rectangle {
+                for point[position] in line.points: Rectangle {
+                    visible: root.reveal >= 1 && (root.markers == DitherChartMarkers.all || (root.markers == DitherChartMarkers.last && position == line.points.length - 1));
+                    x: point.x * 1px - root.marker-radius;
+                    y: point.y * 1px - root.marker-radius;
+                    width: 2 * root.marker-radius;
+                    height: 2 * root.marker-radius;
+                    border-radius: root.marker-radius;
+                    background: root.color-of(index);
+                    border-width: 2px;
+                    border-color: DitherTheme.background;
+                    opacity: root.opacity-of(index);
+                }
+            }
+
+            if root.scrubbing && root.bars: Rectangle {
+                x: root.layout.lines[0].points[root.scrubbed].x * 1px - (root.layout.right - root.layout.left) * 1px / root.categories.length / 2;
+                y: root.layout.top * 1px;
+                width: (root.layout.right - root.layout.left) * 1px / root.categories.length;
+                height: (root.layout.bottom - root.layout.top) * 1px;
+                animate x { duration: root.glide; easing: ease-out; }
+                background: DitherTheme.foreground.with-alpha(0.06);
+            }
+
+            if root.scrubbing && !root.bars: Rectangle {
+                property <float> at: root.layout.lines.length > 0 ? root.layout.lines[0].points[root.scrubbed].x : 0;
+
+                x: self.at * 1px;
+                y: root.layout.top * 1px;
+                animate x { duration: root.glide; easing: ease-out; }
+                width: 1px;
+                height: (root.layout.bottom - root.layout.top) * 1px;
+                background: DitherTheme.foreground.with-alpha(0.35);
+
+                for line[index] in root.layout.lines: Rectangle {
+                    x: -root.marker-radius;
+                    y: line.points[root.scrubbed].y * 1px - root.layout.top * 1px - root.marker-radius;
+                    animate y { duration: root.glide; easing: ease-out; }
+                    width: 2 * root.marker-radius;
+                    height: 2 * root.marker-radius;
+                    border-radius: root.marker-radius;
+                    background: root.color-of(index);
+                    border-width: 2px;
+                    border-color: DitherTheme.background;
+                    opacity: root.opacity-of(index);
+                }
+            }
+
+            if root.tooltip && root.interactive && root.scrubbed >= 0 && area.has-hover: Rectangle {
+                property <length> anchor-x: root.layout.lines.length > 0 ? root.layout.lines[0].points[root.scrubbed].x * 1px : 0px;
+                property <length> above: root.layout.tops[root.scrubbed] * 1px - self.height - root.readout-gap;
+                property <length> beside: self.anchor-x + root.readout-gap + self.width <= stage.width ? self.anchor-x + root.readout-gap : self.anchor-x - root.readout-gap - self.width;
+
+                x: self.above >= 0 ? Math.min(Math.max(0px, self.anchor-x - self.width / 2), stage.width - self.width) : self.beside;
+                y: self.above >= 0 ? self.above : root.layout.top * 1px;
+                animate x, y { duration: root.glide; easing: ease-out; }
+                width: card.preferred-width + 20px;
+                height: card.preferred-height + 16px;
+                border-radius: 8px;
+                background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.08);
+                border-width: 1px;
+                border-color: DitherTheme.foreground.with-alpha(0.2);
+
+                card := VerticalLayout {
+                    x: 10px;
+                    y: 8px;
+                    spacing: 4px;
+
+                    Text {
+                        text: root.categories[root.scrubbed];
+                        color: DitherTheme.foreground.with-alpha(0.6);
+                        font-size: 10px;
+                    }
+
+                    for line[index] in root.series: HorizontalLayout {
+                        spacing: 8px;
+                        opacity: root.opacity-of(index);
+
+                        Rectangle {
+                            width: 8px;
+                            height: 8px;
+                            y: (parent.height - self.height) / 2;
+                            border-radius: 2px;
+                            background: root.color-of(index);
+                        }
+                        Text {
+                            text: line.label;
+                            color: DitherTheme.foreground.with-alpha(0.6);
+                            font-size: 12px;
+                        }
+                        Text {
+                            text: DitherEngine.chart-readout(root.categories, root.series, root.spec, root.scrubbed)[index];
+                            color: DitherTheme.foreground;
+                            font-size: 12px;
+                            font-weight: 500;
+                            horizontal-alignment: right;
+                        }
+                    }
+                }
+            }
+
+            area := TouchArea {
+                x: root.layout.left * 1px;
+                width: (root.layout.right - root.layout.left) * 1px;
+                enabled: root.interactive;
+                mouse-cursor: MouseCursor.crosshair;
+                moved => { root.scrub-to(self.mouse-x + root.layout.left * 1px); }
+                pointer-event(event) => {
+                    if event.kind == PointerEventKind.move {
+                        root.scrub-to(self.mouse-x + root.layout.left * 1px);
+                    }
+                }
+            }
+        }
+
+        if root.legend: HorizontalLayout {
+            spacing: 4px;
+            alignment: start;
+
+            for line[index] in root.series: Rectangle {
+                width: key.preferred-width + 28px;
+                height: 28px;
+                border-radius: 6px;
+                background: root.locked == index ? DitherTheme.foreground.with-alpha(0.1) : transparent;
+                opacity: root.opacity-of(index);
+
+                key := HorizontalLayout {
+                    x: 8px;
+                    spacing: 6px;
+                    Rectangle {
+                        width: 14px;
+                        Rectangle {
+                            y: (parent.height - self.height) / 2;
+                            height: root.area-keys ? 10px : 2px;
+                            border-radius: 1px;
+                            background: root.area-keys ? root.color-of(index).with-alpha(0.4) : root.color-of(index);
+
+                            if root.area-keys: Rectangle {
+                                height: 2px;
+                                background: root.color-of(index);
+                            }
+                        }
+                    }
+                    Text {
+                        text: line.label;
+                        color: DitherTheme.foreground.with-alpha(0.7);
+                        font-size: 11px;
+                        vertical-alignment: center;
+                    }
+                }
+
+                TouchArea {
+                    changed has-hover => { root.hovered-series = self.has-hover ? index : -1; }
+                    clicked => { root.locked = root.locked == index ? -1 : index; }
+                }
+            }
+        }
+    }
+}

@@ -5,6 +5,7 @@ description: A before and after slider that sets a dithered photo next to the or
 
 import Demo from '../../../components/Demo.astro';
 import ImageCompare from '../../../components/ImageCompare.astro';
+import Api from '../../../components/Api.astro';
 
 Drag the divider, click anywhere on the picture, or focus it and use the arrow keys. The left side is dithered and the right side is the original. When it first appears the divider nudges once so it reads as draggable.
 
@@ -19,6 +20,8 @@ Drag the divider, click anywhere on the picture, or focus it and use the arrow k
 >
 	<ImageCompare />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Bayer dither, no labels"
@@ -37,24 +40,7 @@ Drag the divider, click anywhere on the picture, or focus it and use the arrow k
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `source` | | The picture. |
-| `method` | `floyd-steinberg` | `bayer4`, `bayer8`, `blue-noise`, `floyd-steinberg`, `atkinson` or `sierra-lite`. |
-| `threshold` | `0.5` | Brightness cut-off, 0 to 1. |
-| `cell` | `2px` | Size of one dither cell. |
-| `palette` | background, foreground | Two or more colours. Pixels take the nearest one. |
-| `before-label` | `DITHERED` | Label on the left side. |
-| `after-label` | `ORIGINAL` | Label on the right side. |
-| `labels` | `true` | Show the corner labels. They fade out when the divider comes near. |
-| `hint` | `true` | Nudge the divider once when it first appears. |
-| `value` | `50` | Divider position from the left, 0 to 100. |
-
-## Callbacks
-
-| Callback | |
-| --- | --- |
-| `changed(float)` | The new position, while dragging or on key presses. |
+<Api file="dither-image-compare" />
 
 ## Keys
 

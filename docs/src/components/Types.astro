@@ -1,0 +1,61 @@
+---
+import { allTypes, referencedTypes } from '../scripts/slint-api';
+import { descriptions } from '../scripts/slint-api';
+
+interface Props {
+	kind: 'enum' | 'struct';
+}
+
+const { kind } = Astro.props;
+const used = referencedTypes();
+const notes = descriptions('_types') as Record<string, Record<string, string>>;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const items = [...allTypes().values()].filter((type) => type.kind === kind && used.has(type.name)).sort((a, b) => a.name.localeCompare(b.name));
+const link = (type: string) => type.split(/([A-Z]\w*)/).map((part) => ({ text: part, known: allTypes().has(part) && used.has(part) }));
+---
+
+<div class="types">
+	{items.map((type) => (
+		<section id={type.name.toLowerCase()}>
+			<h3><a href={`#${type.name.toLowerCase()}`}>{type.name}</a></h3>
+			{notes._[type.name] && <p set:html={notes._[type.name]} />}
+			{type.kind === 'enum' ? (
+				<p class="values">{type.values.map((value) => <code>{value}</code>)}</p>
+			) : (
+				<table>
+					<thead><tr><th>Field</th><th>Type</th></tr></thead>
+					<tbody>
+						{type.fields.map((field) => (
+							<tr>
+								<td><code>{field.name}</code></td>
+								<td><code>{link(field.type).map((part) => (part.known ? <a href={`${base}/reference/types/#${part.text.toLowerCase()}`}>{part.text}</a> : part.text))}</code></td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			)}
+		</section>
+	))}
+</div>
+
+<style>
+	section {
+		margin: 0 0 1.5rem;
+	}
+	h3 {
+		margin: 1.5rem 0 0.4rem;
+	}
+	h3 a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.values {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		margin: 0.25rem 0;
+	}
+	table {
+		font-size: var(--sl-text-sm);
+	}
+</style>

@@ -1,0 +1,18 @@
+{
+ "DitherNumber": {
+  "value": "The number to show. Change it and the digits roll to the new value.",
+  "from": "Where the first roll starts.",
+  "decimals": "Most decimals. Trailing zeros are left out, and thousands get a separator.",
+  "prefix": "Text before the number, such as <code>\"$\"</code> or <code>\"+\"</code>.",
+  "suffix": "Text after the number, such as <code>\"%\"</code> or <code>\" ms\"</code>.",
+  "size": "<code>sm</code>, <code>md</code>, <code>lg</code>, <code>xl</code> or <code>display</code>: 24, 36, 60, 96 and 112px, each a little tighter.",
+  "color": "Colour of the number.",
+  "accent": "Colour a digit takes while it moves, fading back as it lands. Set it to <code>color</code> to keep one colour.",
+  "duration": "Milliseconds per digit.",
+  "stagger": "Milliseconds between one digit starting and the next.",
+  "animate": "When <code>false</code> the number shows its value straight away.",
+  "matrix": "The dither pattern of the faded edges.",
+  "cell": "Size of one dither cell.",
+  "background": "Colour behind the number. The faded edges are drawn in it, so match the surface the number sits on."
+ }
+}

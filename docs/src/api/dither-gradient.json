@@ -1,0 +1,11 @@
+{
+ "DitherGradient": {
+  "angle": "Direction, as in CSS. 180deg runs top to bottom.",
+  "from": "Tone at the start, from 0 (paper) to 1 (ink).",
+  "to": "Tone at the end.",
+  "matrix": "<code>bayer2</code>, <code>bayer4</code>, <code>bayer8</code> or <code>blue-noise</code>.",
+  "cell": "Size of one dither cell, rounded to whole device pixels.",
+  "palette": "Two or more colours, from paper to ink.",
+  "levels": "Snaps the tone to this many steps. <code>0</code> keeps every tone the matrix can draw."
+ }
+}

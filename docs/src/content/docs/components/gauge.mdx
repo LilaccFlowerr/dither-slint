@@ -5,6 +5,7 @@ description: "A radial gauge built from dithered blocks: a half arc, a 270° dia
 
 import Gauge from '../../../components/Gauge.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 Blocks up to the value fill in over a faint track. The block at the value is solid and steps out by a cell, like a needle, and with the gradient fill each block behind it is a step lighter. The blocks fade in one by one when the gauge appears.
 
@@ -37,6 +38,8 @@ DitherGauge {
 	<Gauge label="Speed" value={88} unit=" km/h" max={160} variant="dial" color="orange" />
 	<Gauge label="Storage" value={64} unit="%" variant="ring" color="green" />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Fills, segments and bloom"
@@ -72,23 +75,5 @@ DitherGauge {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `value` | `0` | The reading, between `minimum` and `maximum`. |
-| `label` | | What is measured. Shown under the value and used as the accessible name. |
-| `minimum` | `0` | The low end of the scale. |
-| `maximum` | `100` | The high end of the scale. |
-| `variant` | `half` | `half` (180°), `dial` (270°, like a speedometer) or `ring` (a full circle from the top). |
-| `size` | `220px` | Width of the gauge. |
-| `segments` | 28, 36 or 48 | Number of blocks the arc is split into. The default depends on the variant. |
-| `unit` | | Shown after the value, such as `"%"` or `" ms"`. |
-| `decimals` | `1` | Most decimals in the value and the range. |
-| `value-text` | | Text for the reading, instead of the value and unit. |
-| `show-range` | `true`, `false` for `ring` | Shows `minimum` and `maximum` under the ends of the arc. |
-| `color` | `DitherTheme.ink` | Colour of the value arc. |
-| `track-color` | `color` | Colour of the empty track, drawn faint. |
-| `fill` | `gradient` | `gradient` (each block behind the value a step lighter), `dotted`, `hatched` or `solid`. The block at the value is always solid. |
-| `bloom` | `off` | `low` or `high` adds a glow behind the filled blocks. |
-| `animate` | `DitherTheme.animated` | Fades the blocks in one by one when the gauge appears. |
-| `matrix` | `bayer4` | The dither pattern. |
-| `cell` | `3px` | Size of one dither cell. |
+<Api file="dither-gauge" />
+

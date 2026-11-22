@@ -1,0 +1,8 @@
+{
+ "DitherWaves": {
+  "variant": "<code>ocean</code> or <code>lines</code>.",
+  "horizon": "Height of the horizon, for <code>ocean</code>.",
+  "layers": "How many waves, 2 to 8.",
+  "amplitude": "Height of the waves."
+ }
+}

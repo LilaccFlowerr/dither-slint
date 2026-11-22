@@ -1,0 +1,222 @@
+import { DitherEngine, DitherMatrix, DitherRadarGrid, DitherRadarLayout, DitherRadarSeries, DitherRadarSpec } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+
+export component DitherRadarChart inherits Rectangle {
+    in property <[string]> axes;
+    in property <[DitherRadarSeries]> series;
+    in property <float> max: 0;
+    in property <int> rings: 4;
+    in property <DitherRadarGrid> grid: DitherRadarGrid.polygon;
+    in property <length> size: 360px;
+    in property <string> unit;
+    in property <bool> legend: root.series.length > 1;
+    in property <bool> interactive: true;
+    in property <bool> animated: DitherTheme.animated;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+
+    property <[color]> series-colors: [DitherTheme.ink, DitherPalette.orange, DitherPalette.green, DitherPalette.pink, DitherPalette.purple, DitherPalette.blue, DitherPalette.red, DitherPalette.grey];
+    property <length> side: Math.min(root.size, root.width);
+    property <length> centre: root.side / 2;
+    property <DitherRadarSpec> spec: { side: root.side / 1px, cell: root.cell / 1px, max: root.max, rings: root.rings, grid: root.grid, matrix: root.matrix };
+    property <DitherRadarLayout> layout: DitherEngine.radar-layout(root.axes, root.series, root.spec);
+    property <[color]> colors: [root.color-of(0), root.color-of(1), root.color-of(2), root.color-of(3), root.color-of(4), root.color-of(5), root.color-of(6), root.color-of(7)];
+    property <float> grow: root.animated ? 0 : 1;
+    property <float> grow-steps: 24;
+    property <int> scrubbed: -1;
+    property <int> locked: -1;
+    property <int> hovered-series: -1;
+    property <int> spotlit: !root.interactive ? -1 : root.hovered-series >= 0 ? root.hovered-series : root.locked;
+    property <float> dimmed: 0.18;
+    property <length> marker-size: Math.max(4px, root.cell * 2);
+    property <length> card-gap: 14px;
+    property <length> legend-height: 36px;
+    property <length> font-size: 10px;
+
+    pure function color-of(index: int) -> color {
+        root.series[index].color.alpha == 0 ? root.series-colors[Math.mod(index, root.series-colors.length)] : root.series[index].color
+    }
+
+    pure function opacity-of(index: int) -> float {
+        root.spotlit >= 0 && root.spotlit != index ? root.dimmed : 1
+    }
+
+    init => {
+        if root.animated {
+            root.grow = 1;
+        }
+    }
+
+    animate grow { duration: 840ms; easing: ease-out; }
+
+    height: root.side + (root.legend ? root.legend-height : 0px);
+
+    plot := Rectangle {
+        x: (root.width - root.side) / 2;
+        width: root.side;
+        height: root.side;
+
+        for ring[index] in root.layout.rings: Path {
+            width: root.side;
+            height: root.side;
+            viewbox-x: -root.centre / 1px;
+            viewbox-y: -root.centre / 1px;
+            viewbox-width: root.side / 1px;
+            viewbox-height: root.side / 1px;
+            commands: ring;
+            stroke: DitherTheme.foreground.with-alpha(index == root.layout.rings.length - 1 ? 0.25 : 0.18);
+            stroke-width: 1px;
+        }
+
+        for point[index] in root.layout.spokes: Path {
+            width: root.side;
+            height: root.side;
+            viewbox-x: -root.centre / 1px;
+            viewbox-y: -root.centre / 1px;
+            viewbox-width: root.side / 1px;
+            viewbox-height: root.side / 1px;
+            commands: "M 0 0 L " + point.x + " " + point.y;
+            stroke: root.scrubbed == index ? DitherTheme.foreground.with-alpha(0.6) : DitherTheme.foreground.with-alpha(0.18);
+            stroke-width: 1px;
+        }
+
+        Image {
+            width: root.side;
+            height: root.side;
+            image-fit: ImageFit.contain;
+            image-rendering: pixelated;
+            source: DitherEngine.radar-image(root.axes, root.series, root.colors, root.spec, Math.round(root.grow * root.grow-steps) / root.grow-steps, root.spotlit);
+        }
+
+        for shape[index] in root.layout.shapes: Rectangle {
+            opacity: root.opacity-of(index);
+
+            for vertex[axis] in shape.points: Rectangle {
+                property <length> edge: root.scrubbed == axis ? root.marker-size + 4px : root.marker-size;
+
+                x: root.centre + vertex.x * root.grow * 1px - self.edge / 2;
+                y: root.centre + vertex.y * root.grow * 1px - self.edge / 2;
+                width: self.edge;
+                height: self.edge;
+                background: root.color-of(index);
+                border-width: root.scrubbed == axis ? 2px : 1px;
+                border-color: DitherTheme.background;
+            }
+        }
+
+        for label in root.layout.labels: Text {
+            x: root.centre + label.x * 1px - (label.align > 0 ? 0px : label.align < 0 ? self.width : self.width / 2);
+            y: root.centre + label.y * 1px + label.line * root.font-size - self.height / 2;
+            text: label.text;
+            color: DitherTheme.foreground.with-alpha(root.scrubbed >= 0 && root.axes[root.scrubbed] == label.text ? 1 : 0.6);
+            font-size: root.font-size;
+        }
+
+        if root.interactive && root.scrubbed >= 0: Rectangle {
+            property <float> angle: root.scrubbed * 6.2831855 / Math.max(1, root.axes.length);
+            property <length> anchor-x: root.centre + root.layout.spokes[root.scrubbed].x * 1px;
+            property <length> anchor-y: root.centre + root.layout.spokes[root.scrubbed].y * 1px;
+
+            x: Math.min(Math.max(0px, self.anchor-x - self.width / 2 + Math.sin(self.angle * 180deg / 3.1415927) * (self.width / 2 + root.card-gap)), root.side - self.width);
+            y: Math.min(Math.max(0px, self.anchor-y - self.height / 2 - Math.cos(self.angle * 180deg / 3.1415927) * (self.height / 2 + root.card-gap)), root.side - self.height);
+            width: card.preferred-width + 20px;
+            height: card.preferred-height + 16px;
+            border-radius: 8px;
+            background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.08);
+            border-width: 1px;
+            border-color: DitherTheme.foreground.with-alpha(0.2);
+            animate x, y { duration: 200ms; easing: ease-out; }
+
+            card := VerticalLayout {
+                x: 10px;
+                y: 8px;
+                spacing: 4px;
+
+                Text {
+                    text: root.axes[root.scrubbed];
+                    color: DitherTheme.foreground.with-alpha(0.6);
+                    font-size: 10px;
+                }
+
+                for line[index] in root.series: HorizontalLayout {
+                    spacing: 8px;
+                    opacity: root.opacity-of(index);
+
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        y: (parent.height - self.height) / 2;
+                        border-radius: 2px;
+                        background: root.color-of(index);
+                    }
+                    Text {
+                        text: line.label;
+                        color: DitherTheme.foreground.with-alpha(0.6);
+                        font-size: 12px;
+                    }
+                    Text {
+                        text: DitherEngine.chart-format(root.scrubbed < line.values.length ? line.values[root.scrubbed] : 0, root.unit);
+                        color: DitherTheme.foreground;
+                        font-size: 12px;
+                        font-weight: 500;
+                        horizontal-alignment: right;
+                    }
+                }
+            }
+        }
+
+        TouchArea {
+            enabled: root.interactive;
+            pointer-event(event) => {
+                if event.kind == PointerEventKind.move {
+                    root.scrubbed = DitherEngine.radar-axis(root.axes.length, self.mouse-x / 1px, self.mouse-y / 1px, root.side / 1px);
+                }
+            }
+            changed has-hover => {
+                if !self.has-hover {
+                    root.scrubbed = -1;
+                }
+            }
+        }
+    }
+
+    if root.legend: HorizontalLayout {
+        y: root.side + 12px;
+        width: root.width;
+        height: 28px;
+        alignment: center;
+        spacing: 4px;
+
+        for line[index] in root.series: Rectangle {
+            width: key.preferred-width + 28px;
+            border-radius: 6px;
+            background: root.locked == index ? DitherTheme.foreground.with-alpha(0.1) : transparent;
+            opacity: root.opacity-of(index);
+            animate opacity { duration: 150ms; easing: ease-out; }
+
+            key := HorizontalLayout {
+                x: 8px;
+                spacing: 6px;
+                Rectangle {
+                    width: 8px;
+                    height: 8px;
+                    y: (parent.height - self.height) / 2;
+                    border-radius: 2px;
+                    background: root.color-of(index);
+                }
+                Text {
+                    text: line.label;
+                    color: DitherTheme.foreground.with-alpha(0.7);
+                    font-size: 11px;
+                    vertical-alignment: center;
+                }
+            }
+
+            TouchArea {
+                enabled: root.interactive;
+                changed has-hover => { root.hovered-series = self.has-hover ? index : -1; }
+                clicked => { root.locked = root.locked == index ? -1 : index; }
+            }
+        }
+    }
+}

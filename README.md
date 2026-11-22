@@ -65,7 +65,7 @@ Run the gallery with `cargo run --example gallery`.
 - **Controls:** `DitherSwitch`, `DitherSlider`, `DitherInput`, `DitherTabs`, `DitherDropdownMenu`
 - **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`, `DitherUptimeBar`, `DitherGauge`, `DitherNumber`
 
-There are also `DitherImage` for dithering a photo, `DitherImageCompare` for a before and after slider, `DitherScrollReveal` for a picture that resolves as it scrolls into view, `DitherLogo` and `DitherLogoMarquee` for logos, `DitherTreemap` for a treemap, twenty-five animated backgrounds (`DitherAnimatedGradient`, `DitherAurora`, `DitherBeams`, `DitherContours`, `DitherDotMap`, `DitherEclipse`, `DitherFade`, `DitherGlobe`, `DitherHalftone`, `DitherHorizon`, `DitherLightRays`, `DitherMeshGradient`, `DitherMetaballs`, `DitherNoiseField`, `DitherOrb`, `DitherPlasma`, `DitherRetroGrid`, `DitherRidgelines`, `DitherRipples`, `DitherSilk`, `DitherSmoke`, `DitherSpotlight`, `DitherStarfield`, `DitherTunnel` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
+There are also `DitherImage` for dithering a photo, `DitherImageCompare` for a before and after slider, `DitherScrollReveal` for a picture that resolves as it scrolls into view, `DitherLogo` and `DitherLogoMarquee` for logos, `DitherTreemap` for a treemap, `DitherLineChart`, `DitherAreaChart`, `DitherBarChart`, `DitherDonutChart`, `DitherHeatmap`, `DitherPixelArea` and `DitherRadarChart` for charts, `DitherText`, `DitherDissolveText` and `DitherScrambleText` for text, twenty-five animated backgrounds (`DitherAnimatedGradient`, `DitherAurora`, `DitherBeams`, `DitherContours`, `DitherDotMap`, `DitherEclipse`, `DitherFade`, `DitherGlobe`, `DitherHalftone`, `DitherHorizon`, `DitherLightRays`, `DitherMeshGradient`, `DitherMetaballs`, `DitherNoiseField`, `DitherOrb`, `DitherPlasma`, `DitherRetroGrid`, `DitherRidgelines`, `DitherRipples`, `DitherSilk`, `DitherSmoke`, `DitherSpotlight`, `DitherStarfield`, `DitherTunnel` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
 
 Colours come from `DitherTheme` and `DitherPalette`. Turn motion off everywhere with `DitherTheme.animated = false`.
 
@@ -326,6 +326,233 @@ Mark one item `remainder: true` and it takes the space left of the `capacity`, o
 | `matrix` | `bayer4` | The dither pattern of the gradient fills. |
 | `header`, `readout`, `footer` | `true` | Show the title row, the used and total readout, and the status line with the replay button. |
 | `stage-height` | `256px` | Height of the treemap. |
+
+### DitherLineChart
+
+One or more crisp lines, each with an optional dithered range band. Hover for a readout, and use the legend to spotlight a series.
+
+```slint
+DitherLineChart {
+    categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    series: [
+        { label: "Revenue", color: DitherTheme.ink, values: [12, 18, 15, 24, 28, 26], low: [], high: [], dashed: false },
+        { label: "Costs", color: DitherPalette.orange, values: [10, 12, 13, 15, 17, 18], low: [], high: [], dashed: true },
+    ];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `categories` | | The label of every point on the x axis. |
+| `series` | | The lines, each `{ label, color, values, low, high, dashed }`. Give `low` and `high` for a band. |
+| `markers` | `last` | `all`, `last` or `none`. |
+| `zero` | `false` | Start the value axis at zero. |
+| `smooth` | `true` | A smooth curve that never overshoots, or straight segments. |
+| `axes`, `tooltip`, `legend`, `interactive` | `true` (legend with two or more series) | Show the axes, the readout and the legend. |
+| `animated` | `DitherTheme.animated` | Draw the lines in from the left. |
+| `unit` | | Written after every value. Values are shortened to 1.2K. |
+| `level`, `matrix`, `cell` | `0.25`, `bayer4`, `3px` | Coverage, pattern and cell size of the bands. |
+| `chart-height` | `240px` | Height of the chart, axes included. |
+
+### DitherAreaChart
+
+Each series is a crisp line over a dithered fill that is densest under the line and thins out towards the axis. Series can overlap, stack, or stack and scale to 100%.
+
+```slint
+DitherAreaChart {
+    categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    stack: DitherChartStack.stacked;
+    series: [
+        { label: "Web", color: DitherTheme.ink, values: [12, 18, 15, 24, 28, 26], low: [], high: [], dashed: false },
+        { label: "Mobile", color: DitherPalette.orange, values: [8, 10, 12, 14, 16, 18], low: [], high: [], dashed: false },
+    ];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `categories`, `series` | | As for `DitherLineChart`. Later series draw in front. |
+| `stack` | `none` | `none`, `stacked` or `percent`. |
+| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `level` | `0.625` | Gradient only: coverage of the densest band, 0 to 1. |
+| `matrix`, `cell` | `bayer4`, `3px` | The dither pattern and the cell size. |
+| `smooth`, `axes`, `tooltip`, `legend`, `interactive`, `animated`, `unit`, `chart-height` | | As for `DitherLineChart`. |
+
+### DitherBarChart
+
+Dithered bars under a solid cap: grouped, stacked, or stacked and scaled to 100%. With the default `gradient` fill a bar is densest at its top and thins out towards the axis. The highlighted bar, or the one under the pointer, fills in solid.
+
+```slint
+DitherBarChart {
+    categories: ["Q1", "Q2", "Q3", "Q4"];
+    stack: DitherChartStack.stacked;
+    series: [
+        { label: "Web", color: DitherTheme.ink, values: [42, 58, 70, 94], low: [], high: [], dashed: false },
+        { label: "Mobile", color: DitherPalette.orange, values: [30, 44, 56, 78], low: [], high: [], dashed: false },
+    ];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `categories`, `series` | | As for `DitherLineChart`. |
+| `stack` | `none` | `none` puts the series side by side, `stacked` on top of each other, `percent` scaled to 100%. |
+| `highlight` | `last` | The bar drawn solid while nothing is hovered: `last`, `max` or `none`. |
+| `highlight-at` | `-1` | The index of the bar to highlight. Overrides `highlight` when it is 0 or more. |
+| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `level` | `0.75` | Gradient only: coverage at the top of each bar, 0 to 1. |
+| `matrix`, `cell` | `bayer4`, `3px` | The dither pattern and the cell size. |
+| `axes`, `tooltip`, `legend`, `interactive`, `animated`, `unit`, `chart-height` | | As for `DitherLineChart`. |
+
+### DitherDonutChart
+
+A donut or pie drawn in dither cells. Slices run clockwise from 12 o'clock, each with a colour, a texture and a solid rim, and sweep in when the chart appears. Hover a slice or a legend row to step it out and dim the others, and click to keep it lit.
+
+```slint
+DitherDonutChart {
+    label: "Requests today";
+    slices: [
+        { label: "Web", value: 18420, color: DitherTheme.ink, fill: DitherFill.gradient },
+        { label: "Mobile", value: 12310, color: DitherPalette.orange, fill: DitherFill.gradient },
+        { label: "API", value: 8650, color: DitherPalette.green, fill: DitherFill.dotted },
+    ];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `slices` | | The slices, each `{ label, value, color, fill }`. |
+| `label` | | What the total counts, shown in the middle of a donut. |
+| `mode` | `donut` | `donut` or `pie`. |
+| `size` | `220px` | Diameter of the chart. |
+| `thickness` | `0.36` | Donut only: ring thickness as a share of the radius, 0.1 to 0.9. |
+| `gap` | `1` | Gap between slices, in dither cells. |
+| `unit` | | Written after every value. |
+| `legend`, `interactive`, `animated` | `true`, `true`, `DitherTheme.animated` | The legend, the hover and click, and the sweep. |
+| `matrix`, `cell` | `bayer4`, `3px` | The dither pattern and the cell size. |
+
+### DitherHeatmap
+
+A calendar or a grid of values drawn as squares of 4×4 dither cells, so a square's density steps from dots to a checkerboard, a hollow frame and solid. Hover a square for its value and use the legend to spotlight a density. The grid shrinks its cells to fit, then drops the oldest columns.
+
+```slint
+DitherHeatmap {
+    unit: "deploy";
+    units: "deploys";
+    entries: [
+        { date: "2026-11-20", value: 3 },
+        { date: "2026-11-21", value: 7 },
+        { date: "2026-11-22", value: 10 },
+    ];
+}
+
+DitherHeatmap {
+    mode: DitherHeatmapMode.matrix;
+    rows: ["Mon", "Tue"];
+    columns: ["8", "9", "10"];
+    grid: [{ values: [2, 6, 9] }, { values: [3, 7, 10] }];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `mode` | `calendar` | `calendar` or `matrix`. |
+| `entries`, `weeks`, `week-start` | | Calendar: the days with their values (`YYYY-MM-DD`), the columns shown (53) and the first row (0 Sunday, 1 Monday). |
+| `grid`, `rows`, `columns` | | Matrix: the values by row, and the labels. |
+| `steps` | `4` | How many densities values map to, above empty, 2 to 6. |
+| `max` | the largest value | The value drawn solid. `0` takes the largest. |
+| `unit`, `units` | | What a value counts, singular and plural. |
+| `ink`, `cell` | `DitherTheme.ink`, `3px` | Colour of the squares and the largest dither cell. |
+| `legend`, `interactive`, `animated` | `true`, `true`, `DitherTheme.animated` | The scale, the readout and the ripple in. |
+
+### DitherPixelArea
+
+A stepped area chart painted one pixel per dither cell: solid at the floor, dissolving upward to a soft edge at the value. Every pixel is the one colour at a different opacity, so it sits on light and dark backgrounds alike. Hovering lifts the fill and a marker reads the value. A few stars sit in the fill and wink while the page is animated.
+
+```slint
+DitherPixelArea {
+    values: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52];
+    labels: ["Mon", "Tue", "Wed"];
+    fill: DitherFill.dotted;
+    ink: DitherPalette.orange;
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `values`, `labels` | | The values, oldest first, and a label per value for the readout. |
+| `ink` | `DitherPalette.blue` | Colour of the area. |
+| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `cell` | `2px` | Size of one dither cell. |
+| `min`, `max` | `0`, the largest value | The bottom and top of the value axis. |
+| `interactive`, `animated` | `true`, `DitherTheme.animated` | The hover lift and marker, and the sweep in. |
+| `stars`, `winking` | `true`, `DitherTheme.animated` | The stars in the fill, and whether they wink. |
+
+### DitherRadarChart
+
+A radar chart drawn in dither cells. Each series is a polygon of whole cells with a solid outline, and the gradient fill steps up in density ring by ring so the grid reads straight through it. Move the pointer around the chart to read an axis, and use the legend to spotlight a series.
+
+```slint
+DitherRadarChart {
+    axes: ["Speed", "Power", "Range", "Armor", "Stealth", "Agility"];
+    series: [
+        { label: "Falcon", values: [82, 60, 74, 40, 55, 90], color: DitherTheme.ink, fill: DitherFill.gradient },
+        { label: "Bear", values: [40, 92, 50, 88, 20, 35], color: DitherPalette.orange, fill: DitherFill.dotted },
+    ];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `axes` | | The axis labels, clockwise from 12 o'clock. |
+| `series` | | The series, each `{ label, values, color, fill }`. Later ones draw on top. |
+| `max` | a round number above the largest value | The value at the outer ring. `0` picks it. |
+| `rings`, `grid` | `4`, `polygon` | The grid rings, and `polygon` or `circle`. |
+| `size` | `360px` | The largest width and height. |
+| `unit`, `legend`, `interactive`, `animated` | | The unit in the readout, the legend, the hover and the grow-in. |
+| `matrix`, `cell` | `bayer4`, `3px` | The dither pattern and the cell size. |
+
+### Text effects
+
+Three effects for display text. Slint cannot clip a picture to the shape of letters, so each draws its dither as a layer over the text that hides the cells that should be empty. That works on a flat background: set `backdrop` to the colour behind the text, which is the theme background by default.
+
+`DitherText` fills the letters with a dither: a gradient that thins out in one direction, drifting noise, dots or hatching.
+
+```slint
+DitherText {
+    text: "Gradient";
+    fill: DitherTextFill.dotted;
+    ink: DitherPalette.green;
+}
+```
+
+`DitherDissolveText` dissolves in through the levels of a Bayer matrix, one character or word at a time, in reading order, reversed, from the middle out, from both ends in, or shuffled. `showing: false` dissolves it out again.
+
+```slint
+DitherDissolveText {
+    text: "Dissolves in from the middle";
+    order: DitherDissolveOrder.center;
+    fill: DitherDissolveFill.dotted;
+}
+```
+
+`DitherScrambleText` is a decode effect with no layout shift: each character resolves from a dithered block through a few glyphs to its letter. Changing `text` scrambles only the characters that differ.
+
+```slint
+DitherScrambleText {
+    text: "Decoding the message";
+    trigger: DitherScrambleTrigger.hover;
+    completed => { debug("done"); }
+}
+```
+
+| Property | | |
+| --- | --- | --- |
+| `text`, `font-size`, `font-weight`, `ink`, `backdrop` | | The text, the type, the colour and the flat colour behind it. |
+| `fill`, `direction`, `from`, `to`, `scale`, `ghost` | | `DitherText`: what fills the letters and how. |
+| `order`, `word`, `showing`, `level`, `duration`, `stagger`, `delay`, `speed` | | `DitherDissolveText`: the order, units and timing. |
+| `trigger`, `mode`, `characters`, `text-color`, `rate` | | `DitherScrambleText`: when it plays, how unsettled characters look and the glyphs. |
+| `cell`, `matrix`, `animated` | | The dither cell, the pattern and the motion switch. |
 
 ### DitherDivider
 

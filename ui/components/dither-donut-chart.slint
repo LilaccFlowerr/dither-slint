@@ -1,0 +1,199 @@
+import { DitherDonutLayout, DitherDonutMode, DitherDonutSlice, DitherDonutSpec, DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+
+export component DitherDonutChart inherits Rectangle {
+    in property <[DitherDonutSlice]> slices;
+    in property <string> label;
+    in property <DitherDonutMode> mode: DitherDonutMode.donut;
+    in property <length> size: 220px;
+    in property <float> thickness: 0.36;
+    in property <float> gap: 1;
+    in property <string> unit;
+    in property <bool> legend: true;
+    in property <bool> interactive: true;
+    in property <bool> animated: DitherTheme.animated;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+
+    property <[color]> series-colors: [DitherTheme.ink, DitherPalette.orange, DitherPalette.green, DitherPalette.pink, DitherPalette.purple, DitherPalette.blue, DitherPalette.red, DitherPalette.grey];
+    property <DitherDonutSpec> spec: { size: root.size / 1px, cell: root.cell / 1px, mode: root.mode, thickness: root.thickness, gap: root.gap, matrix: root.matrix };
+    property <DitherDonutLayout> layout: DitherEngine.donut-layout(root.slices, root.spec);
+    property <[color]> colors: [root.color-of(0), root.color-of(1), root.color-of(2), root.color-of(3), root.color-of(4), root.color-of(5), root.color-of(6), root.color-of(7)];
+    property <length> drawn: root.layout.side * root.cell;
+    property <float> sweep: root.animated ? 0 : 1;
+    property <float> sweep-steps: 60;
+    property <int> hovered: -1;
+    property <int> locked: -1;
+    property <int> spotlit: !root.interactive ? -1 : root.hovered >= 0 ? root.hovered : root.locked;
+    property <float> dimmed: 0.45;
+    property <float> big-slice: 0.5;
+    property <float> centre-reach: 0.3;
+    property <float> edge-reach: 0.58;
+    property <float> value-share: 0.19;
+
+    function color-of(index: int) -> color {
+        root.slices[index].color.alpha == 0 ? root.series-colors[Math.mod(index, root.series-colors.length)] : root.slices[index].color
+    }
+
+    init => {
+        if root.animated {
+            root.sweep = 1;
+        }
+    }
+
+    animate sweep { duration: 1080ms; easing: ease-out; }
+
+    HorizontalLayout {
+        spacing: 40px;
+        alignment: center;
+
+        Rectangle {
+            width: root.drawn;
+            height: root.drawn;
+
+            Image {
+                width: 100%;
+                height: 100%;
+                image-rendering: pixelated;
+                source: DitherEngine.donut-image(root.slices, root.colors, root.spec, Math.round(root.sweep * root.sweep-steps) / root.sweep-steps * 6.2831855, root.spotlit);
+            }
+
+            if root.mode == DitherDonutMode.donut: VerticalLayout {
+                x: (root.drawn - self.width) / 2;
+                y: (root.drawn - self.height) / 2;
+                width: root.layout.inner * 2 * root.cell * 0.86;
+                alignment: center;
+                spacing: 6px;
+
+                Text {
+                    text: root.spotlit >= 0 ? root.slices[root.spotlit].label : root.label;
+                    color: DitherTheme.foreground.with-alpha(0.6);
+                    font-size: 10px;
+                    horizontal-alignment: center;
+                    overflow: elide;
+                }
+                Text {
+                    text: DitherEngine.donut-value(root.spotlit >= 0 ? root.slices[root.spotlit].value : root.layout.total, root.unit);
+                    color: DitherTheme.foreground;
+                    font-size: max(14px, root.layout.inner * 2 * root.cell * root.value-share);
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    overflow: elide;
+                }
+                Text {
+                    text: root.spotlit >= 0 ? DitherEngine.donut-share(root.layout.shares[root.spotlit]) : "100%";
+                    color: DitherTheme.foreground.with-alpha(0.6);
+                    font-size: 11px;
+                    horizontal-alignment: center;
+                }
+            }
+
+            if root.mode == DitherDonutMode.pie && root.spotlit >= 0: Rectangle {
+                property <float> middle: root.layout.middles[root.spotlit];
+                property <float> reach: root.layout.shares[root.spotlit] > root.big-slice ? root.centre-reach : root.edge-reach;
+
+                x: root.drawn / 2 + Math.sin(self.middle * 180deg / 3.1415927) * root.layout.outer * self.reach * root.cell - self.width / 2;
+                y: root.drawn / 2 - Math.cos(self.middle * 180deg / 3.1415927) * root.layout.outer * self.reach * root.cell - self.height / 2;
+                width: readout.preferred-width + 20px;
+                height: readout.preferred-height + 16px;
+                border-radius: 8px;
+                background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.08);
+                border-width: 1px;
+                border-color: DitherTheme.foreground.with-alpha(0.2);
+
+                readout := VerticalLayout {
+                    x: 10px;
+                    y: 8px;
+                    spacing: 2px;
+                    Text {
+                        text: root.slices[root.spotlit].label;
+                        color: DitherTheme.foreground.with-alpha(0.6);
+                        font-size: 10px;
+                    }
+                    Text {
+                        text: DitherEngine.donut-value(root.slices[root.spotlit].value, root.unit) + "  " + DitherEngine.donut-share(root.layout.shares[root.spotlit]);
+                        color: DitherTheme.foreground;
+                        font-size: 12px;
+                        font-weight: 500;
+                    }
+                }
+            }
+
+            TouchArea {
+                enabled: root.interactive;
+                mouse-cursor: MouseCursor.pointer;
+                pointer-event(event) => {
+                    if event.kind == PointerEventKind.move {
+                        root.hovered = DitherEngine.donut-hit(root.slices, root.spec, self.mouse-x / 1px, self.mouse-y / 1px);
+                    }
+                }
+                changed has-hover => {
+                    if !self.has-hover {
+                        root.hovered = -1;
+                    }
+                }
+                clicked => {
+                    root.locked = root.hovered == root.locked ? -1 : root.hovered;
+                }
+            }
+        }
+
+        if root.legend: VerticalLayout {
+            spacing: 2px;
+            alignment: center;
+            min-width: 208px;
+
+            for slice[index] in root.slices: Rectangle {
+                height: 32px;
+                border-radius: 6px;
+                background: root.locked == index ? DitherTheme.foreground.with-alpha(0.1) : root.spotlit == index ? DitherTheme.foreground.with-alpha(0.05) : transparent;
+                opacity: root.spotlit >= 0 && root.spotlit != index ? root.dimmed : 1;
+                animate opacity { duration: 150ms; easing: ease-out; }
+
+                HorizontalLayout {
+                    padding-left: 8px;
+                    padding-right: 8px;
+                    spacing: 12px;
+
+                    Rectangle {
+                        width: 10px;
+                        height: 10px;
+                        y: (parent.height - self.height) / 2;
+                        border-radius: 2px;
+                        background: root.color-of(index);
+                    }
+                    Text {
+                        text: slice.label;
+                        color: DitherTheme.foreground;
+                        font-size: 14px;
+                        horizontal-stretch: 1;
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+                    Text {
+                        text: DitherEngine.donut-value(slice.value, root.unit);
+                        color: DitherTheme.foreground;
+                        font-size: 12px;
+                        min-width: 72px;
+                        horizontal-alignment: right;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: DitherEngine.donut-share(root.layout.shares[index]);
+                        color: DitherTheme.foreground.with-alpha(0.6);
+                        font-size: 12px;
+                        width: 48px;
+                        horizontal-alignment: right;
+                        vertical-alignment: center;
+                    }
+                }
+
+                TouchArea {
+                    enabled: root.interactive;
+                    changed has-hover => { root.hovered = self.has-hover ? index : -1; }
+                    clicked => { root.locked = root.locked == index ? -1 : index; }
+                }
+            }
+        }
+    }
+}

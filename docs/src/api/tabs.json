@@ -1,0 +1,14 @@
+{
+ "DitherTabs": {
+  "tabs": "The tab labels.",
+  "current": "Index of the active tab.",
+  "variant": "<code>pill</code> lights a dithered surface behind the label. <code>underline</code> draws a dithered bar with a rising glow.",
+  "color": "Indicator colour, such as one from <code>DitherPalette</code>.",
+  "matrix": "<code>bayer2</code>, <code>bayer4</code>, <code>bayer8</code> or <code>blue-noise</code>.",
+  "bloom": "<code>low</code> or <code>high</code> adds a soft glow in the indicator's colour.",
+  "cell": "Size of one dither cell.",
+  "animated": "Glides the indicator between tabs over 260 ms.",
+  "enabled": "Allows mouse and keyboard navigation.",
+  "changed": "Called with the index of the tab that was chosen."
+ }
+}

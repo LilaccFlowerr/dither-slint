@@ -9,6 +9,7 @@ export default defineConfig({
 		starlight({
 			title: 'dither-slint',
 			description: 'Dithered UI components for Slint, written in Rust.',
+			expressiveCode: { shiki: { langAlias: { slint: 'qml' } } },
 			customCss: ['./src/styles/custom.css'],
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/LilaccFlowerr/dither-slint' },
@@ -17,6 +18,7 @@ export default defineConfig({
 				{
 					label: 'Get started',
 					items: [
+						{ label: 'Introduction', slug: 'guides/introduction' },
 						{ label: 'Installation', slug: 'guides/installation' },
 						{ label: 'Credits', slug: 'guides/credits' },
 					],
@@ -24,56 +26,22 @@ export default defineConfig({
 				{
 					label: 'Components',
 					items: [
+						{ label: 'Overview', slug: 'components' },
 						{
-							label: 'Basics',
-							items: [
-								{ label: 'DitherButton', slug: 'components/button' },
-								{ label: 'DitherBadge', slug: 'components/badge' },
-								{ label: 'DitherCard', slug: 'components/card' },
-								{ label: 'DitherDivider', slug: 'components/divider' },
-								{ label: 'DitherGradient', slug: 'components/gradient' },
-							],
+							label: 'Interface',
+							items: ['button', 'badge', 'avatar', 'card', 'divider', 'dropdown', 'empty-state', 'gradient', 'input', 'loader', 'skeleton', 'slider', 'switch', 'tabs'].map((slug) => ({ slug: `components/${slug}` })),
 						},
 						{
-							label: 'Inputs',
-							items: [
-								{ label: 'DitherSwitch', slug: 'components/switch' },
-								{ label: 'DitherSlider', slug: 'components/slider' },
-								{ label: 'DitherInput', slug: 'components/input' },
-								{ label: 'DitherTabs', slug: 'components/tabs' },
-								{ label: 'DitherDropdownMenu', slug: 'components/dropdown' },
-							],
-						},
-						{
-							label: 'Data',
-							items: [
-								{ label: 'DitherStatCard', slug: 'components/stat-card' },
-								{ label: 'DitherTreemap', slug: 'components/treemap' },
-								{ label: 'DitherSparkline', slug: 'components/sparkline' },
-								{ label: 'DitherUptimeBar', slug: 'components/uptime-bar' },
-								{ label: 'DitherGauge', slug: 'components/gauge' },
-								{ label: 'DitherNumber', slug: 'components/number' },
-								{ label: 'DitherProgressBar', slug: 'components/progress-bar' },
-							],
-						},
-						{
-							label: 'Feedback and identity',
-							items: [
-								{ label: 'DitherAvatar', slug: 'components/avatar' },
-								{ label: 'DitherLoader', slug: 'components/loader' },
-								{ label: 'DitherSkeleton', slug: 'components/skeleton' },
-								{ label: 'DitherEmptyState', slug: 'components/empty-state' },
-							],
+							label: 'Charts and data',
+							items: ['line-chart', 'area-chart', 'bar-chart', 'donut-chart', 'radar-chart', 'heatmap', 'pixel-area', 'treemap', 'sparkline', 'gauge', 'progress-bar', 'stat-card', 'uptime-bar'].map((slug) => ({ slug: `components/${slug}` })),
 						},
 						{
 							label: 'Images',
-							items: [
-								{ label: 'DitherImage', slug: 'components/image' },
-								{ label: 'DitherImageCompare', slug: 'components/image-compare' },
-								{ label: 'DitherScrollReveal', slug: 'components/scroll-reveal' },
-								{ label: 'DitherLogo', slug: 'components/logo' },
-								{ label: 'DitherLogoMarquee', slug: 'components/logo-marquee' },
-							],
+							items: ['image', 'image-compare', 'scroll-reveal', 'logo', 'logo-marquee'].map((slug) => ({ slug: `components/${slug}` })),
+						},
+						{
+							label: 'Text',
+							items: ['dither-text', 'dissolve-text', 'scramble-text', 'number'].map((slug) => ({ slug: `components/${slug}` })),
 						},
 					],
 				},
@@ -140,6 +108,13 @@ export default defineConfig({
 						{ label: 'Matrices', slug: 'engine/matrices' },
 						{ label: 'Palettes', slug: 'engine/palettes' },
 						{ label: 'Write your own dither', slug: 'engine/write-your-own' },
+					],
+				},
+				{
+					label: 'Reference',
+					items: [
+						{ label: 'Types', slug: 'reference/types' },
+						{ label: 'Theme', slug: 'reference/theme' },
 					],
 				},
 			],

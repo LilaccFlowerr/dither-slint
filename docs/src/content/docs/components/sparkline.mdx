@@ -5,6 +5,7 @@ description: "A tiny trend line for tables and cards: a line, a dithered fill th
 
 import Sparkline from '../../../components/Sparkline.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 A sparkline is a glance, not a chart. The width follows the element, so size it with `width` or the layout around it. The fill is densest just under the line, and a dot marks the latest value. With `interactive` you can scrub across it with the pointer or the arrow keys to read single values.
 
@@ -18,6 +19,8 @@ A sparkline is a glance, not a chart. The width follows the element, so size it 
 >
 	<Sparkline label="Revenue, last 12 days" height={64} data={[12, 14, 13, 18, 17, 22, 21, 27, 31, 29, 34, 38]} />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Scrubbing"
@@ -103,21 +106,6 @@ DitherSparkline {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `data` | | Values in order, oldest first. |
-| `label` | | What the trend shows, such as "Revenue, last 30 days". Starts the accessible summary. |
-| `height` | `32px` | Height of the sparkline. |
-| `color` | `DitherTheme.ink` | Colour of the line, the fill and the dot. |
-| `area` | `true` | Fills the area under the line. |
-| `fill` | `gradient` | `gradient` (densest just under the line), `dotted`, `hatched` or `solid`. |
-| `level` | `0.5` | Gradient only: coverage of the fill just under the line, 0 to 1. |
-| `bloom` | `off` | `low` or `high` adds a soft glow under the line and the fill. |
-| `dot` | `true` | A dot on the latest value. |
-| `interactive` | `false` | Scrub with the pointer or the arrow keys to read single values. `Escape` lets go. |
-| `domain` | the data's range | The value range the height covers, as `{ min, max }`. Give a row of sparklines one domain to compare them. |
-| `animate` | `DitherTheme.animated` | The line draws in and the fill fades in. |
-| `matrix` | `bayer4` | The dither pattern. |
-| `cell` | `2px` | Size of one dither cell. |
+<Api file="dither-sparkline" />
 
 Values in the readout and the summary are short: 1.2K, 3.4M. `DitherEngine.format-compact(float)` gives you the same format.

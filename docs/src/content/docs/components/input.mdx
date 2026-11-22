@@ -5,6 +5,7 @@ description: A text field with a dithered floor that rises as you hover and focu
 
 import Input from '../../../components/Input.astro';
 import Demo from '../../../components/Demo.astro';
+import Api from '../../../components/Api.astro';
 
 The field is drawn like the outline button: a faint tint of the colour inside a hairline, with a dithered floor that rises from the bottom edge. Hover thickens the floor a little. Focus fades in a denser, taller floor and turns the hairline to the colour. Only opacity animates, so every dot stays on the grid.
 
@@ -18,6 +19,8 @@ The field is drawn like the outline button: a faint tint of the colour inside a 
 >
 	<Input label="Email" placeholder="you@example.com" description="We only use it to sign you in." />
 </Demo>
+
+## Examples
 
 <Demo
 	title="Search, password and error"
@@ -75,23 +78,7 @@ DitherInput {
 
 ## Properties
 
-| Property | Default | |
-| --- | --- | --- |
-| `text` | | The current text. |
-| `placeholder` | | Shown while the field is empty. |
-| `label` | | A label above the field. |
-| `description` | | Muted help text below the field. |
-| `error` | | An error below the field. Turns it red. |
-| `icon` | | An image before the text, such as a magnifier for search. |
-| `password` | `false` | Hides the text and adds a show and hide button. |
-| `clearable` | `false` | A clear button while there is text. Escape clears too. |
-| `fill` | `gradient` | Texture of the floor: `gradient`, `dotted`, `hatched` or `solid`. |
-| `color` | `DitherTheme.ink` | Colour of the tint, floor and focus edge. |
-| `matrix` | `bayer4` | The dither pattern. |
-| `size` | `md` | `sm`, `md` or `lg`: 32, 40 and 44 pixels high. |
-| `bloom` | `off` | A soft glow in the colour while focused. |
-| `cell` | `2px` | Size of one dither cell. |
-| `enabled` | `true` | Drops to 45% opacity and ignores input when `false`. |
+<Api file="dither-input" />
 
 `edited(string)` is called whenever the text changes, `accepted(string)` when you press Enter and `cleared()` after the clear button or Escape.
 

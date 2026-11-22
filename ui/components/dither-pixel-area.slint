@@ -1,0 +1,105 @@
+import { DitherEngine, DitherFill, DitherPixelAreaSpec } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+
+export component DitherPixelArea inherits Rectangle {
+    in property <[float]> values;
+    in property <[string]> labels;
+    in property <color> ink: DitherPalette.blue;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <length> cell: 2px;
+    in property <float> min: 0;
+    in property <float> max: 0;
+    in property <bool> interactive: true;
+    in property <bool> animated: DitherTheme.animated;
+    in property <bool> stars: true;
+    in property <bool> winking: DitherTheme.animated;
+
+    property <length> step: Math.max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> columns: DitherEngine.pixel-area-side(root.width / 1px, root.step / 1px);
+    property <int> rows: DitherEngine.pixel-area-side(root.height / 1px, root.step / 1px);
+    property <float> reveal: root.animated ? 0 : 1;
+    property <float> intensity: root.interactive && area.has-hover ? 1 : 0;
+    property <int> marker: -1;
+    property <float> tick: 0;
+    property <float> reveal-steps: 60;
+    property <length> readout-gap: 8px;
+
+    init => {
+        if root.animated {
+            root.reveal = 1;
+        }
+    }
+
+    animate reveal { duration: 900ms; easing: ease-in-out; }
+    animate intensity { duration: 200ms; easing: ease-out; }
+
+    height: 120px;
+
+    Timer {
+        interval: 100ms;
+        running: root.winking && root.stars;
+        triggered => { root.tick += 1; }
+    }
+
+    Image {
+        x: 0;
+        y: 0;
+        width: root.columns * root.step;
+        height: root.rows * root.step;
+        image-rendering: pixelated;
+        source: DitherEngine.pixel-area-image(root.values, { columns: root.columns, rows: root.rows, min: root.min, max: root.max, fill: root.fill, reveal: Math.round(root.reveal * root.reveal-steps) / root.reveal-steps, intensity: root.intensity, marker: root.marker, stars: root.stars, winking: root.winking, tick: root.tick }, root.ink);
+    }
+
+    if root.interactive && root.marker >= 0 && root.reveal >= 1: Rectangle {
+        property <length> at: (Math.round(root.marker / Math.max(root.values.length - 1, 1) * (root.columns - 1)) + 0.5) * root.step;
+
+        x: Math.min(Math.max(0px, self.at - self.width / 2), root.width - self.width);
+        y: -self.height - root.readout-gap;
+        width: readout.preferred-width + 16px;
+        height: readout.preferred-height + 8px;
+        border-radius: 6px;
+        background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.08);
+        border-width: 1px;
+        border-color: DitherTheme.foreground.with-alpha(0.2);
+        animate x { duration: 150ms; easing: ease-out; }
+
+        readout := HorizontalLayout {
+            x: 8px;
+            y: 4px;
+            spacing: 8px;
+
+            Text {
+                text: root.marker < root.labels.length ? root.labels[root.marker] : "#" + (root.marker + 1);
+                color: DitherTheme.foreground.with-alpha(0.6);
+                font-size: 11px;
+            }
+            Rectangle {
+                width: 8px;
+                height: 8px;
+                y: (parent.height - self.height) / 2;
+                border-radius: 2px;
+                background: root.ink;
+            }
+            Text {
+                text: DitherEngine.pixel-area-readout("", root.values[root.marker]);
+                color: DitherTheme.foreground;
+                font-size: 11px;
+            }
+        }
+    }
+
+    area := TouchArea {
+        enabled: root.interactive;
+        mouse-cursor: MouseCursor.crosshair;
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.move && root.values.length > 0 {
+                root.marker = Math.round(Math.min(1, Math.max(0, self.mouse-x / self.width)) * (root.values.length - 1));
+            }
+        }
+        changed has-hover => {
+            if !self.has-hover {
+                root.marker = -1;
+            }
+        }
+    }
+}

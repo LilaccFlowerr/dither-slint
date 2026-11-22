@@ -1,0 +1,19 @@
+{
+ "DitherAnimatedGradient": {
+  "preset": "Starting values for everything below.",
+  "color1": "The three colours. The palette runs from <code>color1</code> through <code>color2</code> to <code>color3</code>, with a blend between each pair.",
+  "color2": "The three colours. The palette runs from <code>color1</code> through <code>color2</code> to <code>color3</code>, with a blend between each pair.",
+  "color3": "The three colours. The palette runs from <code>color1</code> through <code>color2</code> to <code>color3</code>, with a blend between each pair.",
+  "rotation": "Angle of the pattern, in degrees.",
+  "proportion": "Balance between the colours, 0 to 100.",
+  "scale": "Size of the pattern, 0 to 1.",
+  "speed": "How fast it swirls, 0 to 100.",
+  "distortion": "Noise that bends the pattern, 0 to 100.",
+  "swirl": "Strength of the swirl, 0 to 100.",
+  "swirl-iterations": "How many times it swirls, 1 to 30.",
+  "softness": "Soft or sharp edges between the colours, 0 to 100.",
+  "offset": "Where in its loop it starts.",
+  "shape": "The pattern the swirl folds: <code>checks</code>, <code>stripes</code> or <code>edge</code>.",
+  "shape-size": "Size of that pattern, 0 to 100."
+ }
+}

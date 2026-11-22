@@ -1,0 +1,43 @@
+import { DitherAreaFill, DitherChartStack, DitherEngine, DitherFill, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { ChartFrame, DitherChartMarkers } from "chart-frame.slint";
+
+export enum DitherBarHighlight { last, max, none }
+
+export component DitherBarChart inherits ChartFrame {
+    in property <DitherBarHighlight> highlight: DitherBarHighlight.last;
+    in property <int> highlight-at: -1;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <float> level: 0.75;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+
+    property <[color]> inks: [root.color-of(0), root.color-of(1), root.color-of(2), root.color-of(3), root.color-of(4), root.color-of(5), root.color-of(6), root.color-of(7)];
+    property <int> highlighted: root.highlight-at >= 0 ? root.highlight-at
+        : root.highlight == DitherBarHighlight.none ? -1
+        : root.highlight == DitherBarHighlight.last ? root.categories.length - 1
+        : root.layout.peak;
+    property <int> solid: root.scrubbing ? root.scrubbed : root.highlighted;
+    property <length> label-gap: 6px;
+
+    zero: true;
+    bars: true;
+    area-keys: true;
+    markers: DitherChartMarkers.none;
+
+    Image {
+        width: root.width;
+        height: root.chart-height;
+        image-rendering: pixelated;
+        source: DitherEngine.chart-bars(root.categories, root.series, root.spec, root.inks, { cell: root.cell / 1px, level: root.level, matrix: root.matrix, fill: root.fill }, root.solid);
+    }
+
+    if root.highlighted >= 0 && root.highlighted < root.layout.tops.length && !root.scrubbing: Text {
+        x: root.layout.lines[0].points[root.highlighted].x * 1px - self.width / 2;
+        y: Math.max(0px, root.layout.tops[root.highlighted] * 1px - self.height - root.label-gap);
+        text: DitherEngine.chart-format(root.layout.totals[root.highlighted], root.unit);
+        color: DitherTheme.foreground;
+        font-size: 10px;
+        font-weight: 500;
+    }
+}

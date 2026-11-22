@@ -10,6 +10,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -25,12 +26,7 @@ import Background from '../../../components/Background.astro';
 
 A planet's horizon seen from space: a lit rim, an aurora glow that drifts along it, and a few fixed stars.
 
-| Property | Default | |
-| --- | --- | --- |
-| `horizon` | `0.28` | Height of the horizon's highest point from the bottom, 0 to 1. |
-| `curve` | `0.6` | How round the planet is, 0 (nearly flat) to 1 (a small globe). |
-| `glow` | `1` | Strength of the glow above the horizon, 0 to 1. |
-| `aurora` | `1` | How much the glow ripples into aurora curtains, 0 (a smooth band) to 1. |
-| `stars` | `1` | How many stars, 0 to 3. |
-| `glow-color` | `DitherTheme.ink` | Colour of the glow, rim and stars. |
-| `sky-color` | `DitherTheme.background` | Colour of the sky and the planet. |
+## Properties
+
+<Api file="dither-horizon" />
+

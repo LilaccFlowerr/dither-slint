@@ -1,0 +1,257 @@
+---
+interface Props {
+	kind: 'dither' | 'dissolve' | 'scramble';
+	text: string;
+	fill?: string;
+	color?: string;
+	order?: string;
+	word?: boolean;
+	mode?: string;
+	trigger?: string;
+	size?: number;
+	level?: number;
+	direction?: number;
+}
+
+const { kind, text, fill = 'gradient', color = 'ink', order = 'start', word = false, mode = 'dither', trigger = 'mount', size = 48, level = 0.625, direction = 180 } = Astro.props;
+const config = { kind, text, fill, color, order, word, mode, trigger, size, level, direction };
+---
+
+<div class="effect" data-config={JSON.stringify(config)}>
+	<div class="line"></div>
+	{kind !== 'dither' && <button type="button">Replay</button>}
+</div>
+
+<style>
+	.effect {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		width: 100%;
+		min-height: 80px;
+		user-select: none;
+	}
+	.line {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		font-weight: 700;
+		line-height: 1.1;
+		color: var(--sl-color-white);
+	}
+	.effect :global(.unit) {
+		position: relative;
+		display: inline-block;
+		white-space: pre;
+	}
+	.effect :global(.unit canvas),
+	.effect :global(.unit .block) {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+	.effect :global(.unit .final) {
+		transition: color 700ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.effect :global(.unit .glyph) {
+		position: absolute;
+		inset: 0;
+		text-align: center;
+	}
+	.effect :global(.unit .block) {
+		inset: 15% 9%;
+		width: 82%;
+		height: 70%;
+	}
+	button {
+		flex-shrink: 0;
+		padding: 4px 10px;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 6px;
+		background: none;
+		color: var(--sl-color-gray-2);
+		font: inherit;
+		font-size: var(--sl-text-sm);
+		cursor: pointer;
+	}
+	button:hover {
+		background: var(--sl-color-gray-6);
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { dissolve_overlay, dissolve_ranks, dissolve_step, dissolve_units, scramble_block, scramble_slots, text_cell, text_ink } from '../engine/dither_slint_engine_web.js';
+
+	const dissolveSteps = 16;
+	const inkFrameMs = 83;
+	const frame = 16;
+	const orders = { start: 0, end: 1, center: 2, edges: 3, random: 4 } as const;
+	const dissolveFills = { solid: 0, gradient: 1, dotted: 2, hatched: 3 } as const;
+	const inkFills = { gradient: 0, noise: 1, dotted: 2, hatched: 3, solid: 4 } as const;
+	const modes = { dither: 0, blocks: 1, glyphs: 2 } as const;
+
+	function backdropOf(element: HTMLElement) {
+		let node: HTMLElement | null = element;
+		while (node) {
+			const background = getComputedStyle(node).backgroundColor;
+			const match = background.match(/\d+(\.\d+)?/g);
+			if (match && match.length >= 3 && !(match.length === 4 && Number(match[3]) === 0) && background !== 'transparent') return new Uint8Array([Number(match[0]), Number(match[1]), Number(match[2]), 255]);
+			node = node.parentElement;
+		}
+		return new Uint8Array([27, 26, 25, 255]);
+	}
+
+	function paint(canvas: HTMLCanvasElement, bytes: Uint8Array, columns: number, rows: number) {
+		canvas.width = columns;
+		canvas.height = rows;
+		canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+	}
+
+	ready.then(() => {
+		for (const effect of document.querySelectorAll<HTMLElement>('.effect')) {
+			const config = JSON.parse(effect.dataset.config!);
+			const line = effect.querySelector<HTMLElement>('.line')!;
+			const replay = effect.querySelector<HTMLButtonElement>('button');
+			const ink = new Uint8Array(rgba(config.color));
+			const css = `rgb(${rgba(config.color).slice(0, 3).join(' ')})`;
+			const backdrop = backdropOf(effect);
+			const cell = text_cell(config.size);
+			line.style.fontSize = `${config.size}px`;
+
+			if (config.kind === 'dither') {
+				const label = document.createElement('span');
+				label.className = 'unit';
+				label.textContent = config.text;
+				label.style.color = css;
+				const canvas = document.createElement('canvas');
+				label.append(canvas);
+				line.append(label);
+				let time = 0;
+				const draw = () => {
+					const columns = Math.ceil(label.offsetWidth / cell);
+					const rows = Math.ceil(label.offsetHeight / cell);
+					const spec = new Float32Array([inkFills[config.fill as keyof typeof inkFills], config.direction, 3, 1, 0.4, -1]);
+					paint(canvas, text_ink(columns, rows, spec, backdrop, time), columns, rows);
+				};
+				draw();
+				if (config.fill !== 'solid') {
+					setInterval(() => {
+						time += 1;
+						draw();
+					}, inkFrameMs);
+				}
+			}
+
+			if (config.kind === 'dissolve') {
+				const units: [string, number][] = JSON.parse(dissolve_units(config.text, config.word));
+				const count = units.filter(([, index]) => index >= 0).length;
+				const ranks = dissolve_ranks(count, orders[config.order as keyof typeof orders]);
+				const stagger = config.word ? 90 : 28;
+				const boxes = units.map(([text, index]) => {
+					const box = document.createElement('span');
+					box.className = 'unit';
+					box.textContent = text;
+					const canvas = document.createElement('canvas');
+					if (index >= 0) box.append(canvas);
+					line.append(box);
+					return { box, canvas, index };
+				});
+				let elapsed = 0;
+				let showing = true;
+				let timer = 0;
+				const spec = () => new Float32Array([600, stagger, 0, dissolveFills[config.fill as keyof typeof dissolveFills], config.level, showing ? 1 : 0]);
+				const draw = () => {
+					for (const { box, canvas, index } of boxes) {
+						if (index < 0) continue;
+						const step = dissolve_step(elapsed, ranks[index], spec());
+						const columns = Math.ceil(box.offsetWidth / cell);
+						const rows = Math.ceil(box.offsetHeight / cell);
+						canvas.style.display = config.fill === 'solid' && step >= dissolveSteps ? 'none' : 'block';
+						paint(canvas, dissolve_overlay(columns, rows, step, spec(), backdrop), columns, rows);
+					}
+				};
+				const run = () => {
+					clearInterval(timer);
+					elapsed = 0;
+					timer = window.setInterval(() => {
+						elapsed += frame;
+						draw();
+						if (elapsed > 600 + count * stagger + 200) clearInterval(timer);
+					}, frame);
+				};
+				replay?.addEventListener('click', () => {
+					showing = !showing;
+					run();
+				});
+				draw();
+				run();
+			}
+
+			if (config.kind === 'scramble') {
+				const spec = new Float32Array([modes[config.mode as keyof typeof modes], 520, 34, 0, 20]);
+				let from = '';
+				let keep = false;
+				let elapsed = 0;
+				let timer = 0;
+				const render = () => {
+					const slots: [string, number, number, string][] = JSON.parse(scramble_slots(config.text, from, keep, elapsed, spec, ''));
+					line.replaceChildren(
+						...slots.map(([character, phase, level, glyph]) => {
+							const unit = document.createElement('span');
+							unit.className = 'unit';
+							const final = document.createElement('span');
+							final.className = 'final';
+							final.textContent = character;
+							final.style.color = phase === 4 ? '' : 'transparent';
+							unit.append(final);
+							if (phase === 2) {
+								const block = document.createElement('canvas');
+								block.className = 'block';
+								unit.append(block);
+								const columns = Math.max(1, Math.ceil((unit.offsetWidth || config.size * 0.6) * 0.82 / Math.max(1, Math.round(config.size / 22))));
+								const rows = Math.max(1, Math.ceil((config.size * 1.1 * 0.7) / Math.max(1, Math.round(config.size / 22))));
+								paint(block, scramble_block(columns, rows, level, ink), columns, rows);
+							}
+							if (phase === 1 || phase === 3) {
+								const letter = document.createElement('span');
+								letter.className = 'glyph';
+								letter.textContent = glyph;
+								letter.style.color = phase === 1 ? 'color-mix(in srgb, currentColor 45%, transparent)' : css;
+								unit.append(letter);
+							}
+							return unit;
+						}),
+					);
+				};
+				const play = (before: string, same: boolean) => {
+					from = before;
+					keep = same;
+					elapsed = 0;
+					clearInterval(timer);
+					timer = window.setInterval(() => {
+						elapsed += frame;
+						render();
+						if (elapsed > 520 + config.text.length * 34 + 300) {
+							clearInterval(timer);
+							elapsed = 1_000_000;
+							render();
+						}
+					}, frame);
+				};
+				replay?.addEventListener('click', () => play('', false));
+				if (config.trigger === 'hover') {
+					effect.addEventListener('pointerenter', () => play(config.text, false));
+					elapsed = 1_000_000;
+					render();
+				} else {
+					play('', false);
+				}
+			}
+		}
+	});
+</script>

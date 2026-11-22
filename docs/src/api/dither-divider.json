@@ -1,0 +1,13 @@
+{
+ "DitherDivider": {
+  "orientation": "<code>horizontal</code> or <code>vertical</code>. A vertical rule fills the height of its container.",
+  "label": "Text in the middle of the rule, which splits around it. Horizontal only.",
+  "thickness": "Thickness in cells.",
+  "fade": "Share of each half that fades out, from 0 to 1.",
+  "strength": "Densest dither level, at the middle of the rule.",
+  "color": "Colour of the rule.",
+  "fill": "<code>gradient</code> fades through dither levels, the others fade by opacity.",
+  "matrix": "The dither pattern.",
+  "cell": "Size of one dither cell."
+ }
+}

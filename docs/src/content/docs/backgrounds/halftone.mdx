@@ -10,6 +10,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -27,17 +28,7 @@ import Background from '../../../components/Background.astro';
 
 A print halftone: round dots on a turned screen that grow with a noise, radial or linear source, in one ink or two to three overlapping channels like CMYK. The screen slides slowly, so dots swell and shrink as they travel. Each dot takes one value, sampled at its centre, as in print.
 
-| Property | Default | |
-| --- | --- | --- |
-| `source` | `noise` | What sizes the dots: `noise` (drifting clouds), `radial` (largest at `center`) or `linear` (growing towards `direction`). |
-| `center`, `radius` | `{ x: 0.5, y: 0.5 }`, `1` | Radial only: where the dots are largest, and where they run out. 1 reaches the farthest corner. |
-| `direction` | `0` | Linear only: the direction the dots grow towards, in degrees as in CSS. |
-| `scale` | `1` | Noise only: size of the clouds. |
-| `size` | `10px` | Distance between dot centres. |
-| `angle` | `45` | Screen angle in degrees. Extra channels add 30° each. |
-| `intensity` | `0.9` | Size of the largest dot, 0 to 1. At 1 the biggest dots just touch. |
-| `drift` | `1` | How fast the screen slides. 0 holds it still. |
-| `color` | `DitherTheme.ink` | Colour of the dots. |
-| `channels` | | Two or three inks, each on its own screen. Where dots overlap their colours mix. Replaces `color`. |
-| `background` | `DitherTheme.background` | Colour behind the dots. |
-| `cell` | `1phx` | Size of one rendered pixel. One device pixel keeps dot edges crisp. |
+## Properties
+
+<Api file="dither-halftone" />
+

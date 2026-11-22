@@ -1,0 +1,37 @@
+import { DitherAreaFill, DitherChartStack, DitherEngine, DitherFill, DitherMatrix } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+import { ChartFrame, DitherChartMarkers } from "chart-frame.slint";
+
+export { DitherChartStack }
+
+export component DitherAreaChart inherits ChartFrame {
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <float> level: 0.625;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+
+    property <[color]> inks: [root.color-of(0), root.color-of(1), root.color-of(2), root.color-of(3), root.color-of(4), root.color-of(5), root.color-of(6), root.color-of(7)];
+
+    zero: true;
+    area-keys: true;
+    markers: DitherChartMarkers.none;
+
+    Image {
+        width: root.width;
+        height: root.chart-height;
+        image-rendering: pixelated;
+        source: DitherEngine.chart-area(root.categories, root.series, root.spec, root.inks, { cell: root.cell / 1px, level: root.level, matrix: root.matrix, fill: root.fill });
+    }
+
+    for line[index] in root.layout.lines: Path {
+        width: root.width;
+        height: root.chart-height;
+        viewbox-width: root.width / 1px;
+        viewbox-height: root.chart-height / 1px;
+        commands: line.path;
+        stroke: root.color-of(index);
+        stroke-width: root.fill == DitherFill.solid ? 1.5px : 2px;
+        stroke-line-cap: round;
+        opacity: root.opacity-of(index);
+    }
+}

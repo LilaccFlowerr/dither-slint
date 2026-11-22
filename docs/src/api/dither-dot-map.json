@@ -1,0 +1,14 @@
+{
+ "DitherDotMap": {
+  "markers": "Places to mark, each with <code>lat</code>, <code>lon</code>, an optional <code>label</code> shown beside it and an optional <code>color</code>.",
+  "arcs": "Dotted lines between places, each with <code>from-lat</code>, <code>from-lon</code>, <code>to-lat</code>, <code>to-lon</code> and an optional <code>color</code>.",
+  "color": "Colour of the land dots.",
+  "accent": "Colour of markers, halos and arcs unless they set their own.",
+  "columns": "Dots across the full width, at least 24.",
+  "round": "Round dots instead of squares.",
+  "halo": "Radius in degrees of the glow each marker casts on the land. 0 turns it off.",
+  "ocean": "Share of sea cells with a faint dot, 0 to 1.",
+  "bounds": "The part of the world to draw, in degrees.",
+  "animated": "Pulse the markers and run light along the arcs. <code>false</code> draws a still map."
+ }
+}

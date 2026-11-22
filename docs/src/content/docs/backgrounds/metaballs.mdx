@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -22,8 +23,7 @@ import Background from '../../../components/Background.astro';
 
 Soft blobs that drift, merge and split like a lava lamp. Solid blobs are shaded densest at their cores, with a faint halo. Rings draw contour lines around each blob instead.
 
-| Property | Default | |
-| --- | --- | --- |
-| `variant` | `solid` | `solid` for shaded blobs, `rings` for contour lines. |
-| `count` | `5` | How many blobs, 2 to 8. |
-| `size` | `1` | Size of the blobs: 2 makes them twice as wide. |
+## Properties
+
+<Api file="dither-metaballs" />
+

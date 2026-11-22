@@ -1,0 +1,21 @@
+{
+ "DitherLogoMarquee": {
+  "logos": "The logos, in order. Each is <code>{ source: image }</code>.",
+  "variant": "<code>marquee</code> scrolls, <code>wall</code> is a still grid with hairline dividers.",
+  "logo-height": "Height of each logo. The width follows its ratio.",
+  "gap": "Space between logos in the row.",
+  "speed": "Scroll speed in pixels per second.",
+  "direction": "<code>left</code> or <code>right</code>.",
+  "fade": "How the ends fade out: <code>soft</code>, <code>dither</code> or <code>none</code>.",
+  "fade-width": "Width of each end's fade.",
+  "backdrop": "The colour the ends fade to. Set it to your page background.",
+  "pause-button": "A small button on hover that stops the motion.",
+  "animate": "<code>false</code> gives a still, centred row.",
+  "ink": "Colour of the logos when <code>tone</code> is <code>mono</code>.",
+  "tone": "<code>mono</code> draws every logo in one ink. <code>original</code> keeps each file's own colours.",
+  "outline": "Keep a solid outline one cell wide, so the shapes stay exact however open the fill is.",
+  "floor": "Gradient fill: how much ink is left at the bottom, 0 to 1.",
+  "effect": "Motion over every logo: <code>none</code>, <code>shimmer</code> or <code>scan</code>.",
+  "period": "Time per sweep of the effect."
+ }
+}

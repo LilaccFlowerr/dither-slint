@@ -1,0 +1,17 @@
+{
+ "DitherScrollReveal": {
+  "source": "The picture.",
+  "method": "<code>bayer4</code>, <code>bayer8</code>, <code>blue-noise</code>, <code>floyd-steinberg</code>, <code>atkinson</code> or <code>sierra-lite</code>.",
+  "threshold": "Brightness cut-off, 0 to 1.",
+  "cell": "Size of one dither cell.",
+  "palette": "Two or more colours.",
+  "end": "<code>photo</code> ends on the picture itself, <code>dither</code> on the finest dither.",
+  "coarsest": "How many cells wide the first, coarsest blocks are.",
+  "start": "Where the top edge is when the reveal starts, as a share of the scroll area from the top. 1 is the bottom edge.",
+  "finish": "Where the top edge is when the reveal is done.",
+  "viewport-height": "Height of the scroll area. Set it and the reveal follows the scroll.",
+  "viewport-top": "Where the scroll area starts in the window.",
+  "progress": "The reveal by hand, 0 to 1. Used when <code>viewport-height</code> is <code>0</code>.",
+  "shown": "The progress being drawn, read only."
+ }
+}

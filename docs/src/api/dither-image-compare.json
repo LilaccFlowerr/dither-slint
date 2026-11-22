@@ -1,0 +1,15 @@
+{
+ "DitherImageCompare": {
+  "source": "The picture.",
+  "method": "<code>bayer4</code>, <code>bayer8</code>, <code>blue-noise</code>, <code>floyd-steinberg</code>, <code>atkinson</code> or <code>sierra-lite</code>.",
+  "threshold": "Brightness cut-off, 0 to 1.",
+  "cell": "Size of one dither cell.",
+  "palette": "Two or more colours. Pixels take the nearest one.",
+  "before-label": "Label on the left side.",
+  "after-label": "Label on the right side.",
+  "labels": "Show the corner labels. They fade out when the divider comes near.",
+  "hint": "Nudge the divider once when it first appears.",
+  "value": "Divider position from the left, 0 to 100.",
+  "changed": "The new position, while dragging or on key presses."
+ }
+}

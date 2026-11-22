@@ -9,6 +9,7 @@ background:
 ---
 
 import Background from '../../../components/Background.astro';
+import Api from '../../../components/Api.astro';
 
 <Background
 	{...frontmatter.background}
@@ -23,9 +24,7 @@ import Background from '../../../components/Background.astro';
 
 Soft smoke billowing upward and thinning out, lit from above.
 
-| Property | Default | |
-| --- | --- | --- |
-| `scale` | `1` | Size of the billows: higher makes more, smaller ones. |
-| `climb` | `0.8` | How high the smoke climbs before it thins out, 0 to 1. |
-| `wind` | `0.2` | Sideways wind: negative blows left, positive right. |
-| `density` | `1` | How thick the smoke is, 0 to 1.5. |
+## Properties
+
+<Api file="dither-smoke" />
+

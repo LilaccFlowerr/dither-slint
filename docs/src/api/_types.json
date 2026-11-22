@@ -1,0 +1,23 @@
+{
+  "_": {
+    "DitherMatrix": "The threshold pattern that decides which cells are inked.",
+    "DitherFill": "The texture of a fill.",
+    "DitherEdge": "A side of a box.",
+    "DitherBloom": "How strong the soft glow around a dither is.",
+    "DitherGlow": "Where a card's light comes from.",
+    "DitherHover": "What a box does when the pointer comes in or it gets keyboard focus.",
+    "DitherPress": "What a box does when it is pressed.",
+    "DitherIdle": "What a box does on its own while on screen.",
+    "DitherMethod": "How a photo is turned into dots: a regular pattern or error diffusion.",
+    "DitherChartSeries": "One series of a chart: its label, colour and values, with optional range and dashing for a line.",
+    "DitherTreemapItem": "One tile of a treemap.",
+    "DitherDonutSlice": "One slice of a donut or pie chart.",
+    "DitherRadarSeries": "One series of a radar chart.",
+    "DitherHeatmapEntry": "One day of a calendar heatmap.",
+    "DitherHeatmapRow": "One row of a matrix heatmap.",
+    "DitherLogoItem": "One logo of a logo marquee.",
+    "DitherPoint": "A point in a box, as fractions of its width and height.",
+    "DitherMarker": "A marked place on a globe or map.",
+    "DitherArc": "A route between two places on a globe or map."
+  }
+}

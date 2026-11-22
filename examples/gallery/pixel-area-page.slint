@@ -1,0 +1,39 @@
+import { DitherFill, DitherPalette, DitherPixelArea, DitherTheme } from "../../ui/lib.slint";
+
+export component PixelAreaPage inherits VerticalLayout {
+    property <[float]> signups: [12, 18, 15, 24, 28, 26, 34, 38, 36, 44, 48, 52, 47, 55, 61, 58, 66, 72, 69, 80];
+
+    padding: 24px;
+    spacing: 24px;
+    alignment: start;
+
+    Text { text: "gradient"; color: DitherTheme.foreground; }
+    DitherPixelArea {
+        max-width: 600px;
+        values: root.signups;
+        animated: false;
+        winking: false;
+    }
+
+    Text { text: "dotted, orange"; color: DitherTheme.foreground; }
+    DitherPixelArea {
+        max-width: 600px;
+        values: root.signups;
+        fill: DitherFill.dotted;
+        ink: DitherPalette.orange;
+        height: 90px;
+        animated: false;
+        winking: false;
+    }
+
+    Text { text: "hatched, green, no stars"; color: DitherTheme.foreground; }
+    DitherPixelArea {
+        max-width: 600px;
+        values: root.signups;
+        fill: DitherFill.hatched;
+        ink: DitherPalette.green;
+        stars: false;
+        height: 90px;
+        animated: false;
+    }
+}

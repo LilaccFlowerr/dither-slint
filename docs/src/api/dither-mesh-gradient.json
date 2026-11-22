@@ -1,0 +1,6 @@
+{
+ "DitherMeshGradient": {
+  "blobs": "How many blobs drift across the box, 3 to 5.",
+  "size": "Size of each blob, as a share of the box height."
+ }
+}
