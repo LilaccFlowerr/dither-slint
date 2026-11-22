@@ -6,10 +6,12 @@ const pages = await getCollection('docs');
 const byId = new Map(pages.map((page) => [page.id, page]));
 
 const groups: { title: string; note: string; ids: string[] }[] = [
-	{ title: 'Interface', note: 'Controls and the small pieces around them.', ids: ['button', 'badge', 'avatar', 'card', 'divider', 'dropdown', 'empty-state', 'gradient', 'input', 'loader', 'skeleton', 'slider', 'switch', 'tabs'] },
-	{ title: 'Charts and data', note: 'Charts, and the components that show one number well.', ids: ['line-chart', 'area-chart', 'bar-chart', 'donut-chart', 'radar-chart', 'heatmap', 'pixel-area', 'treemap', 'sparkline', 'gauge', 'progress-bar', 'stat-card', 'uptime-bar'] },
+	{ title: 'Basics', note: 'The building blocks of an interface.', ids: ['button', 'badge', 'card', 'divider', 'gradient'] },
+	{ title: 'Inputs', note: 'Controls you interact with.', ids: ['switch', 'slider', 'input', 'tabs', 'dropdown'] },
+	{ title: 'Data', note: 'Charts, and the components that show one number well.', ids: ['line-chart', 'area-chart', 'bar-chart', 'donut-chart', 'radar-chart', 'heatmap', 'pixel-area', 'treemap', 'sparkline', 'stat-card', 'uptime-bar', 'gauge', 'number', 'progress-bar'] },
+	{ title: 'Feedback and identity', note: 'Who someone is, and what the app is doing.', ids: ['avatar', 'loader', 'skeleton', 'empty-state'] },
 	{ title: 'Images', note: 'Photos and logos in dither.', ids: ['image', 'image-compare', 'scroll-reveal', 'logo', 'logo-marquee'] },
-	{ title: 'Text', note: 'Display text with a dithered fill, and text that decodes.', ids: ['dither-text', 'dissolve-text', 'scramble-text', 'number'] },
+	{ title: 'Text', note: 'Display text with a dithered fill, and text that decodes.', ids: ['dither-text', 'dissolve-text', 'scramble-text'] },
 ];
 const section = (id: string) => `components/${id}`;
 ---
