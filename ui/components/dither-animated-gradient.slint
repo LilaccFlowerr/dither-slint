@@ -1,0 +1,100 @@
+import { DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export enum DitherAnimatedGradientPreset { prism, lava, plasma, pulse, vortex, mist }
+
+export enum DitherAnimatedGradientShape { checks, stripes, edge }
+
+export struct DitherAnimatedGradientParams {
+    color1: color,
+    color2: color,
+    color3: color,
+    rotation: float,
+    proportion: float,
+    scale: float,
+    speed: float,
+    distortion: float,
+    swirl: float,
+    swirl-iterations: float,
+    softness: float,
+    offset: float,
+    shape: DitherAnimatedGradientShape,
+    shape-size: float,
+}
+
+export component DitherAnimatedGradient {
+    in property <DitherAnimatedGradientPreset> preset: DitherAnimatedGradientPreset.prism;
+    in property <color> color1: root.preset-values.color1;
+    in property <color> color2: root.preset-values.color2;
+    in property <color> color3: root.preset-values.color3;
+    in property <float> rotation: root.preset-values.rotation;
+    in property <float> proportion: root.preset-values.proportion;
+    in property <float> scale: root.preset-values.scale;
+    in property <float> speed: root.preset-values.speed;
+    in property <float> distortion: root.preset-values.distortion;
+    in property <float> swirl: root.preset-values.swirl;
+    in property <float> swirl-iterations: root.preset-values.swirl-iterations;
+    in property <float> softness: root.preset-values.softness;
+    in property <float> offset: root.preset-values.offset;
+    in property <DitherAnimatedGradientShape> shape: root.preset-values.shape;
+    in property <float> shape-size: root.preset-values.shape-size;
+    in property <[color]> palette: [
+        root.color1,
+        root.color1.mix(root.color2, 0.5),
+        root.color2,
+        root.color2.mix(root.color3, 0.5),
+        root.color3,
+    ];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer8;
+    in property <length> cell: 3px;
+    in property <float> still-time: 2.5;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <DitherAnimatedGradientParams> preset-values: root.values(root.preset);
+
+    pure function values(preset: DitherAnimatedGradientPreset) -> DitherAnimatedGradientParams {
+        if preset == DitherAnimatedGradientPreset.lava {
+            return { color1: #ff9f21, color2: #ff0303, color3: DitherTheme.background, rotation: 114, proportion: 100, scale: 0.52, speed: 30, distortion: 7, swirl: 18, swirl-iterations: 20, softness: 100, offset: 717, shape: DitherAnimatedGradientShape.edge, shape-size: 12 };
+        }
+        if preset == DitherAnimatedGradientPreset.plasma {
+            return { color1: #b566ff, color2: DitherTheme.background, color3: DitherTheme.background, rotation: 0, proportion: 63, scale: 0.75, speed: 30, distortion: 5, swirl: 61, swirl-iterations: 5, softness: 100, offset: -168, shape: DitherAnimatedGradientShape.checks, shape-size: 28 };
+        }
+        if preset == DitherAnimatedGradientPreset.pulse {
+            return { color1: #66ff85, color2: DitherTheme.background, color3: DitherTheme.background, rotation: -167, proportion: 92, scale: 0, speed: 20, distortion: 54, swirl: 75, swirl-iterations: 3, softness: 28, offset: -813, shape: DitherAnimatedGradientShape.checks, shape-size: 79 };
+        }
+        if preset == DitherAnimatedGradientPreset.vortex {
+            return { color1: DitherTheme.background, color2: DitherTheme.foreground, color3: DitherTheme.background, rotation: 50, proportion: 41, scale: 0.4, speed: 20, distortion: 0, swirl: 100, swirl-iterations: 3, softness: 5, offset: -744, shape: DitherAnimatedGradientShape.stripes, shape-size: 80 };
+        }
+        if preset == DitherAnimatedGradientPreset.mist {
+            return { color1: DitherTheme.background, color2: #ff66b8, color3: DitherTheme.background, rotation: 0, proportion: 33, scale: 0.48, speed: 39, distortion: 4, swirl: 65, swirl-iterations: 5, softness: 100, offset: -235, shape: DitherAnimatedGradientShape.edge, shape-size: 48 };
+        }
+        return { color1: DitherTheme.background, color2: #66b3ff, color3: DitherTheme.foreground, rotation: -50, proportion: 1, scale: 0.01, speed: 30, distortion: 0, swirl: 50, swirl-iterations: 16, softness: 47, offset: -299, shape: DitherAnimatedGradientShape.checks, shape-size: 45 };
+    }
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "animated-gradient";
+        params: [
+            root.cell / 1px,
+            root.rotation,
+            root.proportion,
+            root.scale,
+            root.speed,
+            root.distortion,
+            root.swirl,
+            root.swirl-iterations,
+            root.softness,
+            root.offset,
+            root.shape == DitherAnimatedGradientShape.checks ? 0 : root.shape == DitherAnimatedGradientShape.stripes ? 1 : 2,
+            root.shape-size,
+        ];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

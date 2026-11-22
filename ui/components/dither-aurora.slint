@@ -1,0 +1,70 @@
+import { DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export enum DitherAuroraDirection { up, down }
+
+export enum DitherAuroraMask { none, top, bottom, edges }
+
+export component DitherAurora {
+    in property <color> color: DitherTheme.ink;
+    in property <color> tip-color: root.color;
+    in property <color> background: DitherTheme.background;
+    in property <int> curtains: 3;
+    in property <float> edge-height: 0.42;
+    in property <float> spread: 0.11;
+    in property <float> sway: 1;
+    in property <float> turbulence: 0.6;
+    in property <float> rays: 8;
+    in property <float> length: 0.45;
+    in property <float> glow: 0.9;
+    in property <float> intensity: 0.95;
+    in property <float> shimmer: 0.2;
+    in property <float> scale: 1;
+    in property <float> tilt: 0;
+    in property <float> drift: 0;
+    in property <DitherAuroraDirection> direction: DitherAuroraDirection.up;
+    in property <DitherAuroraMask> mask: DitherAuroraMask.none;
+    in property <[color]> palette: [
+        root.background,
+        DitherEngine.mix(root.background, root.tip-color, 0.3),
+        DitherEngine.mix(root.background, root.tip-color, 0.7),
+        root.color,
+        DitherEngine.mix(DitherTheme.foreground, root.color, 0.5),
+    ];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer8;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 0;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "aurora";
+        params: [
+            root.curtains,
+            root.edge-height,
+            root.spread,
+            root.sway,
+            root.turbulence,
+            root.rays,
+            root.length,
+            root.glow,
+            root.intensity,
+            root.shimmer,
+            root.scale,
+            root.tilt,
+            root.drift,
+            root.direction == DitherAuroraDirection.down ? 1 : 0,
+            root.mask == DitherAuroraMask.top ? 1 : root.mask == DitherAuroraMask.bottom ? 2 : root.mask == DitherAuroraMask.edges ? 3 : 0,
+        ];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

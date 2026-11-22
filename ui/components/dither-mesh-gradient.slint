@@ -1,0 +1,34 @@
+import { DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export component DitherMeshGradient {
+    in property <int> blobs: 4;
+    in property <float> size: 0.6;
+    in property <[color]> palette: [
+        DitherTheme.background,
+        DitherEngine.mix(DitherTheme.background, DitherTheme.ink, 0.28),
+        DitherEngine.mix(#b446d3, DitherTheme.ink, 0.45),
+        DitherTheme.ink,
+        DitherEngine.mix(DitherTheme.foreground, DitherTheme.ink, 0.58),
+    ];
+    in property <DitherMatrix> matrix: DitherMatrix.blue-noise;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 0;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "mesh-gradient";
+        params: [root.blobs, root.size];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

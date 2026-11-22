@@ -2,6 +2,7 @@ import { ScrollView } from "std-widgets.slint";
 import { DitherNoiseField, DitherNoiseMask, DitherNoiseVariant, DitherPalette } from "../../ui/lib.slint";
 import { DitherPlasma, DitherRipples, DitherShader, DitherTheme } from "../../ui/lib.slint";
 import { DitherWaves, DitherWavesVariant } from "../../ui/lib.slint";
+import { DitherAnimatedGradient, DitherAnimatedGradientPreset, DitherAurora, DitherMeshGradient, DitherSilk, DitherSmoke } from "../../ui/lib.slint";
 
 component Heading inherits Text {
     color: DitherTheme.foreground;
@@ -75,6 +76,24 @@ export component BackgroundsPage inherits ScrollView {
                     highlight: DitherPalette.pink;
                 }
             }
+        }
+
+        Heading { text: "Animated and mesh gradients"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherAnimatedGradient { } }
+            Box { DitherAnimatedGradient { preset: DitherAnimatedGradientPreset.lava; } }
+            Box { DitherMeshGradient { } }
+        }
+
+        Heading { text: "Aurora, silk and smoke"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherAurora { } }
+            Box { DitherSilk { } }
+            Box { DitherSmoke { } }
         }
 
         Heading { text: "Your own field, written in Rust"; }

@@ -3,16 +3,26 @@ use std::sync::Arc;
 
 use crate::field::Field;
 
+mod animated_gradient;
+mod aurora;
+mod mesh_gradient;
 mod noise_field;
 mod plasma;
 mod ripples;
+mod silk;
+mod smoke;
 mod waves;
 
 pub fn all() -> HashMap<String, Arc<dyn Field>> {
-    let fields: [(&str, Arc<dyn Field>); 4] = [
+    let fields: [(&str, Arc<dyn Field>); 9] = [
+        ("animated-gradient", Arc::new(animated_gradient::AnimatedGradient)),
+        ("aurora", Arc::new(aurora::Aurora)),
+        ("mesh-gradient", Arc::new(mesh_gradient::MeshGradient)),
         ("noise-field", Arc::new(noise_field::NoiseField)),
         ("plasma", Arc::new(plasma::Plasma)),
         ("ripples", Arc::new(ripples::Ripples)),
+        ("silk", Arc::new(silk::Silk)),
+        ("smoke", Arc::new(smoke::Smoke)),
         ("waves", Arc::new(waves::Waves)),
     ];
     fields.into_iter().map(|(name, field)| (name.to_string(), field)).collect()

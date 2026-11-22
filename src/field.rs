@@ -49,10 +49,23 @@ pub struct Cell<'a> {
     pub palette: &'a Palette,
 }
 
+/// What every cell of one frame shares.
+pub struct Frame<'a> {
+    pub resolution: Vec2,
+    pub time: f32,
+    pub params: &'a [f32],
+}
+
 pub trait Field: Send + Sync {
     fn tone(&self, cell: &Cell) -> f32;
 
     fn color(&self, _cell: &Cell) -> Option<Vec4> {
+        None
+    }
+
+    /// This field for one frame, for a field that can work out shared values once
+    /// instead of in every cell. `None` renders every cell with the field itself.
+    fn prepare(&self, _frame: &Frame) -> Option<Box<dyn Field + '_>> {
         None
     }
 }
@@ -126,7 +139,10 @@ pub fn render(shader: &Shader) -> Image {
     if palette.len() < 2 {
         return Image::from_rgba8(buffer);
     }
-    let shader = Shader { columns: columns as u32, rows: rows as u32, ..*shader };
+    let frame = Frame { resolution: Vec2::new(columns as f32, rows as f32), time: shader.time, params: shader.params };
+    let prepared = shader.field.prepare(&frame);
+    let field = prepared.as_deref().unwrap_or(shader.field);
+    let shader = Shader { field, columns: columns as u32, rows: rows as u32, ..*shader };
 
     let levels = if shader.levels == 0 { shader.matrix.map().steps as u32 + 1 } else { shader.levels };
     let steps = (levels.max(2) - 1) as f32;

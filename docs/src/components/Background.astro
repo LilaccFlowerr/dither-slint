@@ -20,10 +20,11 @@ interface Props {
 	matrix?: number;
 	cell?: number;
 	still?: number;
+	timeSpeed?: boolean;
 	controls?: Control[];
 }
 
-const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, still = 0, controls = [] } = Astro.props;
+const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, still = 0, timeSpeed = true, controls = [] } = Astro.props;
 ---
 
 <div class="background" data-field={field} data-name={name} data-slots={slots} data-palette={palette.join(' ')} data-params={JSON.stringify(params)} data-still={still}>
@@ -41,9 +42,13 @@ const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, s
 		<label><span>Cell</span>
 			<input type="range" name="cell" min="2" max="10" step="1" value={cell} /><output></output>
 		</label>
-		<label><span>Speed</span>
-			<input type="range" name="speed" min="0" max="3" step="0.1" value="1" /><output></output>
-		</label>
+		{timeSpeed ? (
+			<label><span>Speed</span>
+				<input type="range" name="speed" min="0" max="3" step="0.1" value="1" /><output></output>
+			</label>
+		) : (
+			<input type="hidden" name="speed" value="1" />
+		)}
 		{controls.map((control) => {
 			const kind = control.kind ?? 'slider';
 			const base = { 'data-index': control.index, 'data-prop': control.prop, 'data-kind': kind, 'data-array': control.array };
@@ -221,7 +226,7 @@ const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, s
 			let highlight: HTMLInputElement | null = null;
 			let visible = false;
 			let frame = 0;
-			let time = 0;
+			let time = Number(demo.dataset.still);
 			let last = 0;
 
 			const holder = demo.querySelector('.colors')!;
@@ -255,7 +260,8 @@ const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, s
 			};
 
 			const code = () => {
-				const lines = [`matrix: DitherMatrix.${matrixNames[Number(input('matrix').value)]};`, `cell: ${input('cell').value}px;`, `speed: ${input('speed').value};`];
+				const lines = [`matrix: DitherMatrix.${matrixNames[Number(input('matrix').value)]};`, `cell: ${input('cell').value}px;`];
+				if (input('speed').type !== 'hidden') lines.push(`speed: ${input('speed').value};`);
 				if (noise) {
 					lines.push(`background: ${picks[0].value};`, `color: ${picks[1].value};`);
 					if (highlight!.checked) lines.push(`highlight: ${picks[2].value};`);

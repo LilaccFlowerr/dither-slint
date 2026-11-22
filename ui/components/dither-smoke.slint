@@ -1,0 +1,30 @@
+import { DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export component DitherSmoke {
+    in property <float> scale: 1;
+    in property <float> climb: 0.8;
+    in property <float> wind: 0.2;
+    in property <float> density: 1;
+    in property <[color]> palette: [DitherTheme.background, DitherTheme.ink];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 12;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "smoke";
+        params: [root.scale, root.climb, root.wind, root.density];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}
