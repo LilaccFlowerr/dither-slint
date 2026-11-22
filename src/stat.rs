@@ -29,7 +29,12 @@ pub struct Change {
 
 /// A number with thousands separators and at most three decimals.
 pub fn format_number(value: f32) -> String {
-    let text = format!("{:.3}", value.abs());
+    format_decimals(value, 3)
+}
+
+/// A number with thousands separators and at most `decimals` decimals.
+pub fn format_decimals(value: f32, decimals: usize) -> String {
+    let text = format!("{:.*}", decimals, value.abs());
     let (whole, fraction) = text.split_once('.').unwrap_or((&text, ""));
     let mut grouped = String::new();
     for (index, digit) in whole.chars().enumerate() {
@@ -92,6 +97,13 @@ mod tests {
         assert_eq!(format_number(12.5), "12.5");
         assert_eq!(format_number(1234.25), "1,234.25");
         assert_eq!(format_number(7.0004), "7");
+    }
+
+    #[test]
+    fn the_number_of_decimals_can_be_chosen() {
+        assert_eq!(format_decimals(1234.56, 1), "1,234.6");
+        assert_eq!(format_decimals(72.0, 1), "72");
+        assert_eq!(format_decimals(72.449, 0), "72");
     }
 
     #[test]

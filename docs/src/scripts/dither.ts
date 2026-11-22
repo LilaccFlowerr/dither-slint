@@ -31,6 +31,7 @@ export function blend(base: Rgba, other: Rgba, amount: number): Rgba {
 }
 
 export const variants = { gradient: 0, dotted: 1, hatched: 2, solid: 3 } as const;
+export const blooms = { off: 0, low: 1, high: 2 } as const;
 export const edges = { top: 0, bottom: 1, left: 2, right: 3 } as const;
 
 export interface Layer {

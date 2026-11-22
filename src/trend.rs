@@ -1,6 +1,7 @@
 use slint::{Color, Image, Rgba8Pixel};
 
 use crate::Matrix;
+use crate::bloom::Bloom;
 use crate::render::{paint, pixel};
 use crate::stat::format_compact;
 use crate::style::{FillVariant, texture_inked};
@@ -57,8 +58,7 @@ pub struct AreaOptions {
 #[derive(Clone, Copy, Debug)]
 pub struct BloomOptions {
     pub area: bool,
-    pub blur: f32,
-    pub strength: f32,
+    pub bloom: Bloom,
     pub color: Color,
 }
 
@@ -159,46 +159,12 @@ fn distance_to_segment(point: Point, from: Point, to: Point) -> f32 {
     ((point.x - (from.x + t * dx)).powi(2) + (point.y - (from.y + t * dy)).powi(2)).sqrt()
 }
 
-fn box_blur(values: &mut [f32], width: usize, height: usize, radius: usize) {
-    let mut scratch = vec![0.0; values.len()];
-    let window = (2 * radius + 1) as f32;
-    for horizontal in [true, false] {
-        let (lines, length) = if horizontal { (height, width) } else { (width, height) };
-        for line in 0..lines {
-            let at = |index: usize| if horizontal { line * width + index } else { index * width + line };
-            let mut sum: f32 = (0..=radius.min(length - 1)).map(|index| values[at(index)]).sum();
-            for index in 0..length {
-                scratch[at(index)] = sum / window;
-                if index + radius + 1 < length {
-                    sum += values[at(index + radius + 1)];
-                }
-                if index >= radius {
-                    sum -= values[at(index - radius)];
-                }
-            }
-        }
-        values.copy_from_slice(&scratch);
-    }
-}
-
-fn blur_radius(blur: f32, cell: f32) -> usize {
-    let sigma = blur / cell;
-    (((1.0 + 4.0 * sigma * sigma).sqrt() - 1.0) / 2.0).round().max(1.0) as usize
-}
-
-/// How many cells of room a glow with a blur of `blur` pixels needs on every side.
-pub fn bloom_padding(blur: f32, cell: f32) -> u32 {
-    3 * blur_radius(blur, cell) as u32
-}
-
 /// A blurred, translucent copy of the area and a 4px line, or of the line
 /// alone, padded on every side so it can spill past the box.
 pub fn bloom(values: &[f32], frame: &Frame, cell: f32, options: &BloomOptions) -> Image {
-    let BloomOptions { area, blur, strength, color } = *options;
+    let BloomOptions { area, bloom, color } = *options;
     let line = points(values, frame);
-    let ink = pixel(color);
-    let radius = blur_radius(blur, cell);
-    let pad = 3 * radius;
+    let pad = crate::bloom::padding(bloom, cell) as usize;
     let (columns, rows) = grid(frame, cell);
     let (width, height) = (columns as usize + 2 * pad, rows as usize + 2 * pad);
     let mut mask = vec![0.0_f32; width * height];
@@ -210,13 +176,7 @@ pub fn bloom(values: &[f32], frame: &Frame, cell: f32, options: &BloomOptions) -
             mask[y * width + x] = if under || on_line { 1.0 } else { 0.0 };
         }
     }
-    for _ in 0..3 {
-        box_blur(&mut mask, width, height, radius);
-    }
-    paint(width as u32, height as u32, |x, y| {
-        let alpha = mask[y as usize * width + x as usize] * strength * ink.a as f32;
-        Rgba8Pixel::new(ink.r, ink.g, ink.b, alpha.round() as u8)
-    })
+    crate::bloom::glow(mask, width, height, cell, bloom, color)
 }
 
 #[cfg(test)]
@@ -335,19 +295,19 @@ mod tests {
 
     #[test]
     fn the_bloom_spills_past_the_box() {
-        let options = BloomOptions { area: true, blur: 10.0, strength: 0.5, color: Color::from_rgb_u8(200, 100, 50) };
+        let options = BloomOptions { area: true, bloom: Bloom::Low, color: Color::from_rgb_u8(200, 100, 50) };
         let image = bloom(&[0.0, 10.0], &frame(), 2.0, &options);
         let size = image.size();
-        let pad = bloom_padding(10.0, 2.0);
+        let pad = crate::bloom::padding(Bloom::Low, 2.0);
         assert_eq!((size.width, size.height), (50 + 2 * pad, 28 + 2 * pad));
         let alpha = alpha(&image);
         assert!(alpha[(size.width * (size.height / 2) + pad - 2) as usize] > 0, "the glow reaches left of the area");
-        assert!(alpha.iter().all(|a| *a <= 128), "it never gets stronger than the strength");
+        assert!(alpha.iter().all(|a| *a <= 77), "it never gets stronger than the low strength");
     }
 
     #[test]
     fn the_bloom_fades_out_before_the_edge_of_its_image() {
-        let options = BloomOptions { area: true, blur: 18.0, strength: 1.0, color: Color::from_rgb_u8(255, 255, 255) };
+        let options = BloomOptions { area: true, bloom: Bloom::High, color: Color::from_rgb_u8(255, 255, 255) };
         let image = bloom(&[0.0, 10.0, 5.0], &frame(), 2.0, &options);
         let size = image.size();
         let alpha = alpha(&image);
@@ -356,14 +316,8 @@ mod tests {
     }
 
     #[test]
-    fn the_padding_covers_the_whole_blur() {
-        assert!(bloom_padding(18.0, 2.0) as f32 * 2.0 >= 2.5 * 18.0);
-        assert!(bloom_padding(10.0, 3.0) as f32 * 3.0 >= 2.5 * 10.0);
-    }
-
-    #[test]
     fn the_line_bloom_hugs_the_line() {
-        let options = BloomOptions { area: false, blur: 6.0, strength: 1.0, color: Color::from_rgb_u8(255, 255, 255) };
+        let options = BloomOptions { area: false, bloom: Bloom::Low, color: Color::from_rgb_u8(255, 255, 255) };
         let image = bloom(&[0.0, 0.0], &Frame { margin: Margin::default(), domain: Some((-1.0, 1.0)), ..frame() }, 2.0, &options);
         let size = image.size();
         let alpha = alpha(&image);

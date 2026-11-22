@@ -21,8 +21,7 @@ export component DitherStatCard inherits DitherCard {
     property <length> text-height: 20px + 4px + 36px + (root.has-delta ? 4px + 16px : 0px);
     property <length> unit: max(1phx, Math.round(root.cell / 1phx) * 1phx);
     property <length> marker: root.unit * 2;
-    property <length> bloom-blur: root.bloom == DitherBloom.high ? 18px : 10px;
-    property <int> bloom-padding: DitherEngine.trend-bloom-padding(root.bloom-blur / 1px, root.unit / 1px);
+    property <int> bloom-padding: DitherEngine.bloom-padding(root.bloom, root.unit / 1px);
     property <DitherStatChange> change: DitherEngine.stat-change(root.delta, root.good);
 
     glow: DitherGlow.top-right;
@@ -64,7 +63,7 @@ export component DitherStatCard inherits DitherCard {
             width: (parent.columns + 2 * root.bloom-padding) * root.unit;
             height: (parent.rows + 2 * root.bloom-padding) * root.unit;
             image-fit: ImageFit.fill;
-            source: DitherEngine.trend-bloom(root.trend, parent.frame, root.unit / 1px, { area: true, blur: root.bloom-blur / 1px, strength: root.bloom == DitherBloom.high ? 0.55 : 0.3, color: root.color });
+            source: DitherEngine.trend-bloom(root.trend, parent.frame, root.unit / 1px, { area: true, bloom: root.bloom, color: root.color });
         }
 
         VerticalLayout {

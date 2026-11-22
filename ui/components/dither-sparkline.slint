@@ -27,8 +27,7 @@ export component DitherSparkline {
     property <bool> drawn: root.data.length > 1 && root.width > 0;
     property <int> columns: Math.ceil(root.width / root.unit);
     property <int> rows: Math.ceil(root.height / root.unit);
-    property <length> bloom-blur: root.bloom == DitherBloom.high ? 18px : 10px;
-    property <int> bloom-padding: DitherEngine.trend-bloom-padding(root.bloom-blur / 1px, root.unit / 1px);
+    property <int> bloom-padding: DitherEngine.bloom-padding(root.bloom, root.unit / 1px);
     property <DitherTrendFrame> frame: {
         width: root.width / 1px,
         height: root.height / 1px,
@@ -103,7 +102,7 @@ export component DitherSparkline {
             image-fit: ImageFit.fill;
             opacity: root.shown ? 1 : 0;
             animate opacity { duration: 500ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
-            source: DitherEngine.trend-bloom(root.data, root.frame, root.unit / 1px, { area: root.area, blur: root.bloom-blur / 1px, strength: root.bloom == DitherBloom.high ? 0.55 : 0.3, color: root.color });
+            source: DitherEngine.trend-bloom(root.data, root.frame, root.unit / 1px, { area: root.area, bloom: root.bloom, color: root.color });
         }
 
         if root.drawn && root.area: Image {

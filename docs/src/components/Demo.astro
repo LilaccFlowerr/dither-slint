@@ -69,13 +69,16 @@ const { title, code } = Astro.props;
 		gap: 0.75rem 1rem;
 		padding: 1.5rem;
 	}
-	.frame:has(:global(.dmenu)) {
+	.frame:has(:global(.dmenu)),
+	.frame:has(:global(.uptime)) {
 		overflow: visible;
 	}
-	.frame:has(:global(.dmenu)) .bar {
+	.frame:has(:global(.dmenu)) .bar,
+	.frame:has(:global(.uptime)) .bar {
 		border-radius: 7px 7px 0 0;
 	}
-	.frame:has(:global(.dmenu)) .preview {
+	.frame:has(:global(.dmenu)) .preview,
+	.frame:has(:global(.uptime)) .preview {
 		border-radius: 0 0 7px 7px;
 	}
 	.preview[hidden],

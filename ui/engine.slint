@@ -22,6 +22,10 @@ export enum DitherStatOutcome { good, bad, neutral }
 
 export enum DitherTrendShading { bands, near }
 
+export enum DitherUptimeStatus { up, degraded, down, none }
+
+export enum DitherGaugeVariant { half, dial, ring }
+
 export enum DitherMethod { bayer4, bayer8, blue-noise, floyd-steinberg, atkinson, sierra-lite }
 
 export enum DitherHover { sweep, spotlight, scan, trace, rise, noise, none }
@@ -70,14 +74,58 @@ export struct DitherTrendStyle {
 
 export struct DitherTrendBloom {
     area: bool,
-    blur: float,
-    strength: float,
+    bloom: DitherBloom,
     color: color,
 }
 
 export struct DitherTrendPoint {
     x: float,
     y: float,
+}
+
+export struct DitherUptimeDay {
+    date: string,
+    uptime: float,
+    note: string,
+    status: DitherUptimeStatus,
+    custom-status: bool,
+}
+
+export struct DitherUptimeInfo {
+    status: DitherUptimeStatus,
+    status-text: string,
+    date-text: string,
+    percent-text: string,
+    description: string,
+}
+
+export struct DitherUptimeSummary {
+    status: DitherUptimeStatus,
+    status-text: string,
+    overall-text: string,
+}
+
+export struct DitherGaugeSpec {
+    variant: DitherGaugeVariant,
+    size: float,
+    segments: int,
+    ratio: float,
+    cell: float,
+}
+
+export struct DitherGaugeStyle {
+    fill: DitherFill,
+    matrix: DitherMatrix,
+    color: color,
+    track-color: color,
+    elapsed: float,
+}
+
+export struct DitherGaugeLayout {
+    height: float,
+    thickness: float,
+    range-width: float,
+    reveal: float,
 }
 
 export global DitherEngine {
@@ -95,11 +143,18 @@ export global DitherEngine {
     pure callback slider-range-fill(columns: int, rows: int, start: int, end: int, both: bool, hot: bool, matrix: DitherMatrix, color: color) -> image;
     pure callback trend-area(values: [float], frame: DitherTrendFrame, cell: float, style: DitherTrendStyle) -> image;
     pure callback trend-bloom(values: [float], frame: DitherTrendFrame, cell: float, bloom: DitherTrendBloom) -> image;
-    pure callback trend-bloom-padding(blur: float, cell: float) -> int;
+    pure callback bloom-padding(bloom: DitherBloom, cell: float) -> int;
+    pure callback rect-bloom(columns: int, rows: int, cell: float, bloom: DitherBloom, color: color) -> image;
     pure callback trend-line(values: [float], frame: DitherTrendFrame) -> string;
     pure callback trend-points(values: [float], frame: DitherTrendFrame) -> [DitherTrendPoint];
     pure callback trend-summary(label: string, values: [float]) -> string;
     pure callback format-compact(value: float) -> string;
+    pure callback format-decimals(value: float, decimals: int) -> string;
+    pure callback gauge-layout(spec: DitherGaugeSpec) -> DitherGaugeLayout;
+    pure callback gauge-arc(spec: DitherGaugeSpec, style: DitherGaugeStyle) -> image;
+    pure callback gauge-bloom(spec: DitherGaugeSpec, bloom: DitherBloom, color: color) -> image;
+    pure callback uptime-day(day: DitherUptimeDay) -> DitherUptimeInfo;
+    pure callback uptime-summary(days: [DitherUptimeDay]) -> DitherUptimeSummary;
     pure callback stat-change(delta: float, good: DitherStatDirection) -> DitherStatChange;
     pure callback format-number(value: float) -> string;
     pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;

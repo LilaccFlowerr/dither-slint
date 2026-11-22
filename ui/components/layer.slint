@@ -9,6 +9,7 @@ export component DitherLayer {
     in property <float> to: 0;
     in property <color> color;
     in property <bool> frame: true;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
 
     property <int> columns: Math.ceil(root.width / root.cell);
     property <int> rows: Math.ceil(root.height / root.cell);
@@ -23,6 +24,6 @@ export component DitherLayer {
         height: root.rows * root.cell;
         image-fit: ImageFit.fill;
         image-rendering: pixelated;
-        source: DitherEngine.fill(root.columns, root.rows, root.fill, root.edge, root.length, root.from, root.to, DitherMatrix.bayer4, root.color, root.frame);
+        source: DitherEngine.fill(root.columns, root.rows, root.fill, root.edge, root.length, root.from, root.to, root.matrix, root.color, root.frame);
     }
 }

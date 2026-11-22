@@ -1,0 +1,49 @@
+import { DitherBloom, DitherFill, DitherPalette, DitherTheme, DitherUptimeBar, DitherUptimeStatus } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component UptimePage inherits VerticalLayout {
+    padding: 24px;
+    padding-top: 72px;
+    spacing: 28px;
+    alignment: start;
+
+    DitherUptimeBar {
+        label: "API";
+        days: [
+            { date: "2026-10-14", uptime: 1 }, { date: "2026-10-15", uptime: 1 }, { date: "2026-10-16", uptime: 0.9995 },
+            { date: "2026-10-17", uptime: 1 }, { date: "2026-10-18", uptime: 1 }, { date: "2026-10-19", uptime: 0.995, note: "Slow responses from the EU region." },
+            { date: "2026-10-20", uptime: 1 }, { date: "2026-10-21", uptime: 1 }, { date: "2026-10-22", uptime: 1 },
+            { date: "2026-10-23", uptime: 1 }, { date: "2026-10-24", uptime: 0.97, note: "Database failover took 43 minutes." }, { date: "2026-10-25", uptime: 1 },
+            { date: "2026-10-26", uptime: 1 }, { date: "2026-10-27", uptime: 1 }, { date: "2026-10-28", uptime: 1 },
+            { date: "2026-10-29", uptime: 1 }, { date: "2026-10-30", uptime: 0.9992 }, { date: "2026-10-31", uptime: 1 },
+            { date: "2026-11-01", uptime: 1 }, { date: "2026-11-02", uptime: 1 }, { date: "2026-11-03", uptime: 1 },
+            { date: "2026-11-04", uptime: 1 }, { date: "2026-11-05", uptime: 1 }, { date: "2026-11-06", uptime: 0.993 },
+            { date: "2026-11-07", uptime: 1 }, { date: "2026-11-08", uptime: 1 }, { date: "2026-11-09", uptime: 1 },
+            { date: "2026-11-10", uptime: 1 }, { date: "2026-11-11", uptime: 1 }, { date: "2026-11-12", uptime: 1 },
+        ];
+    }
+
+    Heading { text: "Bloom and no data"; }
+
+    DitherUptimeBar {
+        label: "Webhooks";
+        bloom: DitherBloom.high;
+        days: [
+            { date: "2026-10-14", uptime: -1 }, { date: "2026-10-15", uptime: -1 }, { date: "2026-10-16", uptime: -1 },
+            { date: "2026-10-17", uptime: -1 }, { date: "2026-10-18", uptime: -1 }, { date: "2026-10-19", uptime: 1 },
+            { date: "2026-10-20", uptime: 1 }, { date: "2026-10-21", uptime: 1 }, { date: "2026-10-22", uptime: 0.98 },
+            { date: "2026-10-23", uptime: 1 }, { date: "2026-10-24", uptime: 1 }, { date: "2026-10-25", uptime: 1 },
+            { date: "2026-10-26", uptime: 0.996 }, { date: "2026-10-27", uptime: 1 }, { date: "2026-10-28", uptime: 1 },
+            { date: "2026-10-29", uptime: 1 }, { date: "2026-10-30", uptime: 1 }, { date: "2026-10-31", uptime: 1 },
+            { date: "2026-11-01", uptime: 1 }, { date: "2026-11-02", uptime: 1 }, { date: "2026-11-03", uptime: 1 },
+            { date: "2026-11-04", uptime: 1 }, { date: "2026-11-05", uptime: 1 }, { date: "2026-11-06", uptime: 1 },
+            { date: "2026-11-07", uptime: 1 }, { date: "2026-11-08", uptime: 1 }, { date: "2026-11-09", uptime: 1 },
+            { date: "2026-11-10", uptime: 1 }, { date: "2026-11-11", uptime: 1 }, { date: "2026-11-12", uptime: 0.94, status: DitherUptimeStatus.down, custom-status: true, note: "Delivery paused during the incident." },
+        ];
+    }
+}

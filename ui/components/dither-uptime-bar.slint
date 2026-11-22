@@ -1,0 +1,334 @@
+import { DitherBloom, DitherEdge, DitherEngine, DitherFill, DitherMatrix, DitherUptimeDay, DitherUptimeInfo, DitherUptimeStatus, DitherUptimeSummary } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+import { DitherLayer } from "layer.slint";
+
+export { DitherUptimeDay, DitherUptimeStatus }
+
+component DayPaint {
+    in property <DitherUptimeStatus> status;
+    in property <DitherFill> fill;
+    in property <color> tone;
+    in property <length> cell;
+    in property <DitherMatrix> matrix;
+
+    width: 100%;
+    height: 100%;
+
+    DitherLayer {
+        cell: root.cell;
+        fill: root.status == DitherUptimeStatus.up ? root.fill
+            : root.status == DitherUptimeStatus.degraded ? DitherFill.hatched
+            : root.status == DitherUptimeStatus.down ? DitherFill.solid : DitherFill.dotted;
+        edge: DitherEdge.bottom;
+        length: 10;
+        from: 1;
+        to: 0.5;
+        color: root.tone;
+        frame: false;
+        matrix: root.matrix;
+    }
+}
+
+export component DitherUptimeBar {
+    in property <string> label;
+    in property <[DitherUptimeDay]> days;
+    in property <color> up-color: DitherPalette.green;
+    in property <color> degraded-color: DitherPalette.orange;
+    in property <color> down-color: DitherPalette.red;
+    in property <color> none-color: DitherPalette.grey;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 2px;
+
+    property <length> unit: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <DitherUptimeSummary> summary: DitherEngine.uptime-summary(root.days);
+    property <int> span: root.width < 448px ? 30 : root.width < 672px ? 60 : 90;
+    property <int> shown: Math.min(root.span, root.days.length);
+    property <int> first: root.days.length - root.shown;
+    property <length> gap: 3px;
+    property <length> bar-width: root.shown > 0 ? (root.width - (root.shown - 1) * root.gap) / root.shown : 0px;
+    property <length> bar-height: 32px;
+    property <int> bar-columns: Math.ceil(root.bar-width / root.unit);
+    property <int> bar-rows: Math.ceil(root.bar-height / root.unit);
+    property <int> bloom-padding: DitherEngine.bloom-padding(root.bloom, root.unit / 1px);
+    property <length> tip-width: 208px;
+
+    property <int> active: -1;
+    property <bool> tip-visible;
+    property <bool> glide;
+    property <int> focus-index: root.days.length - 1;
+    property <DitherUptimeInfo> tip-info: DitherEngine.uptime-day(root.days[Math.max(root.active, 0)]);
+
+    pure function tone(status: DitherUptimeStatus) -> color {
+        return status == DitherUptimeStatus.up ? root.up-color
+            : status == DitherUptimeStatus.degraded ? root.degraded-color
+            : status == DitherUptimeStatus.down ? root.down-color : root.none-color;
+    }
+
+    pure function bar-x(index: int) -> length {
+        return (index - root.first) * (root.bar-width + root.gap);
+    }
+
+    function show(index: int) {
+        root.glide = root.tip-visible;
+        root.active = index;
+        root.tip-visible = true;
+    }
+
+    function hide() {
+        root.glide = false;
+        root.tip-visible = false;
+    }
+
+    preferred-width: 480px;
+    preferred-height: 92px;
+
+    VerticalLayout {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        spacing: 12px;
+
+        HorizontalLayout {
+            spacing: 8px;
+
+            Text {
+                text: root.label;
+                color: DitherTheme.foreground;
+                font-size: 14px;
+                font-weight: 500;
+                vertical-alignment: center;
+            }
+
+            Text {
+                horizontal-stretch: 1;
+                text: root.summary.status-text;
+                color: root.tone(root.summary.status);
+                font-size: 12px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+
+            if root.summary.overall-text != "": Text {
+                text: "\{root.summary.overall-text} uptime";
+                color: DitherTheme.foreground.transparentize(0.4);
+                font-size: 12px;
+                font-family: "monospace";
+                vertical-alignment: center;
+            }
+        }
+
+        row := Rectangle {
+            height: root.bar-height;
+
+            for day[index] in root.days: Rectangle {
+                property <DitherUptimeInfo> info: DitherEngine.uptime-day(day);
+
+                visible: index >= root.first;
+                x: root.bar-x(index);
+                y: 0;
+                width: root.bar-width;
+                height: root.bar-height;
+                opacity: root.tip-visible && root.active != index ? 0.55 : 1;
+                animate opacity { duration: 150ms; }
+
+                if root.bloom != DitherBloom.off && (self.info.status == DitherUptimeStatus.degraded || self.info.status == DitherUptimeStatus.down): Image {
+                    x: -root.bloom-padding * root.unit;
+                    y: -root.bloom-padding * root.unit;
+                    width: (root.bar-columns + 2 * root.bloom-padding) * root.unit;
+                    height: (root.bar-rows + 2 * root.bloom-padding) * root.unit;
+                    image-fit: ImageFit.fill;
+                    source: DitherEngine.rect-bloom(root.bar-columns, root.bar-rows, root.unit / 1px, root.bloom, root.tone(parent.info.status));
+                }
+
+                DayPaint {
+                    status: parent.info.status;
+                    fill: root.fill;
+                    tone: root.tone(parent.info.status);
+                    cell: root.unit;
+                    matrix: root.matrix;
+                }
+            }
+
+            if scope.has-focus && root.focus-index >= root.first: Rectangle {
+                x: root.bar-x(root.focus-index) - 4px;
+                y: -4px;
+                width: root.bar-width + 8px;
+                height: root.bar-height + 8px;
+                border-width: 2px;
+                border-radius: 3px;
+                border-color: DitherTheme.foreground.transparentize(0.4);
+            }
+
+            if root.active >= 0: Rectangle {
+                property <length> centre: root.bar-x(root.active) + root.bar-width / 2;
+
+                x: Math.min(Math.max(self.centre, root.tip-width / 2), row.width - root.tip-width / 2) - root.tip-width / 2;
+                y: -self.height - 8px;
+                width: root.tip-width;
+                height: tip-layout.preferred-height;
+                background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.08).transparentize(0.05);
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: DitherTheme.foreground.transparentize(0.88);
+                drop-shadow-blur: 24px;
+                drop-shadow-offset-y: 8px;
+                drop-shadow-color: #00000066;
+                opacity: root.tip-visible ? 1 : 0;
+                animate opacity { duration: 200ms; }
+                animate x { duration: root.glide ? 200ms : 0ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+
+                tip-layout := VerticalLayout {
+                    x: 0;
+                    y: 0;
+                    width: parent.width;
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    padding-top: 10px;
+                    padding-bottom: 10px;
+                    spacing: 6px;
+
+                    Text {
+                        text: root.tip-info.date-text.to-uppercase();
+                        color: DitherTheme.foreground.transparentize(0.4);
+                        font-size: 10px;
+                        font-family: "monospace";
+                        letter-spacing: 0.5px;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        Rectangle {
+                            width: 10px;
+                            height: 10px;
+                            y: (parent.height - self.height) / 2;
+
+                            DayPaint {
+                                status: root.tip-info.status;
+                                fill: root.fill;
+                                tone: root.tone(root.tip-info.status);
+                                cell: root.unit;
+                                matrix: root.matrix;
+                            }
+                        }
+
+                        Text {
+                            horizontal-stretch: 1;
+                            text: root.tip-info.status-text;
+                            color: DitherTheme.foreground;
+                            font-size: 12px;
+                            vertical-alignment: center;
+                        }
+
+                        if root.tip-info.percent-text != "": Text {
+                            text: root.tip-info.percent-text;
+                            color: DitherTheme.foreground.transparentize(0.4);
+                            font-size: 12px;
+                            font-family: "monospace";
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    if root.days[root.active].note != "": Text {
+                        text: root.days[root.active].note;
+                        color: DitherTheme.foreground.transparentize(0.4);
+                        font-size: 12px;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            scope := FocusScope {
+                x: 0;
+                y: 0;
+                width: 100%;
+                height: 100%;
+                accessible-role: AccessibleRole.list;
+                accessible-label: "\{root.label}, daily uptime";
+                accessible-description: root.tip-visible ? root.tip-info.description : "";
+
+                key-pressed(event) => {
+                    let last = root.days.length - 1;
+                    let from = Math.max(root.focus-index, root.first);
+                    if event.text == Key.Escape {
+                        root.hide();
+                        return accept;
+                    }
+                    if last < 0 {
+                        return reject;
+                    }
+                    if event.text == Key.LeftArrow {
+                        root.focus-index = Math.max(root.first, from - 1);
+                    } else if event.text == Key.RightArrow {
+                        root.focus-index = Math.min(last, from + 1);
+                    } else if event.text == Key.Home {
+                        root.focus-index = root.first;
+                    } else if event.text == Key.End {
+                        root.focus-index = last;
+                    } else {
+                        return reject;
+                    }
+                    root.show(root.focus-index);
+                    return accept;
+                }
+
+                changed has-focus => {
+                    if self.has-focus && root.days.length > 0 {
+                        root.focus-index = Math.max(root.focus-index, root.first);
+                        root.show(root.focus-index);
+                    } else {
+                        root.hide();
+                    }
+                }
+
+                TouchArea {
+                    changed has-hover => {
+                        if !self.has-hover {
+                            root.hide();
+                        }
+                    }
+
+                    pointer-event(event) => {
+                        if root.shown > 0 && (event.kind == PointerEventKind.move || event.kind == PointerEventKind.down) {
+                            root.show(Math.clamp(root.first + Math.floor(self.mouse-x / (root.bar-width + root.gap)), root.first, root.days.length - 1));
+                        }
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            spacing: 12px;
+
+            Text {
+                width: 80px;
+                text: "\{root.shown} days ago";
+                color: DitherTheme.foreground.transparentize(0.4);
+                font-size: 11px;
+                font-family: "monospace";
+                vertical-alignment: center;
+            }
+
+            Rectangle {
+                horizontal-stretch: 1;
+
+                Rectangle {
+                    y: (parent.height - self.height) / 2;
+                    height: 1px;
+                    background: DitherTheme.foreground.transparentize(0.88);
+                }
+            }
+
+            Text {
+                text: "Today";
+                color: DitherTheme.foreground.transparentize(0.4);
+                font-size: 11px;
+                font-family: "monospace";
+                vertical-alignment: center;
+            }
+        }
+    }
+}

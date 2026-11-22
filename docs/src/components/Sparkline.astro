@@ -118,8 +118,8 @@ const { data, label, height = 32, color = 'ink', area = true, fill = 'gradient',
 </style>
 
 <script>
-	import { format_compact, trend_area, trend_bloom, trend_bloom_padding, trend_line, trend_points, trend_summary } from '../engine/dither_slint_engine_web.js';
-	import { ready, rgba, variants } from '../scripts/dither';
+	import { format_compact, bloom_padding, trend_area, trend_bloom, trend_line, trend_points, trend_summary } from '../engine/dither_slint_engine_web.js';
+	import { blooms, ready, rgba, variants } from '../scripts/dither';
 
 	const DOT = 2.5;
 	const STROKE = 1.5;
@@ -208,9 +208,9 @@ const { data, label, height = 32, color = 'ink', area = true, fill = 'gradient',
 			points = trend_points(values, frame);
 			if (fill) put(fill, trend_area(values, frame, step, variants[data.fill as keyof typeof variants], 1, Number(data.level), 1, color), columns, rows, step);
 			if (glow) {
-				const blur = data.bloom === 'high' ? 18 : 10;
-				const pad = trend_bloom_padding(blur, step);
-				put(glow, trend_bloom(values, frame, step, data.area !== undefined, blur, data.bloom === 'high' ? 0.55 : 0.3, color), columns + 2 * pad, rows + 2 * pad, step);
+				const bloom = blooms[data.bloom as keyof typeof blooms];
+				const pad = bloom_padding(bloom, step);
+				put(glow, trend_bloom(values, frame, step, data.area !== undefined, bloom, color), columns + 2 * pad, rows + 2 * pad, step);
 				glow.style.left = `${-pad * step}px`;
 				glow.style.top = `${-pad * step}px`;
 			}

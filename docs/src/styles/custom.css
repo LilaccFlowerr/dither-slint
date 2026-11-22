@@ -28,6 +28,8 @@
 .skeleton *,
 .stat *,
 .spark *,
+.uptime *,
+.gauge *,
 .empty .scene canvas {
 	margin-top: 0 !important;
 }

@@ -1,0 +1,343 @@
+---
+interface Day {
+	date: string;
+	uptime: number | null;
+	status?: 'up' | 'degraded' | 'down' | 'none';
+	note?: string;
+}
+
+interface Props {
+	label: string;
+	days: Day[];
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	bloom?: 'off' | 'low' | 'high';
+	cell?: number;
+}
+
+const { label, days, fill = 'gradient', bloom = 'off', cell = 2 } = Astro.props;
+---
+
+<div class="uptime" data-label={label} data-days={JSON.stringify(days)} data-fill={fill} data-bloom={bloom} data-cell={cell}></div>
+
+<style is:global>
+	.uptime {
+		position: relative;
+		display: flex;
+		flex: 1 1 100%;
+		flex-direction: column;
+		gap: 12px;
+		min-width: 0;
+	}
+	.uptime .head {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		font-size: 14px;
+	}
+	.uptime .head b {
+		font-weight: 500;
+		color: #ebe5d9;
+	}
+	.uptime .head .state {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		font-size: 12px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.uptime .head .overall,
+	.uptime .foot {
+		font-family: var(--sl-font-mono);
+		font-size: 12px;
+		color: color-mix(in srgb, #ebe5d9 60%, transparent);
+		font-variant-numeric: tabular-nums;
+	}
+	.uptime .row {
+		position: relative;
+		display: flex;
+		gap: 3px;
+		height: 32px;
+		padding: 0;
+		list-style: none;
+	}
+	.uptime .row li {
+		position: relative;
+		flex: 1;
+		min-width: 0;
+		height: 100%;
+	}
+	.uptime .row button {
+		position: relative;
+		display: block;
+		width: 100%;
+		height: 100%;
+		padding: 0;
+		overflow: hidden;
+		border: 0;
+		background: none;
+		cursor: default;
+		transition: opacity 150ms;
+	}
+	.uptime .row button:focus-visible {
+		outline: 2px solid color-mix(in srgb, #ebe5d9 60%, transparent);
+		outline-offset: 2px;
+	}
+	.uptime .row.dim button:not(.active) {
+		opacity: 0.55;
+	}
+	.uptime canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: block;
+		max-width: none;
+		margin: 0 !important;
+		image-rendering: pixelated;
+		pointer-events: none;
+	}
+	.uptime canvas.glow {
+		image-rendering: auto;
+	}
+	.uptime .tip {
+		position: absolute;
+		bottom: 100%;
+		left: 0;
+		z-index: 10;
+		width: 208px;
+		margin-bottom: 8px;
+		padding: 10px 12px;
+		border: 1px solid color-mix(in srgb, #ebe5d9 12%, transparent);
+		border-radius: 8px;
+		background: color-mix(in srgb, color-mix(in srgb, #ebe5d9 8%, #1b1a19) 95%, transparent);
+		box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.6);
+		font-size: 12px;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 200ms;
+	}
+	.uptime .tip.shown {
+		opacity: 1;
+	}
+	.uptime .tip.glide {
+		transition: opacity 200ms, transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.uptime .tip .when {
+		font-family: var(--sl-font-mono);
+		font-size: 10px;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		color: color-mix(in srgb, #ebe5d9 60%, transparent);
+	}
+	.uptime .tip .what {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 6px !important;
+		color: #ebe5d9;
+	}
+	.uptime .tip .swatch {
+		position: relative;
+		flex: none;
+		width: 10px;
+		height: 10px;
+		overflow: hidden;
+	}
+	.uptime .tip .share {
+		margin-left: auto;
+		font-family: var(--sl-font-mono);
+		color: color-mix(in srgb, #ebe5d9 60%, transparent);
+	}
+	.uptime .tip .note {
+		margin-top: 6px !important;
+		color: color-mix(in srgb, #ebe5d9 60%, transparent);
+	}
+	.uptime .foot {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		font-size: 11px;
+	}
+	.uptime .foot i {
+		flex: 1;
+		height: 1px;
+		background: color-mix(in srgb, #ebe5d9 12%, transparent);
+	}
+</style>
+
+<script>
+	import { bloom_padding, fill, rect_bloom, uptime_info, uptime_overall } from '../engine/dither_slint_engine_web.js';
+	import { blooms, css, ready, rgba, variants } from '../scripts/dither';
+
+	interface Day {
+		date: string;
+		uptime: number | null;
+		status?: 'up' | 'degraded' | 'down' | 'none';
+		note?: string;
+	}
+
+	const STATUSES = ['up', 'degraded', 'down', 'none'] as const;
+	const TONES = { up: 'green', degraded: 'orange', down: 'red', none: '#808080' } as const;
+	const TEXTURES = { degraded: 'hatched', down: 'solid', none: 'dotted' } as const;
+	const HEIGHT = 32;
+	const TIP = 208;
+
+	function put(canvas: HTMLCanvasElement, bytes: Uint8Array, columns: number, rows: number, step: number) {
+		canvas.width = columns;
+		canvas.height = rows;
+		canvas.style.width = `${columns * step}px`;
+		canvas.style.height = `${rows * step}px`;
+		canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+	}
+
+	function paint(canvas: HTMLCanvasElement, status: (typeof STATUSES)[number], barFill: keyof typeof variants, width: number, height: number, step: number) {
+		const texture = status === 'up' ? barFill : TEXTURES[status];
+		const columns = Math.max(1, Math.ceil(width / step));
+		const rows = Math.max(1, Math.ceil(height / step));
+		put(canvas, fill(columns, rows, variants[texture], 1, 10, 1, 0.5, new Uint8Array(rgba(TONES[status])), false), columns, rows, step);
+	}
+
+	function build(root: HTMLElement) {
+		const data = root.dataset as Record<string, string>;
+		const days: Day[] = JSON.parse(data.days);
+		const step = Number(data.cell);
+		const barFill = data.fill as keyof typeof variants;
+		const bloom = blooms[data.bloom as keyof typeof blooms];
+		const info = days.map((day) => {
+			const [index, text, date, share, description] = uptime_info(day.date, day.uptime ?? -1, day.note ?? '', day.status ? STATUSES.indexOf(day.status) : -1);
+			return { status: STATUSES[Number(index)], text, date, share, description };
+		});
+		const current = info.at(-1)?.status ?? 'none';
+		const overall = uptime_overall(new Float32Array(days.map((day) => day.uptime ?? -1)));
+
+		const head = document.createElement('div');
+		head.className = 'head';
+		const state = Object.assign(document.createElement('span'), { className: 'state', textContent: info.at(-1)?.text ?? 'No data' });
+		state.style.color = css(rgba(TONES[current]));
+		head.append(Object.assign(document.createElement('b'), { textContent: data.label }), state);
+		if (overall) head.append(Object.assign(document.createElement('span'), { className: 'overall', textContent: `${overall} uptime` }));
+
+		const wrap = document.createElement('div');
+		wrap.style.position = 'relative';
+		const row = document.createElement('ol');
+		row.className = 'row';
+		row.setAttribute('aria-label', `${data.label}, daily uptime`);
+		const tip = document.createElement('div');
+		tip.className = 'tip';
+		tip.setAttribute('role', 'tooltip');
+		tip.id = `${data.label.replace(/\W+/g, '-').toLowerCase()}-tip`;
+		wrap.append(row, tip);
+
+		const items = days.map((day, index) => {
+			const item = document.createElement('li');
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.tabIndex = index === days.length - 1 ? 0 : -1;
+			button.setAttribute('aria-label', info[index].description);
+			const bar = document.createElement('canvas');
+			button.append(bar);
+			const status = info[index].status;
+			const glow = bloom > 0 && (status === 'degraded' || status === 'down') ? Object.assign(document.createElement('canvas'), { className: 'glow' }) : null;
+			item.append(...(glow ? [glow] : []), button);
+			row.append(item);
+			return { item, button, bar, glow, status };
+		});
+
+		const foot = document.createElement('div');
+		foot.className = 'foot';
+		foot.setAttribute('aria-hidden', 'true');
+		const since = document.createElement('span');
+		foot.append(since, document.createElement('i'), Object.assign(document.createElement('span'), { textContent: 'Today' }));
+		root.replaceChildren(head, wrap, foot);
+
+		let first = 0;
+		let active = -1;
+		const shownFor = (width: number) => Math.min(days.length, width < 448 ? 30 : width < 672 ? 60 : 90);
+
+		const draw = () => {
+			const width = root.clientWidth;
+			if (width === 0) return;
+			first = days.length - shownFor(width);
+			since.textContent = `${days.length - first} days ago`;
+			items.forEach((entry, index) => (entry.item.hidden = index < first));
+			const barWidth = items[days.length - 1]?.button.clientWidth ?? 0;
+			const pad = bloom_padding(bloom, step);
+			for (const entry of items.slice(first)) {
+				paint(entry.bar, entry.status, barFill, barWidth, HEIGHT, step);
+				if (!entry.glow) continue;
+				const columns = Math.ceil(barWidth / step);
+				const rows = Math.ceil(HEIGHT / step);
+				put(entry.glow, rect_bloom(columns, rows, step, bloom, new Uint8Array(rgba(TONES[entry.status]))), columns + 2 * pad, rows + 2 * pad, step);
+				entry.glow.style.left = `${-pad * step}px`;
+				entry.glow.style.top = `${-pad * step}px`;
+			}
+		};
+
+		const show = (index: number) => {
+			const day = info[index];
+			const { button } = items[index];
+			const centre = button.parentElement!.offsetLeft + button.offsetWidth / 2;
+			const left = Math.min(Math.max(centre, TIP / 2), row.offsetWidth - TIP / 2) - TIP / 2;
+			tip.classList.toggle('glide', tip.classList.contains('shown'));
+			tip.classList.add('shown');
+			tip.style.transform = `translateX(${Math.round(left)}px)`;
+			const swatch = Object.assign(document.createElement('span'), { className: 'swatch' });
+			const swatchCanvas = document.createElement('canvas');
+			paint(swatchCanvas, day.status, barFill, 10, 10, step);
+			swatch.append(swatchCanvas);
+			const what = Object.assign(document.createElement('div'), { className: 'what' });
+			what.append(swatch, Object.assign(document.createElement('span'), { textContent: day.text }));
+			if (day.share) what.append(Object.assign(document.createElement('span'), { className: 'share', textContent: day.share }));
+			tip.replaceChildren(Object.assign(document.createElement('div'), { className: 'when', textContent: day.date }), what);
+			if (days[index].note) tip.append(Object.assign(document.createElement('p'), { className: 'note', textContent: days[index].note }));
+			items.forEach((entry, each) => {
+				entry.button.classList.toggle('active', each === index);
+				entry.button.toggleAttribute('aria-describedby', false);
+			});
+			button.setAttribute('aria-describedby', tip.id);
+			row.classList.add('dim');
+			active = index;
+		};
+
+		const hide = () => {
+			tip.classList.remove('shown', 'glide');
+			row.classList.remove('dim');
+			active = -1;
+		};
+
+		items.forEach((entry, index) => {
+			entry.button.addEventListener('pointerenter', () => show(index));
+			entry.button.addEventListener('click', () => show(index));
+			entry.button.addEventListener('focus', () => {
+				items.forEach((other, each) => (other.button.tabIndex = each === index ? 0 : -1));
+				show(index);
+			});
+			entry.button.addEventListener('blur', hide);
+			entry.button.addEventListener('keydown', (event) => {
+				const last = days.length - 1;
+				const targets: Record<string, number> = {
+					ArrowLeft: Math.max(first, index - 1),
+					ArrowRight: Math.min(last, index + 1),
+					Home: first,
+					End: last,
+				};
+				if (event.key === 'Escape') return hide();
+				const next = targets[event.key];
+				if (next === undefined) return;
+				event.preventDefault();
+				items[next].button.focus();
+			});
+		});
+		row.addEventListener('pointerleave', () => {
+			if (active >= 0 && document.activeElement !== items[active].button) hide();
+		});
+
+		draw();
+		new ResizeObserver(draw).observe(root);
+	}
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.uptime')) build(root);
+	});
+</script>

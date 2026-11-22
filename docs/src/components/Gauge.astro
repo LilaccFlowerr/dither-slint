@@ -1,0 +1,200 @@
+---
+interface Props {
+	value: number;
+	label: string;
+	min?: number;
+	max?: number;
+	variant?: 'half' | 'dial' | 'ring';
+	size?: number;
+	segments?: number;
+	unit?: string;
+	decimals?: number;
+	showRange?: boolean;
+	color?: string;
+	trackColor?: string;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	bloom?: 'off' | 'low' | 'high';
+	animate?: boolean;
+	cell?: number;
+}
+
+const { value, label, min = 0, max = 100, variant = 'half', size = 220, segments = 0, unit = '', decimals = 1, color = 'ink', trackColor, fill = 'gradient', bloom = 'off', animate = true, cell = 3 } = Astro.props;
+const showRange = Astro.props.showRange ?? variant !== 'ring';
+---
+
+<div
+	class="gauge"
+	style={`width: ${size}px`}
+	data-value={value}
+	data-label={label}
+	data-min={min}
+	data-max={max}
+	data-variant={variant}
+	data-size={size}
+	data-segments={segments}
+	data-unit={unit}
+	data-decimals={decimals}
+	data-range={showRange ? '' : undefined}
+	data-color={color}
+	data-track={trackColor ?? color}
+	data-fill={fill}
+	data-bloom={bloom}
+	data-animate={animate ? 'true' : 'false'}
+	data-cell={cell}
+>
+</div>
+
+<style is:global>
+	.gauge {
+		position: relative;
+		display: inline-flex;
+		flex: none;
+		flex-direction: column;
+		align-items: center;
+	}
+	.gauge .face {
+		position: relative;
+	}
+	.gauge canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: block;
+		max-width: none;
+		margin: 0 !important;
+		image-rendering: pixelated;
+	}
+	.gauge canvas.glow {
+		image-rendering: auto;
+	}
+	.gauge .reading {
+		position: absolute;
+		left: 10%;
+		right: 10%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 6px;
+	}
+	.gauge .reading b {
+		font-weight: 600;
+		line-height: 1;
+		color: #ebe5d9;
+		font-variant-numeric: tabular-nums;
+	}
+	.gauge .reading span {
+		max-width: 100%;
+		overflow: hidden;
+		font-size: 12px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		color: color-mix(in srgb, #ebe5d9 60%, transparent);
+	}
+	.gauge .range {
+		display: flex;
+		justify-content: space-between;
+		margin-top: 6px !important;
+		font-family: var(--sl-font-mono);
+		font-size: 11px;
+		color: color-mix(in srgb, #ebe5d9 60%, transparent);
+	}
+	.gauge .range span {
+		text-align: center;
+	}
+</style>
+
+<script>
+	import { bloom_padding, format_decimals, gauge_arc, gauge_bloom, gauge_layout } from '../engine/dither_slint_engine_web.js';
+	import { blooms, ready, rgba, variants } from '../scripts/dither';
+
+	const VARIANTS = { half: 0, dial: 1, ring: 2 } as const;
+
+	function put(canvas: HTMLCanvasElement, bytes: Uint8Array, columns: number, rows: number, scale: number) {
+		canvas.width = columns;
+		canvas.height = rows;
+		canvas.style.width = `${columns * scale}px`;
+		canvas.style.height = `${rows * scale}px`;
+		canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+	}
+
+	function build(root: HTMLElement) {
+		const data = root.dataset as Record<string, string>;
+		const [min, max, size, cell, decimals] = [data.min, data.max, data.size, data.cell, data.decimals].map(Number);
+		const value = Math.min(max, Math.max(min, Number(data.value)));
+		const ratio = Math.min(1, Math.max(0, (value - min) / Math.max(max - min, 1e-9)));
+		const variant = VARIANTS[data.variant as keyof typeof VARIANTS];
+		const segments = Number(data.segments);
+		const bloom = blooms[data.bloom as keyof typeof blooms];
+		const readout = `${format_decimals(value, decimals)}${data.unit}`;
+		const [height, thickness, rangeWidth, reveal] = gauge_layout(variant, size, segments, ratio, cell);
+		const style = new Uint8Array([variants[data.fill as keyof typeof variants], 1]);
+		const palette = new Uint8Array([...rgba(data.color), ...rgba(data.track)]);
+		const motion = data.animate === 'true' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		root.setAttribute('role', 'meter');
+		root.setAttribute('aria-label', data.label);
+		root.setAttribute('aria-valuemin', data.min);
+		root.setAttribute('aria-valuemax', data.max);
+		root.setAttribute('aria-valuenow', String(value));
+		root.setAttribute('aria-valuetext', readout);
+
+		const face = document.createElement('div');
+		face.className = 'face';
+		face.style.width = `${size}px`;
+		face.style.height = `${height}px`;
+		const arc = document.createElement('canvas');
+		arc.setAttribute('aria-hidden', 'true');
+		let glow: HTMLCanvasElement | null = null;
+		if (bloom > 0) {
+			glow = Object.assign(document.createElement('canvas'), { className: 'glow' });
+			glow.setAttribute('aria-hidden', 'true');
+			const pad = bloom_padding(bloom, cell);
+			const columns = Math.ceil(size / cell) + 2 * pad;
+			const rows = Math.ceil(height / cell) + 2 * pad;
+			put(glow, gauge_bloom(variant, size, segments, ratio, cell, bloom, new Uint8Array(rgba(data.color))), columns, rows, cell);
+			glow.style.left = glow.style.top = `${-pad * cell}px`;
+			if (motion) glow.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reveal, fill: 'both' });
+		}
+
+		const reading = document.createElement('div');
+		reading.className = 'reading';
+		reading.setAttribute('aria-hidden', 'true');
+		const number = Object.assign(document.createElement('b'), { textContent: readout });
+		number.style.fontSize = `${Math.round(size * 0.15)}px`;
+		reading.append(number, Object.assign(document.createElement('span'), { textContent: data.label }));
+		face.append(...(glow ? [glow] : []), arc, reading);
+		root.replaceChildren(face);
+		if (data.variant === 'half') reading.style.bottom = '0';
+		else {
+			reading.style.top = `${size / 2}px`;
+			reading.style.transform = 'translateY(-50%)';
+		}
+
+		if (data.range !== undefined) {
+			const range = document.createElement('div');
+			range.className = 'range';
+			range.setAttribute('aria-hidden', 'true');
+			range.style.width = `${rangeWidth}px`;
+			for (const end of [min, max]) {
+				const label = Object.assign(document.createElement('span'), { textContent: format_decimals(end, decimals) });
+				label.style.width = `${thickness}px`;
+				range.append(label);
+			}
+			root.append(range);
+		}
+
+		const draw = (elapsed: number) => put(arc, gauge_arc(variant, size, segments, ratio, cell, style, palette, elapsed), Math.ceil(size), Math.ceil(height), 1);
+		if (!motion) return draw(Infinity);
+		const start = performance.now();
+		const tick = (now: number) => {
+			const elapsed = now - start;
+			draw(elapsed);
+			if (elapsed < reveal) requestAnimationFrame(tick);
+		};
+		requestAnimationFrame(tick);
+	}
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.gauge')) build(root);
+	});
+</script>

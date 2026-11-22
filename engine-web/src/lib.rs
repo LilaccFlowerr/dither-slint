@@ -1,4 +1,5 @@
 use dither_slint::Matrix;
+use dither_slint::bloom::Bloom;
 use dither_slint::render::{self, FillOptions, GradientOptions, linear_gradient};
 use dither_slint::diffuse::Method;
 use dither_slint::field::{self, Shader};
@@ -242,14 +243,19 @@ pub fn trend_area(values: &[f32], frame: &[f32], cell: f32, fill: usize, shading
 }
 
 #[wasm_bindgen]
-pub fn trend_bloom(values: &[f32], frame: &[f32], cell: f32, area: bool, blur: f32, strength: f32, color: &[u8]) -> Vec<u8> {
-    let options = dither_slint::trend::BloomOptions { area, blur, strength, color: colors(color)[0] };
+pub fn trend_bloom(values: &[f32], frame: &[f32], cell: f32, area: bool, bloom: usize, color: &[u8]) -> Vec<u8> {
+    let options = dither_slint::trend::BloomOptions { area, bloom: Bloom::ALL[bloom], color: colors(color)[0] };
     bytes(dither_slint::trend::bloom(values, &trend_frame(frame), cell, &options))
 }
 
 #[wasm_bindgen]
-pub fn trend_bloom_padding(blur: f32, cell: f32) -> u32 {
-    dither_slint::trend::bloom_padding(blur, cell)
+pub fn bloom_padding(bloom: usize, cell: f32) -> u32 {
+    dither_slint::bloom::padding(Bloom::ALL[bloom], cell)
+}
+
+#[wasm_bindgen]
+pub fn rect_bloom(columns: u32, rows: u32, cell: f32, bloom: usize, color: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::bloom::rect(columns, rows, cell, Bloom::ALL[bloom], colors(color)[0]))
 }
 
 #[wasm_bindgen]
@@ -281,4 +287,56 @@ pub fn format_number(value: f32) -> String {
 pub fn stat_change(delta: f32, good: usize) -> Vec<String> {
     let change = dither_slint::stat::describe_change(delta, dither_slint::stat::Direction::ALL[good]);
     vec![change.text, format!("{:?}", change.direction).to_lowercase(), format!("{:?}", change.outcome).to_lowercase()]
+}
+
+fn uptime_day(date: &str, uptime: f32, note: &str, status: i32) -> dither_slint::uptime::Day {
+    use dither_slint::uptime::{Day, Status};
+    Day { date: date.into(), uptime, note: note.into(), status: usize::try_from(status).ok().map(|index| Status::ALL[index]) }
+}
+
+/// Status (index), status text, date, percentage and description of one day. A `status` below zero lets the uptime decide.
+#[wasm_bindgen]
+pub fn uptime_info(date: &str, uptime: f32, note: &str, status: i32) -> Vec<String> {
+    use dither_slint::uptime::{Status, date as format_date, describe, percent, status as status_of};
+    let day = uptime_day(date, uptime, note, status);
+    let status = status_of(&day);
+    let index = Status::ALL.iter().position(|each| *each == status).unwrap_or_default();
+    let shown = if uptime < 0.0 { String::new() } else { percent(uptime) };
+    vec![index.to_string(), status.text().into(), format_date(date), shown, describe(&day)]
+}
+
+#[wasm_bindgen]
+pub fn uptime_overall(uptimes: &[f32]) -> String {
+    let days: Vec<_> = uptimes.iter().map(|uptime| uptime_day("", *uptime, "", -1)).collect();
+    dither_slint::uptime::overall(&days).map(dither_slint::uptime::percent).unwrap_or_default()
+}
+
+fn gauge(variant: usize, size: f32, segments: u32, ratio: f32, cell: f32) -> dither_slint::gauge::Gauge {
+    dither_slint::gauge::Gauge { variant: dither_slint::gauge::Variant::ALL[variant], size, segments, ratio, cell }
+}
+
+/// Height, thickness, width of the range row and reveal time in milliseconds.
+#[wasm_bindgen]
+pub fn gauge_layout(variant: usize, size: f32, segments: u32, ratio: f32, cell: f32) -> Vec<f32> {
+    let layout = dither_slint::gauge::layout(&gauge(variant, size, segments, ratio, cell));
+    vec![layout.height, layout.thickness, layout.range_width, dither_slint::gauge::reveal(&layout)]
+}
+
+#[wasm_bindgen]
+pub fn gauge_arc(variant: usize, size: f32, segments: u32, ratio: f32, cell: f32, style: &[u8], palette: &[u8], elapsed: f32) -> Vec<u8> {
+    let [color, track] = colors(palette)[..2] else {
+        unreachable!("a gauge has a colour and a track colour");
+    };
+    let arc = dither_slint::gauge::ArcStyle { fill: FillVariant::ALL[style[0] as usize], matrix: Matrix::ALL[style[1] as usize], color, track, elapsed };
+    bytes(dither_slint::gauge::arc(&gauge(variant, size, segments, ratio, cell), &arc))
+}
+
+#[wasm_bindgen]
+pub fn gauge_bloom(variant: usize, size: f32, segments: u32, ratio: f32, cell: f32, bloom: usize, color: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::gauge::glow(&gauge(variant, size, segments, ratio, cell), Bloom::ALL[bloom], colors(color)[0]))
+}
+
+#[wasm_bindgen]
+pub fn format_decimals(value: f32, decimals: usize) -> String {
+    dither_slint::stat::format_decimals(value, decimals)
 }

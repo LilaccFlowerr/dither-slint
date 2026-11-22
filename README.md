@@ -63,7 +63,7 @@ Run the gallery with `cargo run --example gallery`.
 
 - **Basics:** `DitherGradient`, `DitherButton`, `DitherBadge`, `DitherCard`, `DitherDivider`
 - **Controls:** `DitherSwitch`, `DitherSlider`, `DitherInput`, `DitherTabs`, `DitherDropdownMenu`
-- **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`
+- **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`, `DitherUptimeBar`, `DitherGauge`
 
 There is also `DitherImage` for dithering a photo, four animated backgrounds (`DitherNoiseField`, `DitherPlasma`, `DitherRipples` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
 
@@ -517,6 +517,73 @@ DitherSparkline {
 | `animate` | `DitherTheme.animated` | The line draws in and the fill fades in. |
 | `matrix` | `bayer4` | The dither pattern. |
 | `cell` | `2px` | Size of one dither cell. |
+
+### DitherUptimeBar
+
+A status-page row: one dithered bar per day, coloured and textured by status, with the overall uptime. Hover, tap or arrow through the bars for each day's details. It shows the last 30, 60 or 90 days, depending on its width.
+
+```slint
+DitherUptimeBar {
+    label: "API";
+    days: [
+        { date: "2026-11-10", uptime: 1 },
+        { date: "2026-11-11", uptime: 0.995, note: "Slow responses from the EU region." },
+        { date: "2026-11-12", uptime: 1 },
+    ];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `label` | | The service. |
+| `days` | | One entry per day, oldest first: `date`, `uptime` from 0 to 1 (negative for no data) and an optional `note`. |
+| `fill` | `gradient` | Texture of the up days. Degraded days are hatched, outages solid, days without data dotted. |
+| `bloom` | `off` | `low` or `high` adds a glow behind incidents. |
+| `up-color`, `degraded-color`, `down-color`, `none-color` | green, orange, red, grey | Colour per status. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `2px` | Size of one dither cell. |
+
+A day is up at 99.9% or more, degraded at 99% or more and an outage below that. Set `status` with `custom-status: true` to decide it yourself.
+
+### DitherGauge
+
+A radial gauge built from dithered blocks: a half arc, a 270° dial or a full ring. Blocks up to the value fill in over a faint track, and the block at the value is solid and steps out by a cell, like a needle.
+
+```slint
+DitherGauge {
+    label: "CPU";
+    value: 72;
+    unit: "%";
+}
+
+DitherGauge {
+    label: "Speed";
+    value: 88;
+    unit: " km/h";
+    maximum: 160;
+    variant: DitherGaugeVariant.dial;
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `value` | `0` | The reading, between `minimum` and `maximum`. |
+| `label` | | What is measured. Shown under the value and used as the accessible name. |
+| `minimum`, `maximum` | `0`, `100` | The scale. |
+| `variant` | `half` | `half`, `dial` or `ring`. |
+| `size` | `220px` | Width of the gauge. |
+| `segments` | 28, 36 or 48 | Number of blocks. The default depends on the variant. |
+| `unit` | | Shown after the value. |
+| `decimals` | `1` | Most decimals in the value and the range. |
+| `value-text` | | Text for the reading, instead of the value and unit. |
+| `show-range` | `true`, `false` for `ring` | Shows `minimum` and `maximum` under the ends of the arc. |
+| `color` | `DitherTheme.ink` | Colour of the value arc. |
+| `track-color` | `color` | Colour of the empty track, drawn faint. |
+| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `bloom` | `off` | `low` or `high` adds a glow behind the filled blocks. |
+| `animate` | `DitherTheme.animated` | Fades the blocks in one by one. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `3px` | Size of one dither cell. |
 
 ### DitherSkeleton
 

@@ -1,10 +1,12 @@
 pub mod avatar;
 pub mod backgrounds;
+pub mod bloom;
 pub mod color;
 pub mod diffuse;
 pub mod empty;
 pub mod export;
 pub mod field;
+pub mod gauge;
 pub mod glow;
 pub mod lively;
 pub mod loader;
@@ -19,6 +21,7 @@ pub mod style;
 pub mod switch;
 pub mod tabs;
 pub mod trend;
+pub mod uptime;
 
 mod blue_noise;
 
@@ -33,7 +36,7 @@ macro_rules! install {
         use $crate::lively::{Hover, Idle, Layer, Press};
         use $crate::slint::{ComponentHandle as _, Model as _};
         use $crate::style::{FillEdge, FillVariant};
-        use $crate::{Matrix, diffuse::Method, glow::Glow, render};
+        use $crate::{Matrix, bloom::Bloom, diffuse::Method, glow::Glow, render};
 
         fn cells(count: i32) -> u32 {
             count.max(0) as u32
@@ -45,6 +48,34 @@ macro_rules! install {
                 height: frame.height,
                 margin: $crate::trend::Margin { left: frame.left, right: frame.right, top: frame.top, bottom: frame.bottom },
                 domain: (frame.min != frame.max).then_some((frame.min, frame.max)),
+            }
+        }
+
+        fn uptime_day(day: &DitherUptimeDay) -> $crate::uptime::Day {
+            $crate::uptime::Day {
+                date: day.date.to_string(),
+                uptime: day.uptime,
+                note: day.note.to_string(),
+                status: day.custom_status.then(|| $crate::uptime::Status::ALL[day.status as usize]),
+            }
+        }
+
+        fn uptime_status(status: $crate::uptime::Status) -> DitherUptimeStatus {
+            match status {
+                $crate::uptime::Status::Up => DitherUptimeStatus::Up,
+                $crate::uptime::Status::Degraded => DitherUptimeStatus::Degraded,
+                $crate::uptime::Status::Down => DitherUptimeStatus::Down,
+                $crate::uptime::Status::None => DitherUptimeStatus::None,
+            }
+        }
+
+        fn gauge_spec(spec: &DitherGaugeSpec) -> $crate::gauge::Gauge {
+            $crate::gauge::Gauge {
+                variant: $crate::gauge::Variant::ALL[spec.variant as usize],
+                size: spec.size,
+                segments: spec.segments.max(0) as u32,
+                ratio: spec.ratio,
+                cell: spec.cell,
             }
         }
 
@@ -147,10 +178,11 @@ macro_rules! install {
         });
         engine.on_trend_bloom(|values, frame, cell, bloom| {
             let values: Vec<f32> = values.iter().collect();
-            let options = $crate::trend::BloomOptions { area: bloom.area, blur: bloom.blur, strength: bloom.strength, color: bloom.color };
+            let options = $crate::trend::BloomOptions { area: bloom.area, bloom: Bloom::ALL[bloom.bloom as usize], color: bloom.color };
             $crate::trend::bloom(&values, &trend_frame(&frame), cell, &options)
         });
-        engine.on_trend_bloom_padding(|blur, cell| $crate::trend::bloom_padding(blur, cell) as i32);
+        engine.on_bloom_padding(|bloom, cell| $crate::bloom::padding(Bloom::ALL[bloom as usize], cell) as i32);
+        engine.on_rect_bloom(|columns, rows, cell, bloom, color| $crate::bloom::rect(cells(columns), cells(rows), cell, Bloom::ALL[bloom as usize], color));
         engine.on_trend_line(|values, frame| {
             let values: Vec<f32> = values.iter().collect();
             $crate::trend::path(&$crate::trend::points(&values, &trend_frame(&frame))).into()
@@ -166,6 +198,42 @@ macro_rules! install {
             $crate::trend::summary(&label, &values).into()
         });
         engine.on_format_compact(|value| $crate::stat::format_compact(value).into());
+        engine.on_format_decimals(|value, decimals| $crate::stat::format_decimals(value, decimals.max(0) as usize).into());
+        engine.on_gauge_layout(|spec| {
+            let layout = $crate::gauge::layout(&gauge_spec(&spec));
+            DitherGaugeLayout { height: layout.height, thickness: layout.thickness, range_width: layout.range_width, reveal: $crate::gauge::reveal(&layout) }
+        });
+        engine.on_gauge_arc(|spec, style| {
+            let style = $crate::gauge::ArcStyle {
+                fill: FillVariant::ALL[style.fill as usize],
+                matrix: Matrix::ALL[style.matrix as usize],
+                color: style.color,
+                track: style.track_color,
+                elapsed: style.elapsed,
+            };
+            $crate::gauge::arc(&gauge_spec(&spec), &style)
+        });
+        engine.on_gauge_bloom(|spec, bloom, color| $crate::gauge::glow(&gauge_spec(&spec), Bloom::ALL[bloom as usize], color));
+        engine.on_uptime_day(|day| {
+            let day = uptime_day(&day);
+            let status = $crate::uptime::status(&day);
+            DitherUptimeInfo {
+                status: uptime_status(status),
+                status_text: status.text().into(),
+                date_text: $crate::uptime::date(&day.date).into(),
+                percent_text: if day.uptime < 0.0 { "".into() } else { $crate::uptime::percent(day.uptime).into() },
+                description: $crate::uptime::describe(&day).into(),
+            }
+        });
+        engine.on_uptime_summary(|days| {
+            let days: Vec<_> = days.iter().map(|day| uptime_day(&day)).collect();
+            let status = days.last().map_or($crate::uptime::Status::None, $crate::uptime::status);
+            DitherUptimeSummary {
+                status: uptime_status(status),
+                status_text: status.text().into(),
+                overall_text: $crate::uptime::overall(&days).map($crate::uptime::percent).unwrap_or_default().into(),
+            }
+        });
         engine.on_stat_change(|delta, good| {
             use $crate::stat::{Direction, Outcome};
             let good = match good {
@@ -311,5 +379,8 @@ mod tests {
         assert_eq!(in_rust(&crate::stat::Direction::ALL), in_slint("DitherStatDirection"));
         assert_eq!(in_rust(&crate::stat::Outcome::ALL), in_slint("DitherStatOutcome"));
         assert_eq!(in_rust(&crate::trend::Shading::ALL), in_slint("DitherTrendShading"));
+        assert_eq!(in_rust(&crate::bloom::Bloom::ALL), in_slint("DitherBloom"));
+        assert_eq!(in_rust(&crate::uptime::Status::ALL), in_slint("DitherUptimeStatus"));
+        assert_eq!(in_rust(&crate::gauge::Variant::ALL), in_slint("DitherGaugeVariant"));
     }
 }

@@ -115,8 +115,8 @@ const { label, value, delta, deltaLabel = '', good = 'up', trend, color = 'ink',
 </style>
 
 <script>
-	import { card_glow, stat_change, trend_area, trend_bloom, trend_bloom_padding, trend_line, trend_points } from '../engine/dither_slint_engine_web.js';
-	import { ready, rgba, variants } from '../scripts/dither';
+	import { card_glow, stat_change, trend_area, bloom_padding, trend_bloom, trend_line, trend_points } from '../engine/dither_slint_engine_web.js';
+	import { blooms, ready, rgba, variants } from '../scripts/dither';
 
 	const TREND_HEIGHT = 56;
 	const RADIUS = 12;
@@ -201,10 +201,9 @@ const { label, value, delta, deltaLabel = '', good = 'up', trend, color = 'ink',
 			const frame = new Float32Array([width, TREND_HEIGHT, 0, 0, 6, TREND_HEIGHT * 0.3, 0, 0]);
 			put(area, trend_area(trend, frame, step, variants[data.trendFill as keyof typeof variants], 0, 0.5, 1, new Uint8Array(color)), columns, trendRows, step);
 			if (glow) {
-				const blur = data.bloom === 'high' ? 18 : 10;
-				const pad = trend_bloom_padding(blur, step);
-				const strength = data.bloom === 'high' ? 0.55 : 0.3;
-				put(glow, trend_bloom(trend, frame, step, true, blur, strength, new Uint8Array(color)), columns + 2 * pad, trendRows + 2 * pad, step);
+				const bloom = blooms[data.bloom as keyof typeof blooms];
+				const pad = bloom_padding(bloom, step);
+				put(glow, trend_bloom(trend, frame, step, true, bloom, new Uint8Array(color)), columns + 2 * pad, trendRows + 2 * pad, step);
 				glow.style.left = `${-pad * step}px`;
 				glow.style.top = `${height - TREND_HEIGHT - pad * step}px`;
 			}

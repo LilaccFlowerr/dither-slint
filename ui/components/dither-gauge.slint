@@ -1,0 +1,143 @@
+import { DitherBloom, DitherEngine, DitherFill, DitherGaugeLayout, DitherGaugeSpec, DitherGaugeVariant, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export { DitherGaugeVariant }
+
+export component DitherGauge {
+    in property <float> value;
+    in property <string> label;
+    in property <float> minimum: 0;
+    in property <float> maximum: 100;
+    in property <DitherGaugeVariant> variant: DitherGaugeVariant.half;
+    in property <length> size: 220px;
+    in property <int> segments;
+    in property <string> unit;
+    in property <int> decimals: 1;
+    in property <string> value-text;
+    in property <bool> show-range: root.variant != DitherGaugeVariant.ring;
+    in property <color> color: DitherTheme.ink;
+    in property <color> track-color: root.color;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <bool> animate: DitherTheme.animated;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <float> clamped: Math.min(root.maximum, Math.max(root.minimum, root.value));
+    property <float> ratio: Math.min(1, Math.max(0, (root.clamped - root.minimum) / Math.max(root.maximum - root.minimum, 0.000000001)));
+    property <string> readout: root.value-text != "" ? root.value-text : "\{DitherEngine.format-decimals(root.clamped, root.decimals)}\{root.unit}";
+    property <DitherGaugeSpec> spec: {
+        variant: root.variant,
+        size: root.size / 1px,
+        segments: root.segments,
+        ratio: root.ratio,
+        cell: root.step / 1px,
+    };
+    property <DitherGaugeLayout> geometry: DitherEngine.gauge-layout(root.spec);
+    property <length> arc-height: root.geometry.height * 1px;
+    property <int> columns: Math.ceil(root.size / root.step);
+    property <int> rows: Math.ceil(root.arc-height / root.step);
+    property <int> bloom-padding: DitherEngine.bloom-padding(root.bloom, root.step / 1px);
+
+    property <duration> started: -1ms;
+    property <float> clock;
+    property <float> elapsed: root.animate ? root.clock : 1000000;
+
+    min-width: root.size;
+    preferred-width: root.size;
+    preferred-height: root.arc-height + (root.show-range ? 6px + 14px : 0px);
+    accessible-role: AccessibleRole.progress-indicator;
+    accessible-label: root.label;
+    accessible-value: root.readout;
+    accessible-value-minimum: root.minimum;
+    accessible-value-maximum: root.maximum;
+
+    Timer {
+        interval: 16ms;
+        running: root.animate && root.clock < root.geometry.reveal;
+        triggered => {
+            if root.started < 0ms {
+                root.started = animation-tick();
+            }
+            root.clock = (animation-tick() - root.started) / 1ms;
+        }
+    }
+
+    if root.bloom != DitherBloom.off: Image {
+        x: -root.bloom-padding * root.step;
+        y: -root.bloom-padding * root.step;
+        width: (root.columns + 2 * root.bloom-padding) * root.step;
+        height: (root.rows + 2 * root.bloom-padding) * root.step;
+        image-fit: ImageFit.fill;
+        opacity: Math.min(1, root.elapsed / root.geometry.reveal);
+        source: DitherEngine.gauge-bloom(root.spec, root.bloom, root.color);
+    }
+
+    Image {
+        x: 0;
+        y: 0;
+        width: Math.ceil(root.size / 1px) * 1px;
+        height: Math.ceil(root.arc-height / 1px) * 1px;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: DitherEngine.gauge-arc(root.spec, {
+            fill: root.fill,
+            matrix: root.matrix,
+            color: root.color,
+            track-color: root.track-color,
+            elapsed: root.elapsed,
+        });
+    }
+
+    VerticalLayout {
+        x: 0;
+        y: root.variant == DitherGaugeVariant.half ? root.arc-height - self.height : (root.size - self.height) / 2;
+        width: root.size;
+        height: self.preferred-height;
+        padding-left: root.size * 0.1;
+        padding-right: root.size * 0.1;
+        spacing: 6px;
+
+        Text {
+            text: root.readout;
+            color: DitherTheme.foreground;
+            font-size: Math.round(root.size * 0.15 / 1px) * 1px;
+            font-weight: 600;
+            horizontal-alignment: center;
+        }
+
+        Text {
+            text: root.label;
+            color: DitherTheme.foreground.transparentize(0.4);
+            font-size: 12px;
+            horizontal-alignment: center;
+            overflow: elide;
+        }
+    }
+
+    if root.show-range: HorizontalLayout {
+        x: (root.size - root.geometry.range-width * 1px) / 2;
+        y: root.arc-height + 6px;
+        width: root.geometry.range-width * 1px;
+        alignment: space-between;
+
+        Text {
+            width: root.geometry.thickness * 1px;
+            text: DitherEngine.format-decimals(root.minimum, root.decimals);
+            color: DitherTheme.foreground.transparentize(0.4);
+            font-size: 11px;
+            font-family: "monospace";
+            horizontal-alignment: center;
+        }
+
+        Text {
+            width: root.geometry.thickness * 1px;
+            text: DitherEngine.format-decimals(root.maximum, root.decimals);
+            color: DitherTheme.foreground.transparentize(0.4);
+            font-size: 11px;
+            font-family: "monospace";
+            horizontal-alignment: center;
+        }
+    }
+}

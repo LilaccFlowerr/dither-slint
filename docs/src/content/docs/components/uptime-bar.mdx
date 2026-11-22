@@ -1,0 +1,73 @@
+---
+title: DitherUptimeBar
+description: "A status-page row: one dithered bar per day, coloured and textured by status, with the overall uptime."
+---
+
+import UptimeBar from '../../../components/UptimeBar.astro';
+import Demo from '../../../components/Demo.astro';
+
+One bar per day, oldest first. The status shows in colour and in texture, so it never relies on colour alone: up days are a gradient that is dense at the base, degraded days hatched, outages solid and days without data dotted. Hover, tap or arrow through the bars for each day's details. The row shows the last 30, 60 or 90 days, depending on its width.
+
+<Demo
+	title="Basic"
+	code={`DitherUptimeBar {
+    label: "API";
+    days: [
+        { date: "2026-11-01", uptime: 1 },
+        { date: "2026-11-02", uptime: 1 },
+        { date: "2026-11-03", uptime: 0.9995 },
+        { date: "2026-11-04", uptime: 1 },
+        { date: "2026-11-05", uptime: 0.995, note: "Slow responses from the EU region." },
+        { date: "2026-11-06", uptime: 1 },
+        { date: "2026-11-07", uptime: 1 },
+        { date: "2026-11-08", uptime: 0.97, note: "Database failover took 43 minutes." },
+        { date: "2026-11-09", uptime: 1 },
+        { date: "2026-11-10", uptime: 1 },
+        { date: "2026-11-11", uptime: 0.9992 },
+        { date: "2026-11-12", uptime: 1 },
+    ];
+}`}
+>
+	<UptimeBar label="API" days={[{ date: '2026-11-01', uptime: 1 }, { date: '2026-11-02', uptime: 1 }, { date: '2026-11-03', uptime: 0.9995 }, { date: '2026-11-04', uptime: 1 }, { date: '2026-11-05', uptime: 0.995, note: 'Slow responses from the EU region.' }, { date: '2026-11-06', uptime: 1 }, { date: '2026-11-07', uptime: 1 }, { date: '2026-11-08', uptime: 0.97, note: 'Database failover took 43 minutes.' }, { date: '2026-11-09', uptime: 1 }, { date: '2026-11-10', uptime: 1 }, { date: '2026-11-11', uptime: 0.9992 }, { date: '2026-11-12', uptime: 1 }]} />
+</Demo>
+
+<Demo
+	title="Bloom and days without data"
+	code={`DitherUptimeBar {
+    label: "Webhooks";
+    bloom: DitherBloom.high;
+    days: [
+        { date: "2026-11-01", uptime: -1 },
+        { date: "2026-11-02", uptime: -1 },
+        { date: "2026-11-03", uptime: -1 },
+        { date: "2026-11-04", uptime: 1 },
+        { date: "2026-11-05", uptime: 1 },
+        { date: "2026-11-06", uptime: 0.98 },
+        { date: "2026-11-07", uptime: 1 },
+        { date: "2026-11-08", uptime: 0.996 },
+        { date: "2026-11-09", uptime: 1 },
+        { date: "2026-11-10", uptime: 1 },
+        { date: "2026-11-11", uptime: 1 },
+        { date: "2026-11-12", uptime: 0.94, note: "Delivery paused during the incident.", status: DitherUptimeStatus.down, custom-status: true },
+    ];
+}`}
+>
+	<UptimeBar label="Webhooks" bloom="high" days={[{ date: '2026-11-01', uptime: null }, { date: '2026-11-02', uptime: null }, { date: '2026-11-03', uptime: null }, { date: '2026-11-04', uptime: 1 }, { date: '2026-11-05', uptime: 1 }, { date: '2026-11-06', uptime: 0.98 }, { date: '2026-11-07', uptime: 1 }, { date: '2026-11-08', uptime: 0.996 }, { date: '2026-11-09', uptime: 1 }, { date: '2026-11-10', uptime: 1 }, { date: '2026-11-11', uptime: 1 }, { date: '2026-11-12', uptime: 0.94, note: 'Delivery paused during the incident.', status: 'down' }]} />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `label` | | The service, such as "API". |
+| `days` | | One entry per day, oldest first. Each has a `date` (`"2026-10-13"`), an `uptime` from 0 to 1 (negative for no data) and an optional `note` for the tooltip. |
+| `fill` | `gradient` | Texture of the up days. Degraded days are always hatched, outages solid and days without data dotted. |
+| `bloom` | `off` | `low` or `high` adds a glow behind degraded days and outages, so incidents stand out. |
+| `up-color` | `DitherPalette.green` | Colour of the up days. |
+| `degraded-color` | `DitherPalette.orange` | Colour of the degraded days. |
+| `down-color` | `DitherPalette.red` | Colour of the outages. |
+| `none-color` | `DitherPalette.grey` | Colour of the days without data. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `2px` | Size of one dither cell. |
+
+A day is up at 99.9% or more, degraded at 99% or more and an outage below that. Set `status` with `custom-status: true` to decide it yourself. The uptime in the header is the average of the days with data, and percentages are rounded down, so 99.999% never reads as 100%.

@@ -1,0 +1,65 @@
+import { DitherBloom, DitherFill, DitherGauge, DitherGaugeVariant, DitherPalette } from "../../ui/lib.slint";
+
+export component GaugePage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 32px;
+    alignment: start;
+
+    HorizontalLayout {
+        spacing: 24px;
+        alignment: start;
+
+        DitherGauge {
+            label: "CPU";
+            value: 72;
+            unit: "%";
+        }
+
+        DitherGauge {
+            label: "Speed";
+            value: 88;
+            unit: " km/h";
+            maximum: 160;
+            variant: DitherGaugeVariant.dial;
+            color: DitherPalette.orange;
+        }
+
+        DitherGauge {
+            label: "Storage";
+            value: 64;
+            unit: "%";
+            variant: DitherGaugeVariant.ring;
+            color: DitherPalette.green;
+        }
+    }
+
+    HorizontalLayout {
+        spacing: 24px;
+        alignment: start;
+
+        DitherGauge {
+            label: "Dotted";
+            value: 45;
+            size: 160px;
+            fill: DitherFill.dotted;
+            color: DitherPalette.pink;
+        }
+
+        DitherGauge {
+            label: "Hatched";
+            value: 60;
+            size: 160px;
+            fill: DitherFill.hatched;
+            color: DitherPalette.purple;
+        }
+
+        DitherGauge {
+            label: "Glow";
+            value: 92;
+            size: 160px;
+            segments: 12;
+            bloom: DitherBloom.high;
+            color: DitherPalette.red;
+        }
+    }
+}
