@@ -1,0 +1,49 @@
+import { DitherBloom, DitherFill, DitherPalette, DitherSparkline, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+export component SparklinePage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 14px;
+    alignment: start;
+
+    Heading { text: "Default"; }
+    DitherSparkline {
+        width: 320px;
+        label: "Revenue, last 12 days";
+        data: [12, 14, 13, 18, 17, 22, 21, 27, 31, 29, 34, 38];
+    }
+
+    Heading { text: "Scrub with the pointer or the arrow keys"; }
+    DitherSparkline {
+        width: 320px;
+        height: 48px;
+        interactive: true;
+        label: "Sessions";
+        data: [1200, 1800, 1500, 2600, 2400, 3900, 3500, 4800, 6200];
+        color: DitherPalette.green;
+    }
+
+    Heading { text: "Fills"; }
+    HorizontalLayout {
+        spacing: 20px;
+        alignment: start;
+        DitherSparkline { width: 140px; label: "Dotted"; data: [3, 5, 4, 8, 6, 9, 12]; fill: DitherFill.dotted; color: DitherPalette.pink; }
+        DitherSparkline { width: 140px; label: "Hatched"; data: [9, 7, 8, 5, 6, 3, 4]; fill: DitherFill.hatched; color: DitherPalette.purple; }
+        DitherSparkline { width: 140px; label: "Solid"; data: [1, 2, 2, 4, 3, 6, 7]; fill: DitherFill.solid; color: DitherPalette.blue; }
+        DitherSparkline { width: 140px; label: "Line only"; data: [4, 3, 6, 5, 8, 7, 10]; area: false; color: DitherPalette.orange; }
+    }
+
+    Heading { text: "Shared domain and bloom"; }
+    HorizontalLayout {
+        spacing: 20px;
+        alignment: start;
+        DitherSparkline { width: 140px; label: "A"; data: [10, 20, 15, 30]; domain: { min: 0, max: 100 }; }
+        DitherSparkline { width: 140px; label: "B"; data: [60, 80, 70, 90]; domain: { min: 0, max: 100 }; }
+        DitherSparkline { width: 140px; label: "Bloom"; data: [3, 5, 4, 8, 6, 9, 12]; bloom: DitherBloom.high; color: DitherPalette.orange; }
+    }
+}

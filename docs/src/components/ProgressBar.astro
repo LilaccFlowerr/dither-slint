@@ -1,0 +1,331 @@
+---
+interface Part {
+	label: string;
+	value: number;
+	color?: string;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+}
+
+interface Props {
+	label: string;
+	value?: number;
+	max?: number;
+	valueText?: string;
+	hideLabel?: boolean;
+	size?: 'sm' | 'md' | 'lg';
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	color?: string;
+	bloom?: 'off' | 'low' | 'high';
+	segments?: number;
+	animate?: boolean;
+	cell?: number;
+	parts?: Part[];
+	unit?: string;
+}
+
+const { label, value, max = 100, valueText = '', hideLabel, size = 'md', fill = 'gradient', color = 'ink', bloom = 'off', segments = 0, animate = true, cell = 2, parts, unit = '' } = Astro.props;
+---
+
+<div
+	class="progress"
+	data-label={label}
+	data-value={value}
+	data-max={max}
+	data-value-text={valueText}
+	data-hide-label={hideLabel ? '' : undefined}
+	data-size={size}
+	data-fill={fill}
+	data-color={color}
+	data-bloom={bloom}
+	data-segments={segments}
+	data-animate={animate ? 'true' : 'false'}
+	data-cell={cell}
+	data-parts={parts ? JSON.stringify(parts) : undefined}
+	data-unit={unit}
+>
+</div>
+
+<style is:global>
+	.progress {
+		display: flex;
+		flex: 1 1 240px;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 200px;
+	}
+	.progress .head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 16px;
+		font-size: 14px;
+		color: var(--sl-color-white);
+	}
+	.progress .head .name {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.progress .head .readout {
+		flex: none;
+		font-family: var(--sl-font-mono);
+		font-size: 12px;
+		color: var(--sl-color-gray-3);
+		font-variant-numeric: tabular-nums;
+	}
+	.progress .sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
+	.progress .track {
+		position: relative;
+		width: 100%;
+		overflow: hidden;
+	}
+	.progress .tint {
+		position: absolute;
+		inset: 0;
+	}
+	.progress .run {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+	}
+	.progress .run canvas {
+		position: absolute;
+		inset: 0;
+		display: block;
+		margin: 0 !important;
+		image-rendering: pixelated;
+	}
+	.progress .run .cap {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+	}
+	.progress .legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 16px;
+		margin: 0 !important;
+		padding: 0;
+		list-style: none;
+		font-size: 12px;
+	}
+	.progress .legend li {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin: 0 !important;
+		color: var(--sl-color-gray-3);
+	}
+	.progress .legend i {
+		width: 8px;
+		height: 8px;
+		border-radius: 2px;
+	}
+	.progress .legend b {
+		font-weight: 400;
+		color: var(--sl-color-white);
+	}
+	.progress .legend span {
+		font-family: var(--sl-font-mono);
+		font-variant-numeric: tabular-nums;
+	}
+</style>
+
+<script>
+	import { fill } from '../engine/dither_slint_engine_web.js';
+	import { css, ready, rgba, variants, type Rgba } from '../scripts/dither';
+
+	const rows = { sm: 2, md: 4, lg: 6 } as const;
+	const series = ['ink', 'orange', 'green', 'pink', 'purple', 'blue', 'red', '#808080'];
+	const COMET = 0.34;
+	const GROW = 600;
+	const colorOf = (spec: string) => rgba(spec);
+
+	interface Part {
+		label: string;
+		value: number;
+		color?: string;
+		fill?: keyof typeof variants;
+	}
+
+	function build(root: HTMLElement) {
+		const data = root.dataset as Record<string, string>;
+		const step = Number(data.cell);
+		const max = Math.max(Number(data.max), 1e-9);
+		const size = data.size as keyof typeof rows;
+		const parts: Part[] | null = data.parts ? JSON.parse(data.parts) : null;
+		const single = data.value === undefined || data.value === '' ? null : Number(data.value);
+		const determinate = parts !== null || single !== null;
+		const barFill = data.fill as keyof typeof variants;
+		const barColor = colorOf(data.color);
+		const grow = data.animate === 'true' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		let spans: { start: number; share: number }[] = [];
+		let total = 0;
+		if (parts) {
+			let room = 1;
+			spans = parts.map((part) => {
+				const share = Math.min(room, Math.min(1, Math.max(0, Math.max(0, part.value) / max)));
+				const span = { start: 1 - room, share };
+				room -= share;
+				return span;
+			});
+			total = parts.reduce((sum, part) => sum + Math.max(0, part.value), 0);
+		} else {
+			total = Math.max(0, single ?? 0);
+		}
+		const ratio = Math.min(1, Math.max(0, total / max));
+		const readout = data.valueText || `${Math.round(ratio * 100)}%`;
+
+		root.setAttribute('role', 'progressbar');
+		root.setAttribute('aria-label', data.label);
+		if (determinate) {
+			root.setAttribute('aria-valuemin', '0');
+			root.setAttribute('aria-valuemax', String(Number(data.max)));
+			root.setAttribute('aria-valuenow', String(Math.min(Number(data.max), total)));
+			root.setAttribute('aria-valuetext', readout);
+		} else if (data.valueText) {
+			root.setAttribute('aria-valuetext', data.valueText);
+		}
+
+		const head = document.createElement('div');
+		head.className = data.hideLabel !== undefined ? 'head sr-only' : 'head';
+		const name = Object.assign(document.createElement('span'), { className: 'name', textContent: data.label });
+		head.append(name);
+		if (determinate || data.valueText) head.append(Object.assign(document.createElement('span'), { className: 'readout', textContent: readout }));
+
+		const track = document.createElement('div');
+		track.className = 'track';
+		track.style.height = `${rows[size] * step}px`;
+		const gaps = Number(data.segments);
+		if (gaps > 1) {
+			const image = `linear-gradient(90deg, #000 calc(100% - ${step}px), transparent 0)`;
+			const tile = `calc((100% + ${step}px) / ${gaps}) 100%`;
+			Object.assign(track.style, { maskImage: image, maskRepeat: 'repeat-x', maskSize: tile, webkitMaskImage: image, webkitMaskRepeat: 'repeat-x', webkitMaskSize: tile });
+		}
+		const tint = document.createElement('div');
+		tint.className = 'tint';
+		tint.style.background = css(blend(parts ? rgba('#808080') : barColor));
+		track.append(tint);
+
+		const glow = data.bloom === 'off' ? '' : `drop-shadow(0 0 ${data.bloom === 'high' ? 18 : 10}px ${css([barColor[0], barColor[1], barColor[2], data.bloom === 'high' ? 140 : 77])})`;
+
+		interface Run {
+			box: HTMLElement;
+			canvas: HTMLCanvasElement;
+			cap: HTMLElement;
+			fill: keyof typeof variants;
+			color: Rgba;
+		}
+		const makeRun = (fillName: keyof typeof variants, color: Rgba): Run => {
+			const box = document.createElement('div');
+			box.className = 'run';
+			if (glow) box.style.filter = glow;
+			const canvas = document.createElement('canvas');
+			const cap = document.createElement('div');
+			cap.className = 'cap';
+			cap.style.width = `${step}px`;
+			cap.style.background = css(color);
+			cap.hidden = fillName === 'solid';
+			box.append(canvas, cap);
+			track.append(box);
+			return { box, canvas, cap, fill: fillName, color };
+		};
+		const paint = (run: Run, left: number, width: number) => {
+			run.box.style.left = `${left}px`;
+			run.box.style.width = `${Math.max(0, width)}px`;
+			run.box.hidden = width < 1;
+			if (width < 1) return;
+			const columns = Math.max(1, Math.ceil(width / step));
+			const height = rows[size];
+			const bytes = fill(columns, height, variants[run.fill], 3, 36, 1, 5 / 16, new Uint8Array(run.color), false);
+			run.canvas.width = columns;
+			run.canvas.height = height;
+			run.canvas.style.width = `${columns * step}px`;
+			run.canvas.style.height = `${height * step}px`;
+			run.canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, height), 0, 0);
+		};
+
+		let draw: (progress: number) => void;
+		if (parts) {
+			const runs = parts.map((part, index) => makeRun(part.fill ?? barFill, colorOf(part.color ?? series[index % series.length])));
+			draw = (progress) => {
+				const width = track.clientWidth;
+				runs.forEach((run, index) => {
+					const span = spans[index];
+					paint(run, span.start * width, span.share * width * progress - step);
+				});
+			};
+		} else if (single !== null) {
+			const run = makeRun(barFill, barColor);
+			draw = (progress) => {
+				paint(run, 0, track.clientWidth * ratio * progress);
+				run.cap.hidden = barFill === 'solid' || ratio <= 0;
+			};
+		} else {
+			const run = makeRun(barFill, barColor);
+			let animation: Animation | null = null;
+			draw = () => {
+				const width = track.clientWidth;
+				paint(run, 0, width * COMET);
+				if (grow && !animation) {
+					animation = run.box.animate([{ transform: 'translateX(-100%)' }, { transform: `translateX(${(100 / COMET).toFixed(1)}%)` }], {
+						duration: 1700,
+						easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+						iterations: Infinity,
+					});
+				} else if (!grow) {
+					run.box.style.left = `${(width * (1 - COMET)) / 2}px`;
+				}
+			};
+		}
+
+		root.replaceChildren(head, track);
+		if (parts) {
+			const legend = document.createElement('ul');
+			legend.className = 'legend';
+			parts.forEach((part, index) => {
+				const item = document.createElement('li');
+				const swatch = document.createElement('i');
+				swatch.style.background = css(colorOf(part.color ?? series[index % series.length]));
+				const text = Object.assign(document.createElement('b'), { textContent: part.label });
+				const amount = Object.assign(document.createElement('span'), { textContent: `${Math.round(part.value * 10) / 10}${data.unit}` });
+				item.append(swatch, text, amount);
+				legend.append(item);
+			});
+			root.append(legend);
+		}
+
+		let progress = grow && determinate ? 0 : 1;
+		draw(progress);
+		new ResizeObserver(() => draw(progress)).observe(track);
+		if (grow && determinate) {
+			const start = performance.now();
+			const tick = (now: number) => {
+				const t = Math.min(1, (now - start) / GROW);
+				progress = 1 - Math.pow(1 - t, 4);
+				draw(progress);
+				if (t < 1) requestAnimationFrame(tick);
+			};
+			requestAnimationFrame(tick);
+		}
+	}
+
+	function blend([r, g, b]: Rgba): Rgba {
+		return [r, g, b, Math.round(0.16 * 255)];
+	}
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.progress')) build(root);
+	});
+</script>

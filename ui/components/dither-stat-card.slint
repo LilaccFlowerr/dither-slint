@@ -1,0 +1,174 @@
+import { DitherBloom, DitherEngine, DitherFill, DitherGlow, DitherMatrix, DitherStatChange, DitherStatDirection, DitherStatOutcome, DitherTrendFrame, DitherTrendPoint, DitherTrendShading } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+import { DitherCard } from "dither-card.slint";
+
+export { DitherStatDirection }
+
+export component DitherStatCard inherits DitherCard {
+    in property <string> label;
+    in property <string> value;
+    in property <bool> has-delta;
+    in property <float> delta;
+    in property <string> delta-label;
+    in property <DitherStatDirection> good: DitherStatDirection.up;
+    in property <[float]> trend;
+    in property <DitherFill> trend-fill: DitherFill.gradient;
+    in property <DitherBloom> bloom: DitherBloom.off;
+
+    property <length> trend-height: 56px;
+    property <bool> has-trend: root.trend.length > 1;
+    property <length> pad: 20px;
+    property <length> text-height: 20px + 4px + 36px + (root.has-delta ? 4px + 16px : 0px);
+    property <length> unit: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <length> marker: root.unit * 2;
+    property <length> bloom-blur: root.bloom == DitherBloom.high ? 18px : 10px;
+    property <int> bloom-padding: DitherEngine.trend-bloom-padding(root.bloom-blur / 1px, root.unit / 1px);
+    property <DitherStatChange> change: DitherEngine.stat-change(root.delta, root.good);
+
+    glow: DitherGlow.top-right;
+    strength: 0.12;
+    reach: 200px;
+    rim: false;
+    radius: 12px;
+    inset: 1px;
+    spacing: 0px;
+    animated: false;
+    preferred-width: 260px;
+    preferred-height: root.pad + root.text-height + (root.has-trend ? 8px + root.trend-height : root.pad);
+    accessible-role: AccessibleRole.groupbox;
+    accessible-label: "\{root.label}: \{root.value}";
+    accessible-description: root.has-delta ? "\{root.change.text} \{root.delta-label}" : "";
+
+    surface := Rectangle {
+        border-radius: root.radius - 1px;
+        clip: true;
+
+        property <length> trend-top: self.height - root.trend-height;
+        property <int> columns: Math.ceil(self.width / root.unit);
+        property <int> rows: Math.ceil(root.trend-height / root.unit);
+        property <DitherTrendFrame> frame: {
+            width: self.width / 1px,
+            height: root.trend-height / 1px,
+            left: 0,
+            right: 0,
+            top: 6,
+            bottom: root.trend-height / 1px * 0.3,
+            min: 0,
+            max: 0,
+        };
+        property <[DitherTrendPoint]> points: DitherEngine.trend-points(root.trend, self.frame);
+
+        if root.has-trend && root.bloom != DitherBloom.off: Image {
+            x: -root.bloom-padding * root.unit;
+            y: parent.trend-top - root.bloom-padding * root.unit;
+            width: (parent.columns + 2 * root.bloom-padding) * root.unit;
+            height: (parent.rows + 2 * root.bloom-padding) * root.unit;
+            image-fit: ImageFit.fill;
+            source: DitherEngine.trend-bloom(root.trend, parent.frame, root.unit / 1px, { area: true, blur: root.bloom-blur / 1px, strength: root.bloom == DitherBloom.high ? 0.55 : 0.3, color: root.color });
+        }
+
+        VerticalLayout {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            height: root.has-trend ? parent.trend-top : parent.height;
+            padding-left: root.pad - 1px;
+            padding-right: root.pad - 1px;
+            padding-top: root.pad - 1px;
+            padding-bottom: root.has-trend ? 8px : root.pad - 1px;
+            spacing: 4px;
+            alignment: start;
+
+            Text {
+                text: root.label;
+                color: DitherTheme.foreground.transparentize(0.4);
+                font-size: 14px;
+                overflow: elide;
+            }
+
+            Text {
+                text: root.value;
+                color: DitherTheme.foreground;
+                font-size: 30px;
+                font-weight: 600;
+                overflow: elide;
+            }
+
+            if root.has-delta: HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+
+                HorizontalLayout {
+                    spacing: 4px;
+
+                    if root.change.direction != DitherStatDirection.flat: Path {
+                        y: (parent.height - self.height) / 2;
+                        width: 8px;
+                        height: 8px;
+                        viewbox-width: 8;
+                        viewbox-height: 8;
+                        commands: root.change.direction == DitherStatDirection.up ? "M 4 1 L 7.5 6.5 L 0.5 6.5 Z" : "M 4 7 L 7.5 1.5 L 0.5 1.5 Z";
+                        fill: root.change.outcome == DitherStatOutcome.good ? DitherEngine.mix(DitherPalette.green, DitherTheme.foreground, 0.22) : DitherEngine.mix(DitherPalette.red, DitherTheme.foreground, 0.22);
+                    }
+
+                    Text {
+                        text: root.change.text;
+                        color: root.change.outcome == DitherStatOutcome.good ? DitherEngine.mix(DitherPalette.green, DitherTheme.foreground, 0.22)
+                            : root.change.outcome == DitherStatOutcome.bad ? DitherEngine.mix(DitherPalette.red, DitherTheme.foreground, 0.22)
+                            : DitherTheme.foreground.transparentize(0.4);
+                        font-size: 12px;
+                        font-weight: 500;
+                        font-family: "monospace";
+                        vertical-alignment: center;
+                    }
+                }
+
+                Text {
+                    text: root.delta-label;
+                    color: DitherTheme.foreground.transparentize(0.4);
+                    font-size: 12px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+            }
+        }
+        if root.has-trend: Rectangle {
+            x: 0;
+            y: parent.trend-top;
+            width: parent.width;
+            height: root.trend-height;
+
+            Image {
+                x: 0;
+                y: 0;
+                width: surface.columns * root.unit;
+                height: surface.rows * root.unit;
+                image-fit: ImageFit.fill;
+                image-rendering: pixelated;
+                source: DitherEngine.trend-area(root.trend, surface.frame, root.unit / 1px, { fill: root.trend-fill, shading: DitherTrendShading.bands, level: 0.5, matrix: root.matrix, color: root.color });
+            }
+
+            Path {
+                x: 0;
+                y: 0;
+                width: parent.width;
+                height: parent.height;
+                viewbox-width: self.width / 1px;
+                viewbox-height: self.height / 1px;
+                commands: DitherEngine.trend-line(root.trend, surface.frame);
+                stroke: root.color;
+                stroke-width: 1.5px;
+                stroke-line-join: round;
+                stroke-line-cap: round;
+            }
+
+            Rectangle {
+                x: Math.min(surface.points[surface.points.length - 1].x * 1px, parent.width - root.marker / 2) - root.marker / 2;
+                y: surface.points[surface.points.length - 1].y * 1px - root.marker / 2;
+                width: root.marker;
+                height: root.marker;
+                background: root.color;
+            }
+        }
+    }
+}

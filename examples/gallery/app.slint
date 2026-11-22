@@ -17,6 +17,9 @@ import { AvatarPage } from "avatar-page.slint";
 import { LoaderPage } from "loader-page.slint";
 import { SkeletonPage } from "skeleton-page.slint";
 import { EmptyPage } from "empty-page.slint";
+import { ProgressPage } from "progress-page.slint";
+import { StatPage } from "stat-page.slint";
+import { SparklinePage } from "sparkline-page.slint";
 
 export component Gallery inherits Window {
     title: "dither-slint";
@@ -26,7 +29,7 @@ export component Gallery inherits Window {
 
     in property <image> sample;
 
-    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch", "Slider", "Input", "Dropdown", "Avatar", "Loader", "Skeleton", "Empty state"];
+    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch", "Slider", "Input", "Dropdown", "Avatar", "Loader", "Skeleton", "Empty state", "Progress", "Stat card", "Sparkline"];
     property <int> page: 0;
 
     HorizontalLayout {
@@ -72,6 +75,9 @@ export component Gallery inherits Window {
             if root.page == 14: LoaderPage { }
             if root.page == 15: SkeletonPage { }
             if root.page == 16: EmptyPage { }
+            if root.page == 17: ProgressPage { }
+            if root.page == 18: StatPage { }
+            if root.page == 19: SparklinePage { }
         }
     }
 }

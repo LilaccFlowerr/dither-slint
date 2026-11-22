@@ -1,0 +1,123 @@
+---
+title: DitherSparkline
+description: "A tiny trend line for tables and cards: a line, a dithered fill that is densest just under it, and a dot on the latest value."
+---
+
+import Sparkline from '../../../components/Sparkline.astro';
+import Demo from '../../../components/Demo.astro';
+
+A sparkline is a glance, not a chart. The width follows the element, so size it with `width` or the layout around it. The fill is densest just under the line, and a dot marks the latest value. With `interactive` you can scrub across it with the pointer or the arrow keys to read single values.
+
+<Demo
+	title="Basic"
+	code={`DitherSparkline {
+    label: "Revenue, last 12 days";
+    height: 64px;
+    data: [12, 14, 13, 18, 17, 22, 21, 27, 31, 29, 34, 38];
+}`}
+>
+	<Sparkline label="Revenue, last 12 days" height={64} data={[12, 14, 13, 18, 17, 22, 21, 27, 31, 29, 34, 38]} />
+</Demo>
+
+<Demo
+	title="Scrubbing"
+	code={`DitherSparkline {
+    label: "Sessions";
+    height: 64px;
+    interactive: true;
+    data: [1200, 1800, 1500, 2600, 2400, 3900, 3500, 4800, 6200];
+    color: DitherPalette.green;
+}`}
+>
+	<Sparkline label="Sessions" height={64} interactive data={[1200, 1800, 1500, 2600, 2400, 3900, 3500, 4800, 6200]} color="green" />
+</Demo>
+
+<Demo
+	title="Fills"
+	code={`DitherSparkline {
+    label: "Dotted";
+    height: 48px;
+    data: [3, 5, 4, 8, 6, 9, 12];
+    fill: DitherFill.dotted;
+    color: DitherPalette.pink;
+}
+
+DitherSparkline {
+    label: "Hatched";
+    height: 48px;
+    data: [9, 7, 8, 5, 6, 3, 4];
+    fill: DitherFill.hatched;
+    color: DitherPalette.purple;
+}
+
+DitherSparkline {
+    label: "Solid";
+    height: 48px;
+    data: [1, 2, 2, 4, 3, 6, 7];
+    fill: DitherFill.solid;
+    color: DitherPalette.blue;
+}
+
+DitherSparkline {
+    label: "Line only";
+    height: 48px;
+    data: [4, 3, 6, 5, 8, 7, 10];
+    area: false;
+    color: DitherPalette.orange;
+}`}
+>
+	<Sparkline label="Dotted" height={48} data={[3, 5, 4, 8, 6, 9, 12]} fill="dotted" color="pink" />
+	<Sparkline label="Hatched" height={48} data={[9, 7, 8, 5, 6, 3, 4]} fill="hatched" color="purple" />
+	<Sparkline label="Solid" height={48} data={[1, 2, 2, 4, 3, 6, 7]} fill="solid" color="blue" />
+	<Sparkline label="Line only" height={48} data={[4, 3, 6, 5, 8, 7, 10]} area={false} color="orange" />
+</Demo>
+
+<Demo
+	title="Shared domain and bloom"
+	code={`DitherSparkline {
+    label: "A";
+    height: 48px;
+    data: [10, 20, 15, 30];
+    domain: { min: 0, max: 100 };
+}
+
+DitherSparkline {
+    label: "B";
+    height: 48px;
+    data: [60, 80, 70, 90];
+    domain: { min: 0, max: 100 };
+}
+
+DitherSparkline {
+    label: "Bloom";
+    height: 48px;
+    data: [3, 5, 4, 8, 6, 9, 12];
+    bloom: DitherBloom.high;
+    color: DitherPalette.orange;
+}`}
+>
+	<Sparkline label="A" height={48} data={[10, 20, 15, 30]} domain={[0, 100]} />
+	<Sparkline label="B" height={48} data={[60, 80, 70, 90]} domain={[0, 100]} />
+	<Sparkline label="Bloom" height={48} data={[3, 5, 4, 8, 6, 9, 12]} bloom="high" color="orange" />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `data` | | Values in order, oldest first. |
+| `label` | | What the trend shows, such as "Revenue, last 30 days". Starts the accessible summary. |
+| `height` | `32px` | Height of the sparkline. |
+| `color` | `DitherTheme.ink` | Colour of the line, the fill and the dot. |
+| `area` | `true` | Fills the area under the line. |
+| `fill` | `gradient` | `gradient` (densest just under the line), `dotted`, `hatched` or `solid`. |
+| `level` | `0.5` | Gradient only: coverage of the fill just under the line, 0 to 1. |
+| `bloom` | `off` | `low` or `high` adds a soft glow under the line and the fill. |
+| `dot` | `true` | A dot on the latest value. |
+| `interactive` | `false` | Scrub with the pointer or the arrow keys to read single values. `Escape` lets go. |
+| `domain` | the data's range | The value range the height covers, as `{ min, max }`. Give a row of sparklines one domain to compare them. |
+| `animate` | `DitherTheme.animated` | The line draws in and the fill fades in. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `2px` | Size of one dither cell. |
+
+Values in the readout and the summary are short: 1.2K, 3.4M. `DitherEngine.format-compact(float)` gives you the same format.

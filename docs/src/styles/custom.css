@@ -24,7 +24,10 @@
 .avatar *,
 .avatar-group *,
 .loader *,
+.progress *,
 .skeleton *,
+.stat *,
+.spark *,
 .empty .scene canvas {
 	margin-top: 0 !important;
 }

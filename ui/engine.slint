@@ -16,6 +16,12 @@ export enum DitherIllustration { box, search, folder, planet }
 
 export enum DitherTabsVariant { pill, underline }
 
+export enum DitherStatDirection { up, down, flat }
+
+export enum DitherStatOutcome { good, bad, neutral }
+
+export enum DitherTrendShading { bands, near }
+
 export enum DitherMethod { bayer4, bayer8, blue-noise, floyd-steinberg, atkinson, sierra-lite }
 
 export enum DitherHover { sweep, spotlight, scan, trace, rise, noise, none }
@@ -23,6 +29,56 @@ export enum DitherHover { sweep, spotlight, scan, trace, rise, noise, none }
 export enum DitherPress { ripple, burst, flash, pulse, glitch, none }
 
 export enum DitherIdle { none, shimmer, breathe, twinkle }
+
+export struct DitherProgressPart {
+    label: string,
+    value: float,
+    color: color,
+    fill: DitherFill,
+    custom-fill: bool,
+}
+
+export struct DitherProgressSpan {
+    start: float,
+    share: float,
+}
+
+export struct DitherStatChange {
+    text: string,
+    direction: DitherStatDirection,
+    outcome: DitherStatOutcome,
+}
+
+export struct DitherTrendFrame {
+    width: float,
+    height: float,
+    left: float,
+    right: float,
+    top: float,
+    bottom: float,
+    min: float,
+    max: float,
+}
+
+export struct DitherTrendStyle {
+    fill: DitherFill,
+    shading: DitherTrendShading,
+    level: float,
+    matrix: DitherMatrix,
+    color: color,
+}
+
+export struct DitherTrendBloom {
+    area: bool,
+    blur: float,
+    strength: float,
+    color: color,
+}
+
+export struct DitherTrendPoint {
+    x: float,
+    y: float,
+}
 
 export global DitherEngine {
     pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, palette: [color], levels: int) -> image;
@@ -34,7 +90,18 @@ export global DitherEngine {
     pure callback loader(variant: DitherLoaderVariant, height: float, cell: float, time: float, matrix: DitherMatrix, color: color) -> image;
     pure callback skeleton(columns: int, rows: int, cell: float, fill: DitherFill, animation: DitherSkeletonAnimation, phase: float, matrix: DitherMatrix, color: color) -> image;
     pure callback empty(illustration: DitherIllustration, backdrop: bool, matrix: DitherMatrix, color: color) -> image;
+    pure callback progress-spans(parts: [DitherProgressPart], max: float) -> [DitherProgressSpan];
+    pure callback progress-total(parts: [DitherProgressPart]) -> float;
     pure callback slider-range-fill(columns: int, rows: int, start: int, end: int, both: bool, hot: bool, matrix: DitherMatrix, color: color) -> image;
+    pure callback trend-area(values: [float], frame: DitherTrendFrame, cell: float, style: DitherTrendStyle) -> image;
+    pure callback trend-bloom(values: [float], frame: DitherTrendFrame, cell: float, bloom: DitherTrendBloom) -> image;
+    pure callback trend-bloom-padding(blur: float, cell: float) -> int;
+    pure callback trend-line(values: [float], frame: DitherTrendFrame) -> string;
+    pure callback trend-points(values: [float], frame: DitherTrendFrame) -> [DitherTrendPoint];
+    pure callback trend-summary(label: string, values: [float]) -> string;
+    pure callback format-compact(value: float) -> string;
+    pure callback stat-change(delta: float, good: DitherStatDirection) -> DitherStatChange;
+    pure callback format-number(value: float) -> string;
     pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;
     pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;

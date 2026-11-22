@@ -1,0 +1,56 @@
+import { DitherBloom, DitherFill, DitherPalette, DitherProgressBar, DitherProgressPart, DitherProgressSize } from "../../ui/lib.slint";
+
+export component ProgressPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 20px;
+    alignment: start;
+
+    DitherProgressBar {
+        label: "Uploading";
+        value: 64;
+    }
+
+    DitherProgressBar {
+        label: "Loading";
+    }
+
+    DitherProgressBar {
+        label: "Sync";
+        value: 72;
+        segments: 10;
+        color: DitherPalette.green;
+    }
+
+    DitherProgressBar {
+        label: "Storage";
+        unit: " GB";
+        parts: [
+            { label: "Photos", value: 32 },
+            { label: "Videos", value: 24 },
+            { label: "Documents", value: 12 },
+        ];
+    }
+
+    HorizontalLayout {
+        spacing: 20px;
+
+        DitherProgressBar {
+            label: "Small";
+            value: 40;
+            size: DitherProgressSize.sm;
+        }
+        DitherProgressBar {
+            label: "Large";
+            value: 40;
+            size: DitherProgressSize.lg;
+            fill: DitherFill.hatched;
+            color: DitherPalette.pink;
+        }
+        DitherProgressBar {
+            label: "Glow";
+            value: 80;
+            bloom: DitherBloom.high;
+            color: DitherPalette.orange;
+        }
+    }
+}

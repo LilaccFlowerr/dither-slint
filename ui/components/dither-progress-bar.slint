@@ -1,0 +1,210 @@
+import { DitherBloom, DitherEdge, DitherEngine, DitherFill, DitherProgressPart, DitherProgressSpan } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+import { DitherLayer as Layer } from "layer.slint";
+
+export { DitherProgressPart }
+
+export enum DitherProgressSize { sm, md, lg }
+
+component Run inherits Rectangle {
+    in property <DitherFill> fill;
+    in property <color> tone;
+    in property <length> step;
+    in property <bool> cap: true;
+
+    clip: true;
+
+    Layer {
+        cell: root.step;
+        fill: root.fill;
+        edge: DitherEdge.right;
+        length: 36;
+        from: 1;
+        to: 0.3125;
+        color: root.tone;
+        frame: false;
+    }
+
+    if root.cap && root.fill != DitherFill.solid: Rectangle {
+        x: root.width - root.step;
+        width: root.step;
+        background: root.tone;
+    }
+}
+
+export component DitherProgressBar inherits VerticalLayout {
+    in property <string> label;
+    in property <float> value: -1;
+    in property <float> maximum: 100;
+    in property <string> value-text;
+    in property <bool> hide-label;
+    in property <DitherProgressSize> size: DitherProgressSize.md;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <color> color: DitherTheme.ink;
+    in property <DitherBloom> bloom: DitherBloom.off;
+    in property <int> segments;
+    in property <bool> animate: DitherTheme.animated;
+    in property <length> cell: 2px;
+    in property <[DitherProgressPart]> parts;
+    in property <string> unit;
+    in property <color> gap: DitherTheme.background;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> rows: root.size == DitherProgressSize.sm ? 2 : root.size == DitherProgressSize.lg ? 6 : 4;
+    property <bool> stacked: root.parts.length > 0;
+    property <float> limit: Math.max(root.maximum, 0.000001);
+    property <float> total: root.stacked ? DitherEngine.progress-total(root.parts) : Math.max(root.value, 0);
+    property <bool> determinate: root.stacked || root.value >= 0;
+    property <float> ratio: Math.min(1, Math.max(0, root.total / root.limit));
+    property <string> readout: root.value-text != "" ? root.value-text : "\{Math.round(root.ratio * 100)}%";
+    property <[DitherProgressSpan]> spans: DitherEngine.progress-spans(root.parts, root.limit);
+
+    property <bool> mounted;
+    property <float> shown: root.mounted || !root.animate ? root.ratio : 0;
+    animate shown { duration: root.animate ? 600ms : 0ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+
+    property <float> sweep;
+    property <float> eased: root.sweep < 0.5 ? 4 * root.sweep * root.sweep * root.sweep : 1 - Math.pow(-2 * root.sweep + 2, 3) / 2;
+
+    pure function series(index: int) -> color {
+        let slot = Math.mod(index, 8);
+        return slot == 0 ? DitherTheme.ink
+            : slot == 1 ? DitherPalette.orange
+            : slot == 2 ? DitherPalette.green
+            : slot == 3 ? DitherPalette.pink
+            : slot == 4 ? DitherPalette.purple
+            : slot == 5 ? DitherPalette.blue
+            : slot == 6 ? DitherPalette.red : DitherPalette.grey;
+    }
+
+    spacing: 8px;
+    accessible-role: AccessibleRole.progress-indicator;
+    accessible-label: root.label;
+    accessible-value: root.determinate ? root.readout : root.value-text;
+    accessible-value-minimum: 0;
+    accessible-value-maximum: root.maximum;
+
+    Timer {
+        interval: 16ms;
+        running: !root.mounted;
+        triggered => {
+            root.mounted = true;
+        }
+    }
+
+    Timer {
+        interval: 16ms;
+        running: !root.determinate && root.animate;
+        triggered => {
+            root.sweep = Math.mod(animation-tick() / 1ms, 1700) / 1700;
+        }
+    }
+
+    if !root.hide-label: HorizontalLayout {
+        spacing: 16px;
+
+        Text {
+            text: root.label;
+            color: DitherTheme.foreground;
+            font-size: 14px;
+            overflow: elide;
+        }
+
+        if root.determinate || root.value-text != "": Text {
+            text: root.readout;
+            color: DitherTheme.foreground.transparentize(0.4);
+            font-size: 12px;
+            font-family: "monospace";
+            horizontal-alignment: right;
+        }
+    }
+
+    Rectangle {
+        height: root.rows * root.step;
+        background: (root.stacked ? DitherPalette.grey : root.color).transparentize(0.84);
+        drop-shadow-blur: root.bloom == DitherBloom.off ? 0px : root.bloom == DitherBloom.high ? 18px : 10px;
+        drop-shadow-color: root.color.transparentize(root.bloom == DitherBloom.high ? 0.45 : 0.7);
+
+        Rectangle {
+            width: 100%;
+            height: 100%;
+            clip: true;
+
+            if !root.stacked && root.determinate: Run {
+                x: 0;
+                width: parent.width * root.shown;
+                height: parent.height;
+                fill: root.fill;
+                tone: root.color;
+                step: root.step;
+                cap: root.ratio > 0;
+            }
+
+            if !root.determinate: Run {
+                x: root.animate ? -self.width + root.eased * (parent.width + self.width) : (parent.width - self.width) / 2;
+                width: parent.width * 0.34;
+                height: parent.height;
+                fill: root.fill;
+                tone: root.color;
+                step: root.step;
+            }
+
+            for part[index] in root.parts: Rectangle {
+                x: root.spans[index].start * parent.width;
+                width: root.spans[index].share * parent.width * (root.mounted || !root.animate ? 1 : 0);
+                height: parent.height;
+                clip: true;
+                animate width { duration: root.animate ? 600ms : 0ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+
+                Run {
+                    x: 0;
+                    width: max(0px, parent.width - root.step);
+                    height: parent.height;
+                    fill: part.custom-fill ? part.fill : root.fill;
+                    tone: part.color.alpha == 0 ? root.series(index) : part.color;
+                    step: root.step;
+                }
+            }
+
+            for gap-index in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]: Rectangle {
+                visible: root.segments > 1 && gap-index < root.segments - 1;
+                x: (gap-index + 1) * (parent.width + root.step) / root.segments - root.step;
+                width: root.step;
+                height: parent.height;
+                background: root.gap;
+            }
+        }
+    }
+
+    if root.stacked: HorizontalLayout {
+        spacing: 16px;
+        alignment: start;
+
+        for part[index] in root.parts: HorizontalLayout {
+            spacing: 6px;
+
+            Rectangle {
+                y: (parent.height - self.height) / 2;
+                width: 8px;
+                height: 8px;
+                border-radius: 2px;
+                background: part.color.alpha == 0 ? root.series(index) : part.color;
+            }
+
+            Text {
+                text: part.label;
+                color: DitherTheme.foreground;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+
+            Text {
+                text: "\{Math.round(part.value * 10) / 10}\{root.unit}";
+                color: DitherTheme.foreground.transparentize(0.4);
+                font-size: 12px;
+                font-family: "monospace";
+                vertical-alignment: center;
+            }
+        }
+    }
+}

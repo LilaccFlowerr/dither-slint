@@ -10,12 +10,15 @@ pub mod lively;
 pub mod loader;
 pub mod matrix;
 pub mod noise;
+pub mod progress;
 pub mod render;
 pub mod skeleton;
 pub mod slider;
+pub mod stat;
 pub mod style;
 pub mod switch;
 pub mod tabs;
+pub mod trend;
 
 mod blue_noise;
 
@@ -34,6 +37,15 @@ macro_rules! install {
 
         fn cells(count: i32) -> u32 {
             count.max(0) as u32
+        }
+
+        fn trend_frame(frame: &DitherTrendFrame) -> $crate::trend::Frame {
+            $crate::trend::Frame {
+                width: frame.width,
+                height: frame.height,
+                margin: $crate::trend::Margin { left: frame.left, right: frame.right, top: frame.top, bottom: frame.bottom },
+                domain: (frame.min != frame.max).then_some((frame.min, frame.max)),
+            }
         }
 
         let engine = $component.global::<DitherEngine>();
@@ -112,6 +124,71 @@ macro_rules! install {
             let layer = if backdrop { $crate::empty::Layer::Backdrop } else { $crate::empty::Layer::Object };
             $crate::empty::empty($crate::empty::Illustration::ALL[illustration as usize], layer, Matrix::ALL[matrix as usize], color)
         });
+        engine.on_progress_spans(|parts, max| {
+            let values: Vec<f32> = parts.iter().map(|part| part.value).collect();
+            let spans: Vec<DitherProgressSpan> =
+                $crate::progress::spans(&values, max).into_iter().map(|span| DitherProgressSpan { start: span.start, share: span.share }).collect();
+            $crate::slint::ModelRc::new($crate::slint::VecModel::from(spans))
+        });
+        engine.on_progress_total(|parts| {
+            let values: Vec<f32> = parts.iter().map(|part| part.value).collect();
+            $crate::progress::total(&values)
+        });
+        engine.on_trend_area(|values, frame, cell, style| {
+            let values: Vec<f32> = values.iter().collect();
+            let options = $crate::trend::AreaOptions {
+                fill: FillVariant::ALL[style.fill as usize],
+                shading: $crate::trend::Shading::ALL[style.shading as usize],
+                level: style.level,
+                matrix: Matrix::ALL[style.matrix as usize],
+                color: style.color,
+            };
+            $crate::trend::area(&values, &trend_frame(&frame), cell, &options)
+        });
+        engine.on_trend_bloom(|values, frame, cell, bloom| {
+            let values: Vec<f32> = values.iter().collect();
+            let options = $crate::trend::BloomOptions { area: bloom.area, blur: bloom.blur, strength: bloom.strength, color: bloom.color };
+            $crate::trend::bloom(&values, &trend_frame(&frame), cell, &options)
+        });
+        engine.on_trend_bloom_padding(|blur, cell| $crate::trend::bloom_padding(blur, cell) as i32);
+        engine.on_trend_line(|values, frame| {
+            let values: Vec<f32> = values.iter().collect();
+            $crate::trend::path(&$crate::trend::points(&values, &trend_frame(&frame))).into()
+        });
+        engine.on_trend_points(|values, frame| {
+            let values: Vec<f32> = values.iter().collect();
+            let points: Vec<DitherTrendPoint> =
+                $crate::trend::points(&values, &trend_frame(&frame)).into_iter().map(|point| DitherTrendPoint { x: point.x, y: point.y }).collect();
+            $crate::slint::ModelRc::new($crate::slint::VecModel::from(points))
+        });
+        engine.on_trend_summary(|label, values| {
+            let values: Vec<f32> = values.iter().collect();
+            $crate::trend::summary(&label, &values).into()
+        });
+        engine.on_format_compact(|value| $crate::stat::format_compact(value).into());
+        engine.on_stat_change(|delta, good| {
+            use $crate::stat::{Direction, Outcome};
+            let good = match good {
+                DitherStatDirection::Up => Direction::Up,
+                DitherStatDirection::Down => Direction::Down,
+                DitherStatDirection::Flat => Direction::Flat,
+            };
+            let change = $crate::stat::describe_change(delta, good);
+            DitherStatChange {
+                text: change.text.into(),
+                direction: match change.direction {
+                    Direction::Up => DitherStatDirection::Up,
+                    Direction::Down => DitherStatDirection::Down,
+                    Direction::Flat => DitherStatDirection::Flat,
+                },
+                outcome: match change.outcome {
+                    Outcome::Good => DitherStatOutcome::Good,
+                    Outcome::Bad => DitherStatOutcome::Bad,
+                    Outcome::Neutral => DitherStatOutcome::Neutral,
+                },
+            }
+        });
+        engine.on_format_number(|value| $crate::stat::format_number(value).into());
         engine.on_picture(|source, columns, rows, method, threshold, palette| {
             let method = Method::ALL[method as usize];
             let options = render::PictureOptions { method, threshold, palette: palette.iter().collect() };
@@ -231,5 +308,8 @@ mod tests {
         assert_eq!(in_rust(&crate::loader::Variant::ALL), in_slint("DitherLoaderVariant"));
         assert_eq!(in_rust(&crate::skeleton::Animation::ALL), in_slint("DitherSkeletonAnimation"));
         assert_eq!(in_rust(&crate::empty::Illustration::ALL), in_slint("DitherIllustration"));
+        assert_eq!(in_rust(&crate::stat::Direction::ALL), in_slint("DitherStatDirection"));
+        assert_eq!(in_rust(&crate::stat::Outcome::ALL), in_slint("DitherStatOutcome"));
+        assert_eq!(in_rust(&crate::trend::Shading::ALL), in_slint("DitherTrendShading"));
     }
 }

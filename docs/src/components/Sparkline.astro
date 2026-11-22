@@ -1,0 +1,262 @@
+---
+interface Props {
+	data: number[];
+	label: string;
+	height?: number;
+	color?: string;
+	area?: boolean;
+	fill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	bloom?: 'off' | 'low' | 'high';
+	interactive?: boolean;
+	animate?: boolean;
+	dot?: boolean;
+	level?: number;
+	cell?: number;
+	domain?: [number, number];
+}
+
+const { data, label, height = 32, color = 'ink', area = true, fill = 'gradient', bloom = 'off', interactive, animate = true, dot = true, level = 0.5, cell = 2, domain } = Astro.props;
+---
+
+<span
+	class="spark"
+	style={`height: ${height}px`}
+	data-label={label}
+	data-values={JSON.stringify(data)}
+	data-color={color}
+	data-area={area ? '' : undefined}
+	data-fill={fill}
+	data-bloom={bloom}
+	data-interactive={interactive ? '' : undefined}
+	data-animate={animate ? 'true' : 'false'}
+	data-dot={dot ? '' : undefined}
+	data-level={level}
+	data-cell={cell}
+	data-domain={domain ? JSON.stringify(domain) : undefined}
+>
+</span>
+
+<style is:global>
+	.spark {
+		position: relative;
+		display: inline-block;
+		flex: 1 1 140px;
+		min-width: 120px;
+		vertical-align: middle;
+	}
+	.spark[data-interactive] {
+		border-radius: 2px;
+		outline: none;
+		touch-action: pan-y;
+	}
+	.spark[data-interactive]:focus-visible {
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--sl-color-accent) 60%, transparent);
+	}
+	.spark canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: block;
+		margin: 0 !important;
+		image-rendering: pixelated;
+		pointer-events: none;
+	}
+	.spark canvas.glow {
+		max-width: none;
+		image-rendering: auto;
+	}
+	.spark svg {
+		position: absolute;
+		inset: 0;
+		display: block;
+		margin: 0 !important;
+		overflow: visible;
+		pointer-events: none;
+	}
+	.spark .readout {
+		position: absolute;
+		bottom: 100%;
+		left: 0;
+		margin: 0 0 6px !important;
+		padding: 2px 6px;
+		border: 1px solid color-mix(in srgb, #ebe5d9 12%, transparent);
+		border-radius: 6px;
+		background: color-mix(in srgb, #ebe5d9 8%, #1b1a19);
+		color: #ebe5d9;
+		font-family: var(--sl-font-mono);
+		font-size: 10px;
+		line-height: 1.4;
+		white-space: nowrap;
+		pointer-events: none;
+	}
+	.spark .readout.glide,
+	.spark circle.glide {
+		transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.spark .sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
+	.spark .wipe {
+		clip-path: inset(-10px 100% -10px 0);
+	}
+	.spark .wipe.in {
+		clip-path: inset(-10px 0 -10px 0);
+		transition: clip-path 700ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	.spark .fade {
+		opacity: 0;
+	}
+	.spark .fade.in {
+		opacity: 1;
+		transition: opacity 500ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+</style>
+
+<script>
+	import { format_compact, trend_area, trend_bloom, trend_bloom_padding, trend_line, trend_points, trend_summary } from '../engine/dither_slint_engine_web.js';
+	import { ready, rgba, variants } from '../scripts/dither';
+
+	const DOT = 2.5;
+	const STROKE = 1.5;
+	const svg = 'http://www.w3.org/2000/svg';
+
+	function put(canvas: HTMLCanvasElement, bytes: Uint8Array, columns: number, rows: number, step: number) {
+		canvas.width = columns;
+		canvas.height = rows;
+		canvas.style.width = `${columns * step}px`;
+		canvas.style.height = `${rows * step}px`;
+		canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+	}
+
+	function build(root: HTMLElement) {
+		const data = root.dataset as Record<string, string>;
+		const values = new Float32Array(JSON.parse(data.values));
+		const color = new Uint8Array(rgba(data.color));
+		const step = Number(data.cell);
+		const height = root.clientHeight;
+		const inset = (data.dot !== undefined ? DOT : 0) + STROKE;
+		const [min, max] = data.domain ? (JSON.parse(data.domain) as [number, number]) : [0, 0];
+		const interactive = data.interactive !== undefined;
+		const motion = data.animate === 'true' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const stroke = `rgb(${color[0]} ${color[1]} ${color[2]})`;
+
+		root.setAttribute('aria-label', trend_summary(data.label, values));
+		if (interactive) {
+			root.setAttribute('role', 'group');
+			root.tabIndex = 0;
+		} else {
+			root.setAttribute('role', 'img');
+		}
+
+		const glow = data.bloom !== 'off' && values.length > 1 ? Object.assign(document.createElement('canvas'), { className: 'glow' }) : null;
+		const fill = data.area !== undefined && values.length > 1 ? document.createElement('canvas') : null;
+		const lines = document.createElementNS(svg, 'svg');
+		lines.setAttribute('aria-hidden', 'true');
+		const stroked = document.createElementNS(svg, 'g');
+		const marker = document.createElementNS(svg, 'circle');
+		marker.setAttribute('fill', stroke);
+		marker.setAttribute('stroke', '#1b1a19');
+		marker.setAttribute('stroke-width', '1.5');
+		marker.setAttribute('class', 'fade');
+		lines.append(stroked, marker);
+		const live = Object.assign(document.createElement('span'), { className: 'sr-only' });
+		live.setAttribute('aria-live', 'polite');
+		const readout = Object.assign(document.createElement('span'), { className: 'readout' });
+		readout.setAttribute('aria-hidden', 'true');
+		readout.hidden = true;
+
+		for (const layer of [glow, fill]) layer?.classList.add('fade');
+		stroked.setAttribute('class', 'wipe');
+		root.replaceChildren(...[glow, fill].filter((layer) => layer !== null), lines, ...(interactive ? [readout, live] : []));
+
+		let active = -1;
+		let glide = false;
+		let points: Float32Array = new Float32Array();
+
+		const place = () => {
+			const index = active >= 0 ? active : data.dot !== undefined ? values.length - 1 : -1;
+			if (index < 0 || index >= values.length) {
+				marker.style.display = 'none';
+				return;
+			}
+			marker.style.display = '';
+			marker.setAttribute('r', String(active >= 0 ? DOT + 0.5 : DOT));
+			marker.setAttribute('class', `${motion && !shown ? 'fade' : 'fade in'}${glide ? ' glide' : ''}`);
+			marker.style.transform = `translate(${points[index * 2]}px, ${points[index * 2 + 1]}px)`;
+			readout.hidden = active < 0;
+			if (active >= 0) {
+				const text = format_compact(values[active]);
+				readout.textContent = text;
+				live.textContent = text;
+				readout.className = glide ? 'readout glide' : 'readout';
+				readout.style.transform = `translateX(calc(${points[active * 2]}px - 50%))`;
+			}
+		};
+
+		let shown = !motion;
+		const draw = () => {
+			const width = root.clientWidth;
+			if (width === 0) return;
+			const frame = new Float32Array([width, height, inset, inset, inset, inset, min, max]);
+			const columns = Math.ceil(width / step);
+			const rows = Math.ceil(height / step);
+			points = trend_points(values, frame);
+			if (fill) put(fill, trend_area(values, frame, step, variants[data.fill as keyof typeof variants], 1, Number(data.level), 1, color), columns, rows, step);
+			if (glow) {
+				const blur = data.bloom === 'high' ? 18 : 10;
+				const pad = trend_bloom_padding(blur, step);
+				put(glow, trend_bloom(values, frame, step, data.area !== undefined, blur, data.bloom === 'high' ? 0.55 : 0.3, color), columns + 2 * pad, rows + 2 * pad, step);
+				glow.style.left = `${-pad * step}px`;
+				glow.style.top = `${-pad * step}px`;
+			}
+			lines.setAttribute('viewBox', `0 0 ${width} ${height}`);
+			stroked.innerHTML = values.length > 1 ? `<path d="${trend_line(values, frame)}" fill="none" stroke="${stroke}" stroke-width="${STROKE}" stroke-linejoin="round" stroke-linecap="round"/>` : '';
+			place();
+		};
+		draw();
+		new ResizeObserver(draw).observe(root);
+
+		const reveal = () => {
+			shown = true;
+			for (const layer of [glow, fill, stroked]) layer?.classList.add('in');
+			place();
+		};
+		if (motion) requestAnimationFrame(() => requestAnimationFrame(reveal));
+		else reveal();
+
+		if (!interactive || values.length === 0) return;
+		const pick = (index: number, gliding: boolean) => {
+			if (index === active) return;
+			glide = gliding && active >= 0;
+			active = index;
+			place();
+		};
+		const clear = () => {
+			active = -1;
+			place();
+		};
+		root.addEventListener('pointermove', (event) => {
+			const box = root.getBoundingClientRect();
+			const share = (event.clientX - box.left) / Math.max(1, box.width);
+			pick(Math.min(values.length - 1, Math.max(0, Math.round(share * (values.length - 1)))), true);
+		});
+		root.addEventListener('pointerleave', clear);
+		root.addEventListener('blur', clear);
+		root.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') return clear();
+			const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
+			if (step === undefined) return;
+			event.preventDefault();
+			pick(Math.min(values.length - 1, Math.max(0, (active >= 0 ? active : values.length - 1) + step)), false);
+		});
+	}
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.spark')) build(root);
+	});
+</script>

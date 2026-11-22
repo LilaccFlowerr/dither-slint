@@ -63,7 +63,7 @@ Run the gallery with `cargo run --example gallery`.
 
 - **Basics:** `DitherGradient`, `DitherButton`, `DitherBadge`, `DitherCard`, `DitherDivider`
 - **Controls:** `DitherSwitch`, `DitherSlider`, `DitherInput`, `DitherTabs`, `DitherDropdownMenu`
-- **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherSkeleton`, `DitherEmptyState`
+- **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`
 
 There is also `DitherImage` for dithering a photo, four animated backgrounds (`DitherNoiseField`, `DitherPlasma`, `DitherRipples` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
 
@@ -422,6 +422,101 @@ DitherLoader {
 | `speed` | `1` | Speed multiplier. |
 | `label` | `Loading` | What a screen reader announces. |
 | `animated` | `DitherTheme.animated` | When `false` it holds a still frame. |
+
+### DitherProgressBar
+
+A progress bar built from dither cells. With a `value` the fill grows to it, densest at its leading edge and capped with a solid cell. Without one a dithered comet sweeps the track. `parts` stacks several values with a legend, and `segments` cuts the bar into blocks.
+
+```slint
+DitherProgressBar {
+    label: "Uploading";
+    value: 64;
+}
+
+DitherProgressBar {
+    label: "Storage";
+    unit: " GB";
+    parts: [
+        { label: "Photos", value: 32 },
+        { label: "Videos", value: 24 },
+        { label: "Documents", value: 12 },
+    ];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `label` | | What is in progress. Shown above the bar and used as its accessible name. |
+| `value` | `-1` | Progress from 0 to `maximum`. A negative value makes the bar indeterminate. |
+| `maximum` | `100` | The value that means done, or the capacity when you use `parts`. |
+| `value-text` | | Text for the readout, such as "3 of 5". Default is the percentage. |
+| `hide-label` | `false` | Hides the label and readout, but keeps them for screen readers. |
+| `size` | `md` | `sm`, `md` or `lg`: 2, 4 and 6 cells high. |
+| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `color` | `DitherTheme.ink` | Colour of the fill and the track. |
+| `bloom` | `off` | `low` or `high` adds a glow. |
+| `segments` | `0` | Cuts the bar into this many blocks, a cell apart. Up to 32. |
+| `gap` | `DitherTheme.background` | Colour of the cut between segments. Match the surface behind the bar. |
+| `cell` | `2px` | Size of one dither cell. |
+| `animate` | `DitherTheme.animated` | Grows to the value, eases between values and sweeps the comet. |
+| `parts` | | Several values stacked left to right, each with `label`, `value` and an optional `color`. |
+| `unit` | | Shown after each part's value in the legend. |
+
+### DitherStatCard
+
+A KPI card: a label, a headline value and a delta that is green when the metric moved the way you want and red when it did not. A `trend` draws the recent values as a dithered area along the bottom, ending in a solid marker. It is a `DitherCard`, so it also takes `color`, `matrix`, `cell` and `radius`.
+
+```slint
+DitherStatCard {
+    label: "Monthly revenue";
+    value: "48,210";
+    has-delta: true;
+    delta: 12.4;
+    delta-label: "vs last month";
+    trend: [12, 14, 13, 18, 17, 22, 21, 27, 31];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `label` | | What the number is. |
+| `value` | | The headline number, as text. `DitherEngine.format-number(float)` adds thousands separators. |
+| `has-delta` | `false` | Shows the delta row. |
+| `delta` | `0` | Change since the last period, in percent. |
+| `delta-label` | | What the change compares with, such as "vs last month". |
+| `good` | `up` | `DitherStatDirection.up` or `down`: which direction counts as good. |
+| `trend` | | Recent values, oldest first. Needs at least two. |
+| `trend-fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `bloom` | `off` | `low` or `high` adds a soft glow under the trend. |
+
+### DitherSparkline
+
+A tiny trend line for tables and cards: a line, a dithered fill that is densest just under it, and a dot on the latest value. The width follows the element. With `interactive` you can scrub across it with the pointer or the arrow keys to read single values.
+
+```slint
+DitherSparkline {
+    width: 320px;
+    label: "Revenue, last 12 days";
+    data: [12, 14, 13, 18, 17, 22, 21, 27, 31, 29, 34, 38];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `data` | | Values in order, oldest first. |
+| `label` | | What the trend shows. Starts the accessible summary. |
+| `height` | `32px` | Height of the sparkline. |
+| `color` | `DitherTheme.ink` | Colour of the line, the fill and the dot. |
+| `area` | `true` | Fills the area under the line. |
+| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `level` | `0.5` | Gradient only: coverage of the fill just under the line. |
+| `bloom` | `off` | `low` or `high` adds a soft glow. |
+| `dot` | `true` | A dot on the latest value. |
+| `interactive` | `false` | Scrub with the pointer or the arrow keys. |
+| `domain` | the data's range | The value range the height covers, as `{ min, max }`. |
+| `animate` | `DitherTheme.animated` | The line draws in and the fill fades in. |
+| `matrix` | `bayer4` | The dither pattern. |
+| `cell` | `2px` | Size of one dither cell. |
 
 ### DitherSkeleton
 

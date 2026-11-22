@@ -15,6 +15,9 @@ import { AvatarPage } from "avatar-page.slint";
 import { LoaderPage } from "loader-page.slint";
 import { SkeletonPage } from "skeleton-page.slint";
 import { EmptyPage } from "empty-page.slint";
+import { ProgressPage } from "progress-page.slint";
+import { StatPage } from "stat-page.slint";
+import { SparklinePage } from "sparkline-page.slint";
 
 export component Shots inherits Window {
     in property <int> which;
@@ -38,5 +41,8 @@ export component Shots inherits Window {
         if root.which == 12: LoaderPage { }
         if root.which == 13: SkeletonPage { }
         if root.which == 14: EmptyPage { }
+        if root.which == 15: ProgressPage { }
+        if root.which == 16: StatPage { }
+        if root.which == 17: SparklinePage { }
     }
 }

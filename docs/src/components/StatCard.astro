@@ -1,0 +1,224 @@
+---
+interface Props {
+	label: string;
+	value: string;
+	delta?: number;
+	deltaLabel?: string;
+	good?: 'up' | 'down';
+	trend?: number[];
+	color?: string;
+	trendFill?: 'gradient' | 'dotted' | 'hatched' | 'solid';
+	bloom?: 'off' | 'low' | 'high';
+	cell?: number;
+}
+
+const { label, value, delta, deltaLabel = '', good = 'up', trend, color = 'ink', trendFill = 'gradient', bloom = 'off', cell = 3 } = Astro.props;
+---
+
+<div
+	class="stat"
+	data-label={label}
+	data-value={value}
+	data-delta={delta}
+	data-delta-label={deltaLabel}
+	data-good={good}
+	data-trend={trend ? JSON.stringify(trend) : undefined}
+	data-color={color}
+	data-trend-fill={trendFill}
+	data-bloom={bloom}
+	data-cell={cell}
+>
+</div>
+
+<style is:global>
+	.stat {
+		position: relative;
+		display: flex;
+		flex: 1 1 240px;
+		flex-direction: column;
+		min-width: 220px;
+		overflow: hidden;
+		border: 1px solid color-mix(in srgb, #ebe5d9 12%, transparent);
+		border-radius: 12px;
+		background: color-mix(in srgb, #ebe5d9 4%, #1b1a19);
+	}
+	.stat canvas {
+		position: absolute;
+		display: block;
+		margin: 0 !important;
+		image-rendering: pixelated;
+	}
+	.stat canvas.glow {
+		max-width: none;
+		image-rendering: auto;
+	}
+	.stat .text {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 20px;
+	}
+	.stat .text.trailing {
+		padding-bottom: 8px;
+	}
+	.stat .name {
+		font-size: 14px;
+		color: color-mix(in srgb, #ebe5d9 60%, transparent);
+	}
+	.stat .number {
+		font-size: 30px;
+		font-weight: 600;
+		line-height: 36px;
+		color: #ebe5d9;
+		font-variant-numeric: tabular-nums;
+	}
+	.stat .change {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 12px;
+		line-height: 16px;
+		color: color-mix(in srgb, #ebe5d9 60%, transparent);
+	}
+	.stat .amount {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-family: var(--sl-font-mono);
+		font-weight: 500;
+		font-variant-numeric: tabular-nums;
+	}
+	.stat .amount svg {
+		width: 8px;
+		height: 8px;
+		margin: 0 !important;
+	}
+	.stat .amount[data-outcome='good'] {
+		color: color-mix(in oklab, #32b364, #ebe5d9 22%);
+	}
+	.stat .amount[data-outcome='bad'] {
+		color: color-mix(in oklab, #ea3c3c, #ebe5d9 22%);
+	}
+	.stat .trend {
+		position: relative;
+		height: 56px;
+		overflow: hidden;
+		margin: 0 !important;
+	}
+	.stat .trend svg {
+		position: absolute;
+		inset: 0;
+		display: block;
+		margin: 0 !important;
+	}
+</style>
+
+<script>
+	import { card_glow, stat_change, trend_area, trend_bloom, trend_bloom_padding, trend_line, trend_points } from '../engine/dither_slint_engine_web.js';
+	import { ready, rgba, variants } from '../scripts/dither';
+
+	const TREND_HEIGHT = 56;
+	const RADIUS = 12;
+	const svg = 'http://www.w3.org/2000/svg';
+
+	function put(canvas: HTMLCanvasElement, bytes: Uint8Array, columns: number, rows: number, step: number) {
+		canvas.width = columns;
+		canvas.height = rows;
+		canvas.style.width = `${columns * step}px`;
+		canvas.style.height = `${rows * step}px`;
+		canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+	}
+
+	function build(root: HTMLElement) {
+		const data = root.dataset as Record<string, string>;
+		const step = Number(data.cell);
+		const color = rgba(data.color);
+		const trend = data.trend ? new Float32Array(JSON.parse(data.trend)) : null;
+		const good = data.good === 'down' ? 1 : 0;
+		const change = data.delta === undefined ? null : stat_change(Number(data.delta), good);
+
+		root.setAttribute('role', 'group');
+		root.setAttribute('aria-label', `${data.label}: ${data.value}`);
+
+		const surface = document.createElement('canvas');
+		surface.setAttribute('aria-hidden', 'true');
+		surface.style.inset = '0';
+
+		const text = document.createElement('div');
+		text.className = trend ? 'text trailing' : 'text';
+		text.append(
+			Object.assign(document.createElement('span'), { className: 'name', textContent: data.label }),
+			Object.assign(document.createElement('span'), { className: 'number', textContent: data.value }),
+		);
+		if (change) {
+			const [amount, direction, outcome] = change;
+			const row = document.createElement('span');
+			row.className = 'change';
+			const figure = Object.assign(document.createElement('span'), { className: 'amount', textContent: amount });
+			figure.dataset.outcome = outcome;
+			if (direction !== 'flat') {
+				const arrow = document.createElementNS(svg, 'svg');
+				arrow.setAttribute('viewBox', '0 0 8 8');
+				arrow.setAttribute('aria-hidden', 'true');
+				const shape = document.createElementNS(svg, 'path');
+				shape.setAttribute('d', direction === 'up' ? 'M4 1L7.5 6.5H0.5Z' : 'M4 7L7.5 1.5H0.5Z');
+				shape.setAttribute('fill', 'currentColor');
+				arrow.append(shape);
+				figure.prepend(arrow);
+			}
+			row.append(figure);
+			if (data.deltaLabel) row.append(Object.assign(document.createElement('span'), { textContent: data.deltaLabel }));
+			text.append(row);
+		}
+		const glow = data.bloom !== 'off' && trend && trend.length > 1 ? Object.assign(document.createElement('canvas'), { className: 'glow' }) : null;
+		glow?.setAttribute('aria-hidden', 'true');
+		root.replaceChildren(surface, ...(glow ? [glow] : []), text);
+
+		let area: HTMLCanvasElement | null = null;
+		let line: SVGSVGElement | null = null;
+		if (trend && trend.length > 1) {
+			const box = document.createElement('div');
+			box.className = 'trend';
+			box.setAttribute('aria-hidden', 'true');
+			area = document.createElement('canvas');
+			area.style.inset = '0';
+			line = document.createElementNS(svg, 'svg');
+			box.append(area, line);
+			root.append(box);
+		}
+
+		const stroke = `rgb(${color[0]} ${color[1]} ${color[2]})`;
+		const draw = () => {
+			const width = root.clientWidth;
+			const height = root.clientHeight;
+			if (width === 0) return;
+			const columns = Math.ceil(width / step);
+			const rows = Math.ceil(height / step);
+			put(surface, card_glow(columns, rows, 1, 200 / step, 0.12, 0, false, RADIUS / step, 0, 1, new Uint8Array(color)), columns, rows, step);
+			if (!area || !line || !trend) return;
+			const trendRows = Math.ceil(TREND_HEIGHT / step);
+			const frame = new Float32Array([width, TREND_HEIGHT, 0, 0, 6, TREND_HEIGHT * 0.3, 0, 0]);
+			put(area, trend_area(trend, frame, step, variants[data.trendFill as keyof typeof variants], 0, 0.5, 1, new Uint8Array(color)), columns, trendRows, step);
+			if (glow) {
+				const blur = data.bloom === 'high' ? 18 : 10;
+				const pad = trend_bloom_padding(blur, step);
+				const strength = data.bloom === 'high' ? 0.55 : 0.3;
+				put(glow, trend_bloom(trend, frame, step, true, blur, strength, new Uint8Array(color)), columns + 2 * pad, trendRows + 2 * pad, step);
+				glow.style.left = `${-pad * step}px`;
+				glow.style.top = `${height - TREND_HEIGHT - pad * step}px`;
+			}
+			const points = trend_points(trend, frame);
+			const [x, y] = [points[points.length - 2], points[points.length - 1]];
+			const marker = step * 2;
+			line.setAttribute('viewBox', `0 0 ${width} ${TREND_HEIGHT}`);
+			line.innerHTML = `<path d="${trend_line(trend, frame)}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><rect x="${Math.min(x, width - marker / 2) - marker / 2}" y="${y - marker / 2}" width="${marker}" height="${marker}" fill="${stroke}"/>`;
+		};
+		draw();
+		new ResizeObserver(draw).observe(root);
+	}
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.stat')) build(root);
+	});
+</script>

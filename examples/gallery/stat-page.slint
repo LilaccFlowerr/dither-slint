@@ -1,0 +1,69 @@
+import { DitherBloom, DitherFill, DitherPalette, DitherStatCard, DitherStatDirection } from "../../ui/lib.slint";
+
+export component StatPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 20px;
+    alignment: start;
+
+    HorizontalLayout {
+        spacing: 20px;
+
+        DitherStatCard {
+            label: "Monthly revenue";
+            value: "48,210";
+            has-delta: true;
+            delta: 12.4;
+            delta-label: "vs last month";
+            trend: [12, 14, 13, 18, 17, 22, 21, 27, 31];
+        }
+
+        DitherStatCard {
+            label: "Median latency";
+            value: "184 ms";
+            has-delta: true;
+            delta: 6.2;
+            delta-label: "vs last week";
+            good: DitherStatDirection.down;
+            color: DitherPalette.orange;
+            trend: [140, 150, 148, 160, 158, 170, 176, 184];
+        }
+
+        DitherStatCard {
+            label: "Active sessions";
+            value: "1,204";
+            has-delta: true;
+            delta: 0;
+            delta-label: "unchanged";
+            color: DitherPalette.green;
+        }
+    }
+
+    HorizontalLayout {
+        spacing: 20px;
+
+        DitherStatCard {
+            label: "Dotted";
+            value: "92%";
+            trend: [3, 5, 4, 8, 6, 9, 12];
+            trend-fill: DitherFill.dotted;
+            color: DitherPalette.pink;
+        }
+
+        DitherStatCard {
+            label: "Hatched";
+            value: "3,481";
+            trend: [9, 7, 8, 5, 6, 3, 4];
+            trend-fill: DitherFill.hatched;
+            color: DitherPalette.purple;
+        }
+
+        DitherStatCard {
+            label: "Solid";
+            value: "27";
+            trend: [1, 2, 2, 4, 3, 6, 7];
+            trend-fill: DitherFill.solid;
+            color: DitherPalette.blue;
+            bloom: DitherBloom.high;
+        }
+    }
+}

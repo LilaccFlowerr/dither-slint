@@ -216,3 +216,69 @@ pub fn empty_state(illustration: usize, backdrop: bool, matrix: usize, color: &[
     let layer = if backdrop { Layer::Backdrop } else { Layer::Object };
     bytes(empty(Illustration::ALL[illustration], layer, Matrix::ALL[matrix], colors(color)[0]))
 }
+
+fn trend_frame(frame: &[f32]) -> dither_slint::trend::Frame {
+    let [width, height, left, right, top, bottom, min, max] = frame[..8] else {
+        unreachable!("a frame has eight numbers");
+    };
+    dither_slint::trend::Frame {
+        width,
+        height,
+        margin: dither_slint::trend::Margin { left, right, top, bottom },
+        domain: (min != max).then_some((min, max)),
+    }
+}
+
+#[wasm_bindgen]
+pub fn trend_area(values: &[f32], frame: &[f32], cell: f32, fill: usize, shading: usize, level: f32, matrix: usize, color: &[u8]) -> Vec<u8> {
+    let options = dither_slint::trend::AreaOptions {
+        fill: FillVariant::ALL[fill],
+        shading: dither_slint::trend::Shading::ALL[shading],
+        level,
+        matrix: Matrix::ALL[matrix],
+        color: colors(color)[0],
+    };
+    bytes(dither_slint::trend::area(values, &trend_frame(frame), cell, &options))
+}
+
+#[wasm_bindgen]
+pub fn trend_bloom(values: &[f32], frame: &[f32], cell: f32, area: bool, blur: f32, strength: f32, color: &[u8]) -> Vec<u8> {
+    let options = dither_slint::trend::BloomOptions { area, blur, strength, color: colors(color)[0] };
+    bytes(dither_slint::trend::bloom(values, &trend_frame(frame), cell, &options))
+}
+
+#[wasm_bindgen]
+pub fn trend_bloom_padding(blur: f32, cell: f32) -> u32 {
+    dither_slint::trend::bloom_padding(blur, cell)
+}
+
+#[wasm_bindgen]
+pub fn trend_line(values: &[f32], frame: &[f32]) -> String {
+    dither_slint::trend::path(&dither_slint::trend::points(values, &trend_frame(frame)))
+}
+
+#[wasm_bindgen]
+pub fn trend_points(values: &[f32], frame: &[f32]) -> Vec<f32> {
+    dither_slint::trend::points(values, &trend_frame(frame)).into_iter().flat_map(|point| [point.x, point.y]).collect()
+}
+
+#[wasm_bindgen]
+pub fn trend_summary(label: &str, values: &[f32]) -> String {
+    dither_slint::trend::summary(label, values)
+}
+
+#[wasm_bindgen]
+pub fn format_compact(value: f32) -> String {
+    dither_slint::stat::format_compact(value)
+}
+
+#[wasm_bindgen]
+pub fn format_number(value: f32) -> String {
+    dither_slint::stat::format_number(value)
+}
+
+#[wasm_bindgen]
+pub fn stat_change(delta: f32, good: usize) -> Vec<String> {
+    let change = dither_slint::stat::describe_change(delta, dither_slint::stat::Direction::ALL[good]);
+    vec![change.text, format!("{:?}", change.direction).to_lowercase(), format!("{:?}", change.outcome).to_lowercase()]
+}
