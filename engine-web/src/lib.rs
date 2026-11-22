@@ -242,10 +242,20 @@ pub fn tabs_indicator(
     to: &[f32],
     progress: f32,
 ) -> Vec<u8> {
-    use dither_slint::tabs::{BoxRect, TabsVariant, tabs_indicator};
+    use dither_slint::tabs::{BoxRect, Indicator, TabsVariant, tabs_indicator};
     let variant = if variant == 0 { TabsVariant::Pill } else { TabsVariant::Underline };
     let rect = |b: &[f32]| BoxRect::new(b[0], b[1], b[2], b[3]);
-    bytes(tabs_indicator(columns, rows, cell, variant, Matrix::ALL[matrix], colors(color)[0], rect(from), rect(to), progress))
+    bytes(tabs_indicator(&Indicator {
+        columns,
+        rows,
+        cell,
+        variant,
+        matrix: Matrix::ALL[matrix],
+        color: colors(color)[0],
+        from: rect(from),
+        to: rect(to),
+        progress,
+    }))
 }
 
 #[wasm_bindgen]

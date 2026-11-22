@@ -102,6 +102,8 @@ pub struct Shader<'a> {
     pub levels: u32,
 }
 
+const MAX_THREADS: usize = 8;
+
 fn to_pixel(color: Vec4) -> Rgba8Pixel {
     let [r, g, b, a] = (color.clamp(Vec4::ZERO, Vec4::ONE) * 255.0).round().to_array();
     Rgba8Pixel::new(r as u8, g as u8, b as u8, a as u8)
@@ -147,7 +149,7 @@ pub fn render(shader: &Shader) -> Image {
     let levels = if shader.levels == 0 { shader.matrix.map().steps as u32 + 1 } else { shader.levels };
     let steps = (levels.max(2) - 1) as f32;
 
-    let threads = std::thread::available_parallelism().map_or(1, |n| n.get()).min(8);
+    let threads = std::thread::available_parallelism().map_or(1, |n| n.get()).min(MAX_THREADS);
     let band = rows.div_ceil(threads);
     let fill = |index: usize, chunk: &mut [Rgba8Pixel]| {
         for (offset, pixel) in chunk.iter_mut().enumerate() {

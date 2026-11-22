@@ -11,6 +11,7 @@ component Run inherits Rectangle {
     in property <color> tone;
     in property <length> step;
     in property <bool> cap: true;
+    property <int> fade-cells: 36;
 
     clip: true;
 
@@ -18,7 +19,7 @@ component Run inherits Rectangle {
         cell: root.step;
         fill: root.fill;
         edge: DitherEdge.right;
-        length: 36;
+        length: root.fade-cells;
         from: 1;
         to: 0.3125;
         color: root.tone;
@@ -33,6 +34,8 @@ component Run inherits Rectangle {
 }
 
 export component DitherProgressBar inherits VerticalLayout {
+    property <float> sweep-ms: 1700;
+    property <float> comet: 0.34;
     in property <string> label;
     in property <float> value: -1;
     in property <float> maximum: 100;
@@ -96,7 +99,7 @@ export component DitherProgressBar inherits VerticalLayout {
         interval: 16ms;
         running: !root.determinate && root.animate;
         triggered => {
-            root.sweep = Math.mod(animation-tick() / 1ms, 1700) / 1700;
+            root.sweep = Math.mod(animation-tick() / 1ms, root.sweep-ms) / root.sweep-ms;
         }
     }
 
@@ -142,7 +145,7 @@ export component DitherProgressBar inherits VerticalLayout {
 
             if !root.determinate: Run {
                 x: root.animate ? -self.width + root.eased * (parent.width + self.width) : (parent.width - self.width) / 2;
-                width: parent.width * 0.34;
+                width: parent.width * root.comet;
                 height: parent.height;
                 fill: root.fill;
                 tone: root.color;

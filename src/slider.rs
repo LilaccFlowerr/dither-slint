@@ -50,8 +50,8 @@ pub fn geometry_of(size: SliderSize, cell: f32, total_width: f32, variant: Slide
         SliderVariant::Thumb => {
             let across = (spec_w / cell).round().max(3.0) as u32;
             let tall = (spec_h / cell).round().max(rows as f32 + 4.0) as u32;
-            let final_across = if across % 2 == 0 { across + 1 } else { across };
-            (final_across as f32 * cell, tall as f32 * cell)
+            let odd_across = if across.is_multiple_of(2) { across + 1 } else { across };
+            (odd_across as f32 * cell, tall as f32 * cell)
         }
         SliderVariant::Bar => (cell, track_height),
     };
@@ -68,12 +68,14 @@ pub fn geometry_of(size: SliderSize, cell: f32, total_width: f32, variant: Slide
     }
 }
 
+const MAX_TICKS: usize = 101;
+
 pub fn tick_count(min: f32, max: f32, step: f32) -> usize {
     if step <= 0.0 || max <= min {
         return 0;
     }
     let count = ((max - min) / step + 1e-6).floor() as usize + 1;
-    if count > 101 {
+    if count > MAX_TICKS {
         0
     } else {
         count

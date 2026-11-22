@@ -4,6 +4,15 @@ use crate::Matrix;
 use crate::glow::Glow;
 use crate::render::{paint, pixel};
 
+const NOISE_MS: f32 = 480.0;
+const NOISE_FRAME_MS: f32 = 45.0;
+const BURST_MS: f32 = 640.0;
+const BURST_BLINK_MS: f32 = 40.0;
+const GLITCH_MS: f32 = 380.0;
+const GLITCH_TICK_MS: f32 = 40.0;
+const BURST_SPARKS: i32 = 12;
+const HASH_RANGE: f64 = 4294967296.0;
+
 fn ease_out(t: f32) -> f32 {
     1.0 - (1.0 - t).powi(3)
 }
@@ -48,7 +57,7 @@ fn hash(x: i32, y: i32, seed: i32) -> f32 {
         .wrapping_add((y as u32).wrapping_mul(668265263))
         .wrapping_add((seed as u32).wrapping_mul(1442695041));
     h = (h ^ (h >> 13)).wrapping_mul(1274126177);
-    ((h ^ (h >> 16)) as f64 / 4294967296.0) as f32
+    ((h ^ (h >> 16)) as f64 / HASH_RANGE) as f32
 }
 
 pub fn scan(layer: &Layer, t: f32) -> Image {
@@ -105,7 +114,7 @@ pub fn trace(layer: &Layer, t: f32) -> Image {
 pub fn noise(layer: &Layer, t: f32) -> Image {
     let Layer { columns, rows, strength, color, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
-    let frame = (t * 480.0 / 45.0).floor() as i32;
+    let frame = (t * NOISE_MS / NOISE_FRAME_MS).floor() as i32;
     let density = (std::f32::consts::PI * t).sin() * strength * 0.22;
     let (ink, clear) = (pixel(color), Rgba8Pixel::new(0, 0, 0, 0));
     paint(columns.max(1), rows.max(1), |x, y| {
@@ -164,15 +173,15 @@ pub fn burst(layer: &Layer, (cx, cy): (f32, f32), t: f32, seed: i32) -> Image {
     let Layer { columns, rows, strength, color, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
     let reach = (columns.min(rows) as f32 * 0.8 + 6.0).clamp(10.0, 48.0);
-    let blink = (t * 640.0 / 40.0).floor() as i32;
+    let blink = (t * BURST_MS / BURST_BLINK_MS).floor() as i32;
     let mut lit = vec![false; (columns.max(1) * rows.max(1)) as usize];
     let mut set = |x: i32, y: i32| {
         if x >= 0 && y >= 0 && (x as u32) < columns && (y as u32) < rows {
             lit[y as usize * columns as usize + x as usize] = true;
         }
     };
-    for i in 0..12 {
-        let angle = i as f32 / 12.0 * std::f32::consts::TAU + (hash(i, 0, seed) - 0.5) * 0.5;
+    for i in 0..BURST_SPARKS {
+        let angle = i as f32 / BURST_SPARKS as f32 * std::f32::consts::TAU + (hash(i, 0, seed) - 0.5) * 0.5;
         let r = reach * (0.55 + hash(i, 1, seed) * 0.6) * ease_out(t);
         let (x, y) = ((cx + angle.cos() * r).round() as i32, (cy + angle.sin() * r).round() as i32);
         if hash(i, blink, seed) > (1.0 - t) * 1.4 {
@@ -198,7 +207,7 @@ pub fn burst(layer: &Layer, (cx, cy): (f32, f32), t: f32, seed: i32) -> Image {
 pub fn glitch(layer: &Layer, t: f32, seed: i32) -> Image {
     let Layer { columns, rows, strength, .. } = *layer;
     let t = t.clamp(0.0, 1.0);
-    let tick = (t * 380.0 / 40.0).floor() as i32;
+    let tick = (t * GLITCH_MS / GLITCH_TICK_MS).floor() as i32;
     let tone = strength * (1.1 - t * 0.7);
     let bars: Vec<(u32, u32, u32, u32)> = (0..5)
         .filter(|&bar| hash(bar, tick, seed) >= 0.3)

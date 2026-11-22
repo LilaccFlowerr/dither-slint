@@ -392,17 +392,17 @@ macro_rules! install {
             };
             let from = $crate::tabs::BoxRect { x: fx, y: fy, w: fw, h: fh };
             let to = $crate::tabs::BoxRect { x: tx, y: ty, w: tw, h: th };
-            $crate::tabs::tabs_indicator(
-                cells(columns),
-                cells(rows),
+            $crate::tabs::tabs_indicator(&$crate::tabs::Indicator {
+                columns: cells(columns),
+                rows: cells(rows),
                 cell,
                 variant,
-                Matrix::ALL[kind as usize],
+                matrix: Matrix::ALL[kind as usize],
                 color,
                 from,
                 to,
                 progress,
-            )
+            })
         });
     }};
 }

@@ -43,6 +43,10 @@ export component DitherFx {
         : root.press == DitherPress.glitch ? 380ms
         : root.press == DitherPress.ripple ? 560ms : 0ms;
 
+    property <duration> shimmer-time: 1100ms;
+    property <duration> shimmer-every: 3400ms;
+    property <float> breathe-ms: 2600;
+
     property <bool> hovering;
     property <float> target-x;
     property <float> target-y;
@@ -64,10 +68,10 @@ export component DitherFx {
 
     property <float> idle-t: {
         if root.idle == DitherIdle.shimmer {
-            return (animation-tick() - root.shimmer-start) * root.pace / 1100ms;
+            return (animation-tick() - root.shimmer-start) * root.pace / root.shimmer-time;
         }
         if root.idle == DitherIdle.breathe {
-            return Math.mod(animation-tick() * root.pace / 1ms, 2600) / 2600;
+            return Math.mod(animation-tick() * root.pace / 1ms, root.breathe-ms) / root.breathe-ms;
         }
         return Math.floor(animation-tick() * root.pace / 100ms);
     }
@@ -129,7 +133,7 @@ export component DitherFx {
     }
 
     Timer {
-        interval: 3400ms / root.pace;
+        interval: root.shimmer-every / root.pace;
         running: root.animated && root.idle == DitherIdle.shimmer;
         triggered => {
             root.shimmer-start = animation-tick();
@@ -138,10 +142,10 @@ export component DitherFx {
     }
 
     Timer {
-        interval: 1100ms / root.pace;
+        interval: root.shimmer-time / root.pace;
         running: root.shimmering;
         triggered => {
-            root.shimmering = (animation-tick() - root.shimmer-start) * root.pace < 1100ms;
+            root.shimmering = (animation-tick() - root.shimmer-start) * root.pace < root.shimmer-time;
         }
     }
 

@@ -3,7 +3,7 @@ use std::path::Path;
 use slint::Color;
 use dither_slint::Matrix;
 use dither_slint::export::to_png;
-use dither_slint::tabs::{BoxRect, TabsVariant, tabs_indicator};
+use dither_slint::tabs::{BoxRect, Indicator, TabsVariant, tabs_indicator};
 
 fn save_png(path: &Path, image: slint::Image, scale: usize) {
     let buffer = image.to_rgba8().unwrap();
@@ -89,41 +89,41 @@ fn main() {
     let deploys_box = BoxRect::new(80.0, 4.0, 68.0, 32.0);
 
     // 1. Pill at rest (Overview)
-    let pill_overview = tabs_indicator(
-        120, 20, 2.0,
-        TabsVariant::Pill,
-        Matrix::Bayer4,
-        blue,
-        overview_box,
-        overview_box,
-        1.0,
-    );
+    let pill_overview = tabs_indicator(&Indicator {
+        columns: 120, rows: 20, cell: 2.0,
+        variant: TabsVariant::Pill,
+        matrix: Matrix::Bayer4,
+        color: blue,
+        from: overview_box,
+        to: overview_box,
+        progress: 1.0,
+    });
     save_png(&out_dir.join("tabs_pill_overview.png"), pill_overview.clone(), 3);
     compose_card_png(&out_dir.join("card_pill_overview.png"), pill_overview, 140, 30, 10, 5, 2);
 
     // 2. Pill gliding mid-flight from Overview to Deploys (progress = 0.38)
-    let pill_gliding = tabs_indicator(
-        120, 20, 2.0,
-        TabsVariant::Pill,
-        Matrix::Bayer4,
-        blue,
-        overview_box,
-        deploys_box,
-        0.38,
-    );
+    let pill_gliding = tabs_indicator(&Indicator {
+        columns: 120, rows: 20, cell: 2.0,
+        variant: TabsVariant::Pill,
+        matrix: Matrix::Bayer4,
+        color: blue,
+        from: overview_box,
+        to: deploys_box,
+        progress: 0.38,
+    });
     save_png(&out_dir.join("tabs_pill_gliding.png"), pill_gliding.clone(), 3);
     compose_card_png(&out_dir.join("card_pill_gliding.png"), pill_gliding, 140, 30, 10, 5, 2);
 
     // 3. Pill at rest (Deploys in Green)
-    let pill_deploys_green = tabs_indicator(
-        120, 20, 2.0,
-        TabsVariant::Pill,
-        Matrix::Bayer4,
-        green,
-        deploys_box,
-        deploys_box,
-        1.0,
-    );
+    let pill_deploys_green = tabs_indicator(&Indicator {
+        columns: 120, rows: 20, cell: 2.0,
+        variant: TabsVariant::Pill,
+        matrix: Matrix::Bayer4,
+        color: green,
+        from: deploys_box,
+        to: deploys_box,
+        progress: 1.0,
+    });
     save_png(&out_dir.join("tabs_pill_green.png"), pill_deploys_green.clone(), 3);
     compose_card_png(&out_dir.join("card_pill_green.png"), pill_deploys_green, 140, 30, 10, 5, 2);
 
@@ -131,28 +131,28 @@ fn main() {
     let underline_overview_box = BoxRect::new(4.0, 0.0, 72.0, 40.0);
     let underline_deploys_box = BoxRect::new(80.0, 0.0, 68.0, 40.0);
 
-    let underline_rest = tabs_indicator(
-        120, 20, 2.0,
-        TabsVariant::Underline,
-        Matrix::Bayer4,
-        blue,
-        underline_overview_box,
-        underline_overview_box,
-        1.0,
-    );
+    let underline_rest = tabs_indicator(&Indicator {
+        columns: 120, rows: 20, cell: 2.0,
+        variant: TabsVariant::Underline,
+        matrix: Matrix::Bayer4,
+        color: blue,
+        from: underline_overview_box,
+        to: underline_overview_box,
+        progress: 1.0,
+    });
     save_png(&out_dir.join("tabs_underline_overview.png"), underline_rest.clone(), 3);
     compose_card_png(&out_dir.join("card_underline_overview.png"), underline_rest, 140, 30, 10, 5, 2);
 
     // 5. Underline gliding
-    let underline_glide = tabs_indicator(
-        120, 20, 2.0,
-        TabsVariant::Underline,
-        Matrix::Bayer4,
-        blue,
-        underline_overview_box,
-        underline_deploys_box,
-        0.42,
-    );
+    let underline_glide = tabs_indicator(&Indicator {
+        columns: 120, rows: 20, cell: 2.0,
+        variant: TabsVariant::Underline,
+        matrix: Matrix::Bayer4,
+        color: blue,
+        from: underline_overview_box,
+        to: underline_deploys_box,
+        progress: 0.42,
+    });
     save_png(&out_dir.join("tabs_underline_gliding.png"), underline_glide.clone(), 3);
     compose_card_png(&out_dir.join("card_underline_gliding.png"), underline_glide, 140, 30, 10, 5, 2);
 

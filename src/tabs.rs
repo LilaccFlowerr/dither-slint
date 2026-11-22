@@ -231,20 +231,23 @@ fn along_body(scene: &Scene, px: f32, py: f32) -> f32 {
     clamp01(((px - bx) * dx + (py - by) * dy) / (2.0 * half) + 0.5)
 }
 
-pub fn tabs_indicator(
-    columns: u32,
-    rows: u32,
-    cell: f32,
-    variant: TabsVariant,
-    matrix: Matrix,
-    color: Color,
-    from: BoxRect,
-    to: BoxRect,
-    progress: f32,
-) -> Image {
-    let (columns, rows) = (columns.max(1), rows.max(1));
-    let cell = cell.max(1.0);
-    let progress = progress.clamp(0.0, 1.0);
+pub struct Indicator {
+    pub columns: u32,
+    pub rows: u32,
+    pub cell: f32,
+    pub variant: TabsVariant,
+    pub matrix: Matrix,
+    pub color: Color,
+    pub from: BoxRect,
+    pub to: BoxRect,
+    pub progress: f32,
+}
+
+pub fn tabs_indicator(indicator: &Indicator) -> Image {
+    let Indicator { variant, matrix, color, from, to, .. } = *indicator;
+    let (columns, rows) = (indicator.columns.max(1), indicator.rows.max(1));
+    let cell = indicator.cell.max(1.0);
+    let progress = indicator.progress.clamp(0.0, 1.0);
 
     let same_box = from.x == to.x && from.y == to.y && from.w == to.w && from.h == to.h;
     let scene = if progress >= 1.0 || same_box || from.w <= 0.0 || from.h <= 0.0 {
@@ -406,49 +409,43 @@ mod tests {
         let to = BoxRect::new(80.0, 4.0, 64.0, 32.0);
 
         // Rest image
-        let img_rest = tabs_indicator(
-            80,
-            20,
-            2.0,
-            TabsVariant::Pill,
-            Matrix::Bayer4,
+        let img_rest = tabs_indicator(&Indicator {
+            columns: 80, rows: 20, cell: 2.0,
+            variant: TabsVariant::Pill,
+            matrix: Matrix::Bayer4,
             color,
             from,
-            from,
-            1.0,
-        );
+            to,
+            progress: 1.0,
+        });
         let buffer = img_rest.to_rgba8().unwrap();
         let inked_count = buffer.as_slice().iter().filter(|p| p.a > 0).count();
         assert!(inked_count > 0);
 
         // Moving glide image
-        let img_move = tabs_indicator(
-            80,
-            20,
-            2.0,
-            TabsVariant::Pill,
-            Matrix::Bayer4,
+        let img_move = tabs_indicator(&Indicator {
+            columns: 80, rows: 20, cell: 2.0,
+            variant: TabsVariant::Pill,
+            matrix: Matrix::Bayer4,
             color,
             from,
             to,
-            0.5,
-        );
+            progress: 0.5,
+        });
         let buffer_move = img_move.to_rgba8().unwrap();
         let inked_move_count = buffer_move.as_slice().iter().filter(|p| p.a > 0).count();
         assert!(inked_move_count > 0);
 
         // Underline variant
-        let img_underline = tabs_indicator(
-            80,
-            20,
-            2.0,
-            TabsVariant::Underline,
-            Matrix::Bayer4,
+        let img_underline = tabs_indicator(&Indicator {
+            columns: 80, rows: 20, cell: 2.0,
+            variant: TabsVariant::Underline,
+            matrix: Matrix::Bayer4,
             color,
             from,
             to,
-            0.5,
-        );
+            progress: 0.5,
+        });
         let buffer_u = img_underline.to_rgba8().unwrap();
         assert!(buffer_u.as_slice().iter().any(|p| p.a > 0));
     }
