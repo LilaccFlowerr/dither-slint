@@ -1,0 +1,30 @@
+import { DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export component DitherRidgelines {
+    in property <int> lines: 32;
+    in property <float> amplitude: 1;
+    in property <float> spread: 0.5;
+    in property <float> shade: 0.25;
+    in property <[color]> palette: [DitherTheme.background, DitherTheme.ink];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 8;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "ridgelines";
+        params: [root.lines, root.amplitude, root.spread, root.shade];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

@@ -1,0 +1,34 @@
+import { DitherMatrix, DitherPoint } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export enum DitherTunnelShape { circle, square }
+
+export component DitherTunnel {
+    in property <DitherTunnelShape> shape: DitherTunnelShape.circle;
+    in property <float> rings: 1;
+    in property <int> spokes: 12;
+    in property <DitherPoint> center: { x: 0.5, y: 0.5 };
+    in property <float> sway: 1;
+    in property <float> fog: 1;
+    in property <[color]> palette: [DitherTheme.background, DitherTheme.ink];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 6;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "tunnel";
+        params: [root.shape == DitherTunnelShape.square ? 1 : 0, root.rings, root.spokes, root.center.x, root.center.y, root.sway, root.fog];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

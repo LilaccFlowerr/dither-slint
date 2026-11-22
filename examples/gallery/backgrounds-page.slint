@@ -3,6 +3,7 @@ import { DitherNoiseField, DitherNoiseMask, DitherNoiseVariant, DitherPalette } 
 import { DitherPlasma, DitherRipples, DitherShader, DitherTheme } from "../../ui/lib.slint";
 import { DitherWaves, DitherWavesVariant } from "../../ui/lib.slint";
 import { DitherAnimatedGradient, DitherAnimatedGradientPreset, DitherAurora, DitherMeshGradient, DitherSilk, DitherSmoke } from "../../ui/lib.slint";
+import { DitherContours, DitherRetroGrid, DitherRidgelines, DitherStarfield, DitherTunnel, DitherTunnelShape } from "../../ui/lib.slint";
 import { DitherBeams, DitherEclipse, DitherHalftone, DitherHalftoneSource, DitherHorizon, DitherLightRays, DitherLightRaysPreset } from "../../ui/lib.slint";
 
 component Heading inherits Text {
@@ -118,6 +119,24 @@ export component BackgroundsPage inherits ScrollView {
                     channels: [DitherPalette.pink, DitherPalette.blue, DitherPalette.orange];
                 }
             }
+        }
+
+        Heading { text: "Contours, ridgelines and retro grid"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherContours { } }
+            Box { DitherRidgelines { } }
+            Box { DitherRetroGrid { } }
+        }
+
+        Heading { text: "Tunnel and starfield"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherTunnel { } }
+            Box { DitherTunnel { shape: DitherTunnelShape.square; } }
+            Box { DitherStarfield { } }
         }
 
         Heading { text: "Your own field, written in Rust"; }

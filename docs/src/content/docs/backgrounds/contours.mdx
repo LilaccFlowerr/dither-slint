@@ -1,0 +1,31 @@
+---
+title: DitherContours
+description: "A topographic map: contour lines over slowly drifting hills, with every fifth line drawn heavier and a light hillshade."
+background:
+  field: contours
+  params: [14, 1, 5, 0.5]
+  palette: ['background', 'mix:background:ink:0.4', 'ink']
+  still: 6
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Lines', prop: 'lines', index: 0, min: 4, max: 32, step: 1 },
+		{ label: 'Scale', prop: 'scale', index: 1, min: 0.3, max: 3, step: 0.05 },
+		{ label: 'Index', prop: 'index', index: 2, min: 0, max: 10, step: 1 },
+		{ label: 'Relief', prop: 'relief', index: 3, min: 0, max: 1, step: 0.05 },
+	]}
+/>
+
+A topographic map: contour lines over slowly drifting hills, with every fifth line drawn heavier and a light hillshade. Thin lines use the middle palette colour, index lines the last. The hills keep their size in cells, so a small box shows a smaller piece of the same map.
+
+| Property | Default | |
+| --- | --- | --- |
+| `lines` | `14` | How many contour lines from the lowest ground to the highest, 4 to 32. |
+| `scale` | `1` | Size of the hills: higher packs more of them in. |
+| `index` | `5` | Every how many lines one is drawn heavier, as on a survey map. 0 draws them all the same. |
+| `relief` | `0.5` | How strongly the slopes facing away from the light are shaded, 0 to 1. |

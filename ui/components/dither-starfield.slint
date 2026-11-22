@@ -1,0 +1,32 @@
+import { DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export component DitherStarfield {
+    in property <float> density: 1;
+    in property <float> twinkle: 0.6;
+    in property <float> angle: 270;
+    in property <float> drift: 1.6;
+    in property <float> nebula: 0.5;
+    in property <[color]> palette: [DitherTheme.background, DitherEngine.mix(DitherTheme.background, DitherTheme.ink, 0.5), DitherTheme.ink];
+    in property <DitherMatrix> matrix: DitherMatrix.blue-noise;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 6;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "starfield";
+        params: [root.density, root.twinkle, root.angle, root.drift, root.nebula, root.palette.length - 1];
+        palette: root.palette;
+        levels: Math.min(256, (root.palette.length - 1) * 16 + 1);
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}
