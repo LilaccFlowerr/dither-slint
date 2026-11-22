@@ -63,7 +63,7 @@ Run the gallery with `cargo run --example gallery`.
 
 - **Basics:** `DitherGradient`, `DitherButton`, `DitherBadge`, `DitherCard`, `DitherDivider`
 - **Controls:** `DitherSwitch`, `DitherSlider`, `DitherInput`, `DitherTabs`, `DitherDropdownMenu`
-- **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`, `DitherUptimeBar`, `DitherGauge`
+- **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`, `DitherUptimeBar`, `DitherGauge`, `DitherNumber`
 
 There is also `DitherImage` for dithering a photo, four animated backgrounds (`DitherNoiseField`, `DitherPlasma`, `DitherRipples` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
 
@@ -584,6 +584,33 @@ DitherGauge {
 | `animate` | `DitherTheme.animated` | Fades the blocks in one by one. |
 | `matrix` | `bayer4` | The dither pattern. |
 | `cell` | `3px` | Size of one dither cell. |
+
+### DitherNumber
+
+An animated number for dashboards and landing stats. Each changed digit rolls on a strip to its new value, takes the accent colour while it moves and fades out at its top and bottom in a dither. It rolls in from `from` when it appears, and again whenever `value` changes.
+
+```slint
+DitherNumber {
+    value: 48210;
+    decimals: 0;
+    size: DitherNumberSize.xl;
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `value` | `0` | The number to show. |
+| `from` | `0` | Where the first roll starts. |
+| `decimals` | `3` | Most decimals. Thousands get a separator. |
+| `prefix`, `suffix` | | Text before and after the number. |
+| `size` | `md` | `sm`, `md`, `lg`, `xl` or `display`. |
+| `color` | `DitherTheme.foreground` | Colour of the number. |
+| `accent` | `DitherTheme.ink` | Colour a digit takes while it moves. |
+| `duration`, `stagger` | `900`, `40` | Milliseconds per digit, and between digits. |
+| `animate` | `DitherTheme.animated` | When `false` the number shows its value straight away. |
+| `matrix` | `bayer4` | The dither pattern of the faded edges. |
+| `cell` | about 1/30 of the font size | Size of one dither cell. |
+| `background` | `DitherTheme.background` | Colour behind the number, used for the faded edges. |
 
 ### DitherSkeleton
 

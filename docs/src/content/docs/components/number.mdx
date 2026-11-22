@@ -1,0 +1,67 @@
+---
+title: DitherNumber
+description: "An animated number for dashboards and landing stats: each changed digit rolls into place, faded at its edges by a dither."
+---
+
+import DitherNumber from '../../../components/DitherNumber.astro';
+import Demo from '../../../components/Demo.astro';
+
+Each changed digit rolls on a strip to its new value, forward when the number goes up and backward when it goes down, and a digit that has to pass more than ten spins an extra lap. Digits start one after another from the left and take the accent colour while they move. The top and bottom of each digit fade out in a dither. The number rolls in from `from` when it appears, and again whenever `value` changes. Click the large one to add 1,337.
+
+<Demo
+	title="Rolling"
+	code={`DitherNumber {
+    value: 48210;
+    decimals: 0;
+    size: DitherNumberSize.xl;
+}`}
+>
+	<DitherNumber value={48210} decimals={0} size="xl" step={1337} />
+</Demo>
+
+<Demo
+	title="Sizes, prefix and suffix"
+	code={`DitherNumber {
+    value: 99.9;
+    suffix: "%";
+    size: DitherNumberSize.sm;
+}
+
+DitherNumber {
+    value: 1284;
+    prefix: "$";
+    accent: DitherPalette.green;
+}
+
+DitherNumber {
+    value: 184;
+    suffix: " ms";
+    size: DitherNumberSize.lg;
+    accent: DitherPalette.orange;
+}`}
+>
+	<DitherNumber value={99.9} suffix="%" size="sm" />
+	<DitherNumber value={1284} prefix="$" accent="green" />
+	<DitherNumber value={184} suffix=" ms" size="lg" accent="orange" />
+</Demo>
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `value` | `0` | The number to show. Change it and the digits roll to the new value. |
+| `from` | `0` | Where the first roll starts. |
+| `decimals` | `3` | Most decimals. Trailing zeros are left out, and thousands get a separator. |
+| `prefix` | | Text before the number, such as `"$"` or `"+"`. |
+| `suffix` | | Text after the number, such as `"%"` or `" ms"`. |
+| `size` | `md` | `sm`, `md`, `lg`, `xl` or `display`: 24, 36, 60, 96 and 112px, each a little tighter. |
+| `color` | `DitherTheme.foreground` | Colour of the number. |
+| `accent` | `DitherTheme.ink` | Colour a digit takes while it moves, fading back as it lands. Set it to `color` to keep one colour. |
+| `duration` | `900` | Milliseconds per digit. |
+| `stagger` | `40` | Milliseconds between one digit starting and the next. |
+| `animate` | `DitherTheme.animated` | When `false` the number shows its value straight away. |
+| `matrix` | `bayer4` | The dither pattern of the faded edges. |
+| `cell` | about 1/30 of the font size | Size of one dither cell. |
+| `background` | `DitherTheme.background` | Colour behind the number. The faded edges are drawn in it, so match the surface the number sits on. |
+
+The number is read out as one piece of text, with its prefix and suffix, the way it looks when it has landed.

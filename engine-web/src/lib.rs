@@ -340,3 +340,30 @@ pub fn gauge_bloom(variant: usize, size: f32, segments: u32, ratio: f32, cell: f
 pub fn format_decimals(value: f32, decimals: usize) -> String {
     dither_slint::stat::format_decimals(value, decimals)
 }
+
+fn number_roll(from: f32, to: f32, decimals: usize, timing: &[f32]) -> dither_slint::number::Roll {
+    dither_slint::number::Roll { from, to, decimals, duration: timing[0], stagger: timing[1] }
+}
+
+/// Four numbers per glyph: 1 for a digit or 0 for anything else, its row, its tint and its character code.
+#[wasm_bindgen]
+pub fn number_glyphs(from: f32, to: f32, decimals: usize, timing: &[f32], elapsed: f32) -> Vec<f32> {
+    use dither_slint::number::{Glyph, glyphs};
+    glyphs(&number_roll(from, to, decimals, timing), elapsed)
+        .into_iter()
+        .flat_map(|glyph| match glyph {
+            Glyph::Digit { row, tint } => [1.0, row, tint, 0.0],
+            Glyph::Static(char) => [0.0, 0.0, 0.0, char as u32 as f32],
+        })
+        .collect()
+}
+
+#[wasm_bindgen]
+pub fn number_length(from: f32, to: f32, decimals: usize, timing: &[f32]) -> f32 {
+    dither_slint::number::length(&number_roll(from, to, decimals, timing))
+}
+
+#[wasm_bindgen]
+pub fn number_edge(columns: u32, rows: u32, matrix: usize, color: &[u8]) -> Vec<u8> {
+    bytes(dither_slint::number::edge(columns, rows, Matrix::ALL[matrix], colors(color)[0]))
+}

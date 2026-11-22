@@ -1,0 +1,59 @@
+import { DitherNumber, DitherNumberSize, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+component Heading inherits Text {
+    color: DitherTheme.foreground.transparentize(0.4);
+    font-size: 13px;
+}
+
+export component NumberPage inherits VerticalLayout {
+    in-out property <float> visitors: 48210;
+
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    Heading { text: "Click the number to add 1,337"; }
+
+    TouchArea {
+        height: counter.preferred-height;
+
+        clicked => {
+            root.visitors += 1337;
+        }
+
+        counter := DitherNumber {
+            x: 0;
+            y: 0;
+            value: root.visitors;
+            size: DitherNumberSize.xl;
+            decimals: 0;
+        }
+    }
+
+    Heading { text: "Sizes, prefix and suffix"; }
+
+    HorizontalLayout {
+        spacing: 32px;
+        alignment: start;
+
+        DitherNumber {
+            value: 99.9;
+            suffix: "%";
+            size: DitherNumberSize.sm;
+        }
+
+        DitherNumber {
+            value: 1284;
+            prefix: "$";
+            size: DitherNumberSize.md;
+            accent: DitherPalette.green;
+        }
+
+        DitherNumber {
+            value: 184;
+            suffix: " ms";
+            size: DitherNumberSize.lg;
+            accent: DitherPalette.orange;
+        }
+    }
+}

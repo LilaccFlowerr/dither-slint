@@ -12,6 +12,7 @@ pub mod lively;
 pub mod loader;
 pub mod matrix;
 pub mod noise;
+pub mod number;
 pub mod progress;
 pub mod render;
 pub mod skeleton;
@@ -77,6 +78,10 @@ macro_rules! install {
                 ratio: spec.ratio,
                 cell: spec.cell,
             }
+        }
+
+        fn number_roll(roll: &DitherNumberRoll) -> $crate::number::Roll {
+            $crate::number::Roll { from: roll.from, to: roll.to, decimals: roll.decimals.max(0) as usize, duration: roll.duration, stagger: roll.stagger }
         }
 
         let engine = $component.global::<DitherEngine>();
@@ -214,6 +219,18 @@ macro_rules! install {
             $crate::gauge::arc(&gauge_spec(&spec), &style)
         });
         engine.on_gauge_bloom(|spec, bloom, color| $crate::gauge::glow(&gauge_spec(&spec), Bloom::ALL[bloom as usize], color));
+        engine.on_number_glyphs(|roll, elapsed| {
+            let glyphs: Vec<DitherNumberGlyph> = $crate::number::glyphs(&number_roll(&roll), elapsed)
+                .into_iter()
+                .map(|glyph| match glyph {
+                    $crate::number::Glyph::Digit { row, tint } => DitherNumberGlyph { digit: true, text: "".into(), row, tint },
+                    $crate::number::Glyph::Static(char) => DitherNumberGlyph { digit: false, text: char.to_string().into(), row: 0.0, tint: 0.0 },
+                })
+                .collect();
+            $crate::slint::ModelRc::new($crate::slint::VecModel::from(glyphs))
+        });
+        engine.on_number_length(|roll| $crate::number::length(&number_roll(&roll)));
+        engine.on_number_edge(|columns, rows, matrix, color| $crate::number::edge(cells(columns), cells(rows), Matrix::ALL[matrix as usize], color));
         engine.on_uptime_day(|day| {
             let day = uptime_day(&day);
             let status = $crate::uptime::status(&day);

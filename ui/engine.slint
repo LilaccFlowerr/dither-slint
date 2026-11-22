@@ -128,6 +128,21 @@ export struct DitherGaugeLayout {
     reveal: float,
 }
 
+export struct DitherNumberRoll {
+    from: float,
+    to: float,
+    decimals: int,
+    duration: float,
+    stagger: float,
+}
+
+export struct DitherNumberGlyph {
+    digit: bool,
+    text: string,
+    row: float,
+    tint: float,
+}
+
 export global DitherEngine {
     pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, palette: [color], levels: int) -> image;
     pure callback fill(columns: int, rows: int, fill: DitherFill, edge: DitherEdge, length: float, from: float, to: float, matrix: DitherMatrix, color: color, frame: bool) -> image;
@@ -153,6 +168,9 @@ export global DitherEngine {
     pure callback gauge-layout(spec: DitherGaugeSpec) -> DitherGaugeLayout;
     pure callback gauge-arc(spec: DitherGaugeSpec, style: DitherGaugeStyle) -> image;
     pure callback gauge-bloom(spec: DitherGaugeSpec, bloom: DitherBloom, color: color) -> image;
+    pure callback number-glyphs(roll: DitherNumberRoll, elapsed: float) -> [DitherNumberGlyph];
+    pure callback number-length(roll: DitherNumberRoll) -> float;
+    pure callback number-edge(columns: int, rows: int, matrix: DitherMatrix, color: color) -> image;
     pure callback uptime-day(day: DitherUptimeDay) -> DitherUptimeInfo;
     pure callback uptime-summary(days: [DitherUptimeDay]) -> DitherUptimeSummary;
     pure callback stat-change(delta: float, good: DitherStatDirection) -> DitherStatChange;

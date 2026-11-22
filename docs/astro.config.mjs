@@ -37,6 +37,7 @@ export default defineConfig({
 						{ label: 'DitherImage', slug: 'components/image' },
 						{ label: 'DitherInput', slug: 'components/input' },
 						{ label: 'DitherLoader', slug: 'components/loader' },
+						{ label: 'DitherNumber', slug: 'components/number' },
 						{ label: 'DitherProgressBar', slug: 'components/progress-bar' },
 						{ label: 'DitherSkeleton', slug: 'components/skeleton' },
 						{ label: 'DitherSlider', slug: 'components/slider' },

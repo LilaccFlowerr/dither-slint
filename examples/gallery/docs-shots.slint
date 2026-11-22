@@ -20,6 +20,7 @@ import { StatPage } from "stat-page.slint";
 import { SparklinePage } from "sparkline-page.slint";
 import { UptimePage } from "uptime-page.slint";
 import { GaugePage } from "gauge-page.slint";
+import { NumberPage } from "number-page.slint";
 
 export component Shots inherits Window {
     in property <int> which;
@@ -48,5 +49,6 @@ export component Shots inherits Window {
         if root.which == 17: SparklinePage { }
         if root.which == 18: UptimePage { }
         if root.which == 19: GaugePage { }
+        if root.which == 20: NumberPage { }
     }
 }

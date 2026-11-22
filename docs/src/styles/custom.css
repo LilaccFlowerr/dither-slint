@@ -30,6 +30,7 @@
 .spark *,
 .uptime *,
 .gauge *,
+.dnumber *,
 .empty .scene canvas {
 	margin-top: 0 !important;
 }

@@ -1,0 +1,153 @@
+import { DitherEngine, DitherMatrix, DitherNumberGlyph, DitherNumberRoll } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export enum DitherNumberSize { sm, md, lg, xl, display }
+
+export component DitherNumber {
+    in property <float> value;
+    in property <float> from;
+    in property <int> decimals: 3;
+    in property <string> prefix;
+    in property <string> suffix;
+    in property <DitherNumberSize> size: DitherNumberSize.md;
+    in property <color> color: DitherTheme.foreground;
+    in property <color> accent: DitherTheme.ink;
+    in property <bool> animate: DitherTheme.animated;
+    in property <float> duration: 900;
+    in property <float> stagger: 40;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: Math.max(1, Math.round(root.font-size / 30px)) * 1px;
+    in property <color> background: DitherTheme.background;
+
+    property <length> font-size: root.size == DitherNumberSize.sm ? 24px
+        : root.size == DitherNumberSize.md ? 36px
+        : root.size == DitherNumberSize.lg ? 60px
+        : root.size == DitherNumberSize.xl ? 96px : 112px;
+    property <float> tracking-em: root.size == DitherNumberSize.sm ? -0.03
+        : root.size == DitherNumberSize.md ? -0.04
+        : root.size == DitherNumberSize.lg ? -0.05
+        : root.size == DitherNumberSize.xl ? -0.055 : -0.06;
+    property <length> tracking: root.font-size * root.tracking-em;
+    property <length> line: root.font-size * 1.1;
+    property <length> pad: root.font-size * 0.14;
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <length> digit-width: zero.preferred-width;
+    property <int> edge-columns: Math.ceil(root.digit-width / root.step);
+    property <int> edge-rows: Math.ceil((root.line + 2 * root.pad) / root.step);
+
+    property <float> shown-from: root.from;
+    property <float> shown-to;
+    property <duration> started: -1ms;
+    property <float> clock;
+    property <DitherNumberRoll> roll: {
+        from: root.shown-from,
+        to: root.shown-to,
+        decimals: root.decimals,
+        duration: root.duration,
+        stagger: root.stagger,
+    };
+    property <float> elapsed: root.animate ? root.clock : 1000000;
+    property <[DitherNumberGlyph]> glyphs: DitherEngine.number-glyphs(root.roll, root.elapsed);
+
+    preferred-width: row.preferred-width;
+    preferred-height: root.line;
+    accessible-role: AccessibleRole.text;
+    accessible-label: "\{root.prefix}\{DitherEngine.format-decimals(root.value, root.decimals)}\{root.suffix}";
+
+    init => {
+        root.shown-to = root.value;
+    }
+
+    changed value => {
+        root.shown-from = root.shown-to;
+        root.shown-to = root.value;
+        root.started = -1ms;
+        root.clock = 0;
+    }
+
+    Timer {
+        interval: 16ms;
+        running: root.animate && root.clock < DitherEngine.number-length(root.roll);
+        triggered => {
+            if root.started < 0ms {
+                root.started = animation-tick();
+            }
+            root.clock = (animation-tick() - root.started) / 1ms;
+        }
+    }
+
+    zero := Text {
+        visible: false;
+        text: "0";
+        font-size: root.font-size;
+        font-weight: 600;
+    }
+
+    row := HorizontalLayout {
+        x: 0;
+        y: 0;
+        height: root.line;
+
+        if root.prefix != "": Text {
+            text: root.prefix;
+            color: root.color;
+            font-size: root.font-size;
+            font-weight: 600;
+            letter-spacing: root.tracking;
+            vertical-alignment: center;
+        }
+
+        for glyph in root.glyphs: Rectangle {
+            width: glyph.digit ? root.digit-width + root.tracking : sign.preferred-width;
+
+            sign := Text {
+                text: glyph.text;
+                color: root.color;
+                font-size: root.font-size;
+                font-weight: 600;
+                letter-spacing: root.tracking;
+                vertical-alignment: center;
+            }
+
+            if glyph.digit: Rectangle {
+                x: (parent.width - root.digit-width) / 2;
+                y: -root.pad;
+                width: root.digit-width;
+                height: root.line + 2 * root.pad;
+                clip: true;
+
+                for index in 30: Text {
+                    visible: Math.abs(index - glyph.row) < 1.5;
+                    y: root.pad + (index - glyph.row) * root.line;
+                    width: parent.width;
+                    height: root.line;
+                    text: "\{Math.mod(index, 10)}";
+                    color: DitherEngine.mix(root.color, root.accent, glyph.tint);
+                    font-size: root.font-size;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                Image {
+                    x: 0;
+                    y: 0;
+                    width: root.edge-columns * root.step;
+                    height: root.edge-rows * root.step;
+                    image-fit: ImageFit.fill;
+                    image-rendering: pixelated;
+                    source: DitherEngine.number-edge(root.edge-columns, root.edge-rows, root.matrix, root.background);
+                }
+            }
+        }
+
+        if root.suffix != "": Text {
+            text: root.suffix;
+            color: root.color;
+            font-size: root.font-size;
+            font-weight: 600;
+            letter-spacing: root.tracking;
+            vertical-alignment: center;
+        }
+    }
+}

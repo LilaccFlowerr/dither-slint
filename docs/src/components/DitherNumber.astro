@@ -1,0 +1,192 @@
+---
+interface Props {
+	value: number;
+	from?: number;
+	decimals?: number;
+	prefix?: string;
+	suffix?: string;
+	size?: 'sm' | 'md' | 'lg' | 'xl' | 'display';
+	accent?: string;
+	duration?: number;
+	stagger?: number;
+	step?: number;
+}
+
+const { value, from = 0, decimals = 3, prefix = '', suffix = '', size = 'md', accent = 'ink', duration = 900, stagger = 40, step } = Astro.props;
+---
+
+<span
+	class="dnumber"
+	data-value={value}
+	data-from={from}
+	data-decimals={decimals}
+	data-prefix={prefix}
+	data-suffix={suffix}
+	data-size={size}
+	data-accent={accent}
+	data-duration={duration}
+	data-stagger={stagger}
+	data-step={step}
+	title={step ? `Click to add ${step.toLocaleString('en-US')}` : undefined}
+>
+</span>
+
+<style is:global>
+	.dnumber {
+		position: relative;
+		display: inline-flex;
+		flex: none;
+		color: #ebe5d9;
+		font-weight: 600;
+		line-height: 1.1;
+		white-space: pre;
+	}
+	.dnumber[data-step] {
+		cursor: pointer;
+	}
+	.dnumber .slot {
+		position: relative;
+		display: inline-block;
+	}
+	.dnumber .slot .ghost {
+		visibility: hidden;
+	}
+	.dnumber .window {
+		position: absolute;
+		inset: -0.14em 0;
+		overflow: clip;
+	}
+	.dnumber .strip {
+		position: absolute;
+		inset: 0.14em 0 auto;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	.dnumber .strip span {
+		display: block;
+		height: 1.1em;
+	}
+	.dnumber canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: block;
+		max-width: none;
+		margin: 0 !important;
+		image-rendering: pixelated;
+	}
+	.dnumber .text {
+		position: absolute;
+		inset: 0;
+		color: transparent;
+	}
+</style>
+
+<script>
+	import { blend, ready, rgba, theme } from '../scripts/dither';
+	import { format_decimals, number_edge, number_glyphs, number_length } from '../engine/dither_slint_engine_web.js';
+
+	const SIZES = { sm: [24, -0.03], md: [36, -0.04], lg: [60, -0.05], xl: [96, -0.055], display: [112, -0.06] } as const;
+	const ROWS = 30;
+
+	function build(root: HTMLElement) {
+		const data = root.dataset as Record<string, string>;
+		const [fontSize, tracking] = SIZES[data.size as keyof typeof SIZES];
+		const decimals = Number(data.decimals);
+		const timing = new Float32Array([Number(data.duration), Number(data.stagger)]);
+		const motion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const ink = rgba('foreground');
+		const accent = rgba(data.accent);
+		const cell = Math.max(1, Math.round(fontSize / 30));
+		const line = fontSize * 1.1;
+		const pad = fontSize * 0.14;
+		root.style.fontSize = `${fontSize}px`;
+		root.style.letterSpacing = `${tracking}em`;
+		root.setAttribute('role', 'text');
+
+		let from = Number(data.from);
+		let to = Number(data.value);
+		let frame = 0;
+
+		let strips: HTMLElement[] = [];
+
+		const build = () => {
+			const glyphs = number_glyphs(from, to, decimals, timing, 0);
+			const parts: Node[] = [];
+			strips = [];
+			if (data.prefix) parts.push(document.createTextNode(data.prefix));
+			for (let index = 0; index < glyphs.length; index += 4) {
+				if (!glyphs[index]) {
+					parts.push(document.createTextNode(String.fromCharCode(glyphs[index + 3])));
+					continue;
+				}
+				const slot = Object.assign(document.createElement('span'), { className: 'slot' });
+				slot.style.letterSpacing = '0';
+				slot.style.marginRight = `${tracking}em`;
+				const ghost = Object.assign(document.createElement('span'), { className: 'ghost', textContent: '0' });
+				const window = Object.assign(document.createElement('span'), { className: 'window' });
+				const strip = Object.assign(document.createElement('span'), { className: 'strip' });
+				for (let row = 0; row < ROWS; row += 1) strip.append(Object.assign(document.createElement('span'), { textContent: String(row % 10) }));
+				window.append(strip);
+				slot.append(ghost, window);
+				parts.push(slot);
+				strips.push(strip);
+			}
+			if (data.suffix) parts.push(document.createTextNode(data.suffix));
+			const text = Object.assign(document.createElement('span'), { className: 'text', textContent: `${data.prefix}${format_decimals(to, decimals)}${data.suffix}` });
+			root.replaceChildren(...parts, text);
+			for (const window of root.querySelectorAll<HTMLElement>('.window')) {
+				const columns = Math.ceil(window.clientWidth / cell);
+				const rows = Math.ceil((line + 2 * pad) / cell);
+				const canvas = document.createElement('canvas');
+				canvas.width = columns;
+				canvas.height = rows;
+				canvas.style.width = `${columns * cell}px`;
+				canvas.style.height = `${rows * cell}px`;
+				canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(number_edge(columns, rows, 1, new Uint8Array(rgba(theme.background)))), columns, rows), 0, 0);
+				window.append(canvas);
+			}
+		};
+
+		const draw = (elapsed: number) => {
+			const glyphs = number_glyphs(from, to, decimals, timing, elapsed);
+			let slot = 0;
+			for (let index = 0; index < glyphs.length; index += 4) {
+				if (!glyphs[index]) continue;
+				const strip = strips[slot];
+				slot += 1;
+				const [r, g, b] = blend(ink, accent, glyphs[index + 2]);
+				strip.style.transform = `translateY(${-glyphs[index + 1] * line}px)`;
+				strip.style.color = `rgb(${r} ${g} ${b})`;
+			}
+		};
+
+		const run = () => {
+			cancelAnimationFrame(frame);
+			build();
+			if (!motion) return draw(Infinity);
+			const length = number_length(from, to, decimals, timing);
+			const start = performance.now();
+			const tick = (now: number) => {
+				const elapsed = now - start;
+				draw(elapsed);
+				if (elapsed < length) frame = requestAnimationFrame(tick);
+			};
+			frame = requestAnimationFrame(tick);
+		};
+
+		run();
+		if (data.step) {
+			root.addEventListener('click', () => {
+				from = to;
+				to += Number(data.step);
+				run();
+			});
+		}
+	}
+
+	ready.then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('.dnumber')) build(root);
+	});
+</script>

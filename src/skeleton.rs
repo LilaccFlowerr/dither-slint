@@ -1,7 +1,7 @@
 use slint::{Color, Image, Rgba8Pixel};
 
 use crate::Matrix;
-use crate::render::{paint, pixel};
+use crate::render::{cubic_bezier, paint, pixel};
 use crate::style::{FillVariant, texture_inked};
 
 const BAND: [(f32, f32); 4] = [(120.0, 4.0 / 16.0), (82.0, 6.0 / 16.0), (48.0, 8.0 / 16.0), (20.0, 11.0 / 16.0)];
@@ -21,18 +21,8 @@ impl Animation {
     pub const ALL: [Self; 3] = [Self::Sweep, Self::Pulse, Self::None];
 }
 
-fn bezier(p1: f32, p2: f32, s: f32) -> f32 {
-    3.0 * p1 * s * (1.0 - s).powi(2) + 3.0 * p2 * s * s * (1.0 - s) + s.powi(3)
-}
-
 fn ease(progress: f32) -> f32 {
-    let (x1, y1, x2, y2) = (0.65, 0.0, 0.35, 1.0);
-    let (mut low, mut high) = (0.0_f32, 1.0_f32);
-    for _ in 0..24 {
-        let middle = (low + high) / 2.0;
-        if bezier(x1, x2, middle) < progress { low = middle } else { high = middle }
-    }
-    bezier(y1, y2, (low + high) / 2.0)
+    cubic_bezier([0.65, 0.0, 0.35, 1.0], progress)
 }
 
 fn rest(fill: FillVariant, matrix: Matrix, x: u32, y: u32) -> bool {

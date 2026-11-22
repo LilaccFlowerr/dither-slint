@@ -34,6 +34,23 @@ pub fn render(
     })
 }
 
+fn bezier(p1: f32, p2: f32, s: f32) -> f32 {
+    3.0 * p1 * s * (1.0 - s).powi(2) + 3.0 * p2 * s * s * (1.0 - s) + s.powi(3)
+}
+
+/// The CSS `cubic-bezier(x1, y1, x2, y2)` easing at `progress`.
+pub(crate) fn cubic_bezier([x1, y1, x2, y2]: [f32; 4], progress: f32) -> f32 {
+    if progress <= 0.0 || progress >= 1.0 {
+        return progress.clamp(0.0, 1.0);
+    }
+    let (mut low, mut high) = (0.0_f32, 1.0_f32);
+    for _ in 0..24 {
+        let middle = (low + high) / 2.0;
+        if bezier(x1, x2, middle) < progress { low = middle } else { high = middle }
+    }
+    bezier(y1, y2, (low + high) / 2.0)
+}
+
 pub(crate) fn pixel(color: Color) -> Rgba8Pixel {
     Rgba8Pixel::new(color.red(), color.green(), color.blue(), color.alpha())
 }
