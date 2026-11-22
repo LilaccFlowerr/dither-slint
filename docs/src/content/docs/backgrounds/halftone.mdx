@@ -1,0 +1,43 @@
+---
+title: DitherHalftone
+description: "A print halftone: round dots on a turned screen that grow with a noise, radial or linear source, in one ink or two to three overlapping channels like CMYK."
+background:
+  field: halftone
+  params: [0, 0.5, 0.5, 1, 0, 1, 0.9, 1, 45, 5, 1]
+  palette: ['background', 'ink']
+  cell: 2
+  colors: ['background', 'color']
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Source', prop: 'source', kind: 'select', options: ['DitherHalftoneSource.noise', 'DitherHalftoneSource.radial', 'DitherHalftoneSource.linear'], index: 0 },
+		{ label: 'Radius', prop: 'radius', index: 3, min: 0.2, max: 2, step: 0.05 },
+		{ label: 'Direction', prop: 'direction', index: 4, min: 0, max: 360, step: 1 },
+		{ label: 'Scale', prop: 'scale', index: 5, min: 0.2, max: 3, step: 0.05 },
+		{ label: 'Intensity', prop: 'intensity', index: 6, min: 0, max: 1, step: 0.05 },
+		{ label: 'Drift', prop: 'drift', index: 7, min: 0, max: 4, step: 0.1 },
+		{ label: 'Angle', prop: 'angle', index: 8, min: 0, max: 90, step: 1 },
+	]}
+/>
+
+A print halftone: round dots on a turned screen that grow with a noise, radial or linear source, in one ink or two to three overlapping channels like CMYK. The screen slides slowly, so dots swell and shrink as they travel. Each dot takes one value, sampled at its centre, as in print.
+
+| Property | Default | |
+| --- | --- | --- |
+| `source` | `noise` | What sizes the dots: `noise` (drifting clouds), `radial` (largest at `center`) or `linear` (growing towards `direction`). |
+| `center`, `radius` | `{ x: 0.5, y: 0.5 }`, `1` | Radial only: where the dots are largest, and where they run out. 1 reaches the farthest corner. |
+| `direction` | `0` | Linear only: the direction the dots grow towards, in degrees as in CSS. |
+| `scale` | `1` | Noise only: size of the clouds. |
+| `size` | `10px` | Distance between dot centres. |
+| `angle` | `45` | Screen angle in degrees. Extra channels add 30° each. |
+| `intensity` | `0.9` | Size of the largest dot, 0 to 1. At 1 the biggest dots just touch. |
+| `drift` | `1` | How fast the screen slides. 0 holds it still. |
+| `color` | `DitherTheme.ink` | Colour of the dots. |
+| `channels` | | Two or three inks, each on its own screen. Where dots overlap their colours mix. Replaces `color`. |
+| `background` | `DitherTheme.background` | Colour behind the dots. |
+| `cell` | `1phx` | Size of one rendered pixel. One device pixel keeps dot edges crisp. |

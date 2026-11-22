@@ -30,6 +30,12 @@ export function blend(base: Rgba, other: Rgba, amount: number): Rgba {
 	return Array.from(mix(new Uint8Array(base), new Uint8Array(other), amount)) as Rgba;
 }
 
+/** A palette entry as the docs write them: a theme name, a hex colour, or `mix:base:other:amount`. */
+export function paletteColor(spec: string): Rgba {
+	const [kind, base, other, amount] = spec.split(':');
+	return kind === 'mix' ? blend(rgba(base), rgba(other), Number(amount)) : rgba(spec);
+}
+
 export const variants = { gradient: 0, dotted: 1, hatched: 2, solid: 3 } as const;
 export const blooms = { off: 0, low: 1, high: 2 } as const;
 export const edges = { top: 0, bottom: 1, left: 2, right: 3 } as const;

@@ -1,0 +1,85 @@
+---
+import { getCollection } from 'astro:content';
+
+const pages = (await getCollection('docs', ({ id, data }) => id.startsWith('backgrounds/') && data.background !== undefined)).sort((a, b) =>
+	a.data.title.localeCompare(b.data.title),
+);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<div class="bg-gallery not-content">
+	{
+		pages.map(({ id, data }) => (
+			<a class="bg-card" href={`${base}/${id}/`}>
+				<canvas
+					data-field={data.background!.field}
+					data-params={JSON.stringify(data.background!.params)}
+					data-palette={data.background!.palette.join(' ')}
+					data-matrix={data.background!.matrix ?? 1}
+					data-cell={data.background!.cell ?? 3}
+					data-still={data.background!.still ?? 0}
+				/>
+				<strong>{data.title}</strong>
+				<span>{data.description}</span>
+			</a>
+		))
+	}
+</div>
+
+<style>
+	.bg-gallery {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 1rem;
+		margin-top: 1.5rem;
+	}
+	.bg-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		overflow: hidden;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		background: #1b1a19;
+		color: var(--sl-color-white);
+		text-decoration: none;
+		transition: border-color 150ms;
+	}
+	.bg-card:hover {
+		border-color: var(--sl-color-accent);
+	}
+	.bg-card canvas {
+		display: block;
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		image-rendering: pixelated;
+	}
+	.bg-card strong {
+		padding: 0.5rem 0.75rem 0;
+		font-size: var(--sl-text-sm);
+	}
+	.bg-card span {
+		padding: 0 0.75rem 0.75rem;
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+	}
+</style>
+
+<script>
+	import { shader } from '../engine/dither_slint_engine_web.js';
+	import { paletteColor, ready } from '../scripts/dither';
+
+	ready.then(() => {
+		for (const canvas of document.querySelectorAll<HTMLCanvasElement>('.bg-gallery canvas')) {
+			const data = canvas.dataset as Record<string, string>;
+			const cell = Number(data.cell);
+			const columns = Math.ceil(canvas.clientWidth / cell);
+			const rows = Math.ceil(canvas.clientHeight / cell);
+			const palette = new Uint8Array(data.palette.split(' ').flatMap(paletteColor));
+			const bytes = shader(data.field, columns, rows, Number(data.still), new Float32Array(JSON.parse(data.params)), palette, Number(data.matrix), 0);
+			canvas.width = columns;
+			canvas.height = rows;
+			canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+		}
+	});
+</script>

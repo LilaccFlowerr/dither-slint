@@ -1,0 +1,32 @@
+import { DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export component DitherHorizon {
+    in property <float> horizon: 0.28;
+    in property <float> curve: 0.6;
+    in property <float> glow: 1;
+    in property <float> aurora: 1;
+    in property <float> stars: 1;
+    in property <color> glow-color: DitherTheme.ink;
+    in property <color> sky-color: DitherTheme.background;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 14;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "horizon";
+        params: [root.horizon, root.curve, root.glow, root.aurora, root.stars];
+        palette: [root.sky-color, root.glow-color];
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

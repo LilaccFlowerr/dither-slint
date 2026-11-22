@@ -1,0 +1,31 @@
+---
+title: DitherSmoke
+description: "Soft smoke billowing upward and thinning out, lit from above."
+background:
+  field: smoke
+  params: [1, 0.8, 0.2, 1]
+  palette: ['background', 'ink']
+  still: 12
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Scale', prop: 'scale', index: 0, min: 0.3, max: 3, step: 0.05 },
+		{ label: 'Climb', prop: 'climb', index: 1, min: 0, max: 1, step: 0.01 },
+		{ label: 'Wind', prop: 'wind', index: 2, min: -2, max: 2, step: 0.05 },
+		{ label: 'Density', prop: 'density', index: 3, min: 0, max: 1.5, step: 0.05 },
+	]}
+/>
+
+Soft smoke billowing upward and thinning out, lit from above.
+
+| Property | Default | |
+| --- | --- | --- |
+| `scale` | `1` | Size of the billows: higher makes more, smaller ones. |
+| `climb` | `0.8` | How high the smoke climbs before it thins out, 0 to 1. |
+| `wind` | `0.2` | Sideways wind: negative blows left, positive right. |
+| `density` | `1` | How thick the smoke is, 0 to 1.5. |

@@ -1,0 +1,56 @@
+---
+title: DitherAurora
+description: "Curtains of light that fold, sway and shimmer."
+background:
+  field: aurora
+  params: [3, 0.42, 0.11, 1, 0.6, 8, 0.45, 0.9, 0.95, 0.2, 1, 0, 0, 0, 0]
+  palette: ['background', 'mix:background:ink:0.3', 'mix:background:ink:0.7', 'ink', 'mix:foreground:ink:0.5']
+  matrix: 2
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Curtains', prop: 'curtains', index: 0, min: 1, max: 6, step: 1 },
+		{ label: 'Edge height', prop: 'edge-height', index: 1, min: 0, max: 1, step: 0.01 },
+		{ label: 'Spread', prop: 'spread', index: 2, min: 0, max: 0.3, step: 0.01 },
+		{ label: 'Sway', prop: 'sway', index: 3, min: 0, max: 3, step: 0.05 },
+		{ label: 'Turbulence', prop: 'turbulence', index: 4, min: 0, max: 2, step: 0.05 },
+		{ label: 'Rays', prop: 'rays', index: 5, min: 2, max: 20, step: 1 },
+		{ label: 'Length', prop: 'length', index: 6, min: 0, max: 1, step: 0.01 },
+		{ label: 'Glow', prop: 'glow', index: 7, min: 0, max: 2, step: 0.05 },
+		{ label: 'Intensity', prop: 'intensity', index: 8, min: 0, max: 1, step: 0.05 },
+		{ label: 'Shimmer', prop: 'shimmer', index: 9, min: 0, max: 1, step: 0.05 },
+		{ label: 'Scale', prop: 'scale', index: 10, min: 0.3, max: 3, step: 0.05 },
+		{ label: 'Tilt', prop: 'tilt', index: 11, min: -45, max: 45, step: 1 },
+		{ label: 'Drift', prop: 'drift', index: 12, min: -2, max: 2, step: 0.1 },
+		{ label: 'Direction', prop: 'direction', kind: 'select', options: ['DitherAuroraDirection.up', 'DitherAuroraDirection.down'], index: 13 },
+		{ label: 'Mask', prop: 'mask', kind: 'select', options: ['DitherAuroraMask.none', 'DitherAuroraMask.top', 'DitherAuroraMask.bottom', 'DitherAuroraMask.edges'], index: 14 },
+	]}
+/>
+
+Curtains of light that fold, sway and shimmer. Set `color`, `tip-color` and `background` for a quick palette, or pass `palette` from paper to brightest to take over.
+
+| Property | Default | |
+| --- | --- | --- |
+| `color` | `DitherTheme.ink` | The bright lower edge of each curtain. |
+| `tip-color` | `color` | The faint tops of the rays, for a two-tone sky. |
+| `background` | `DitherTheme.background` | The sky behind. |
+| `curtains` | `3` | Number of curtains, 1 to 6. |
+| `edge-height` | `0.42` | Where the lowest bright edge hangs, 0 (bottom) to 1 (top). |
+| `spread` | `0.11` | Vertical gap between curtains. |
+| `sway` | `1` | How far the edges fold, 0 to 3. |
+| `turbulence` | `0.6` | Fine ripples along the edges, 0 to 2. |
+| `rays` | `8` | How many rays fit across, 2 to 20. |
+| `length` | `0.45` | How far the rays reach, 0 to 1. |
+| `glow` | `0.9` | Brightness of the edge line, 0 to 2. |
+| `intensity` | `0.95` | Brightness of the curtains, 0 to 1. |
+| `shimmer` | `0.2` | Slow brightness ripple, 0 to 1. |
+| `scale` | `1` | Horizontal zoom: higher fits more folds across. |
+| `tilt` | `0` | Tilt in degrees, -45 to 45. |
+| `drift` | `0` | Sideways travel, -2 (left) to 2 (right). |
+| `direction` | `up` | `up`: rays rise from a bright lower edge. `down`: they hang from the top. |
+| `mask` | `none` | Fade it out where text sits: `none`, `top`, `bottom` or `edges`. |

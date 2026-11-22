@@ -3,6 +3,7 @@ import { DitherNoiseField, DitherNoiseMask, DitherNoiseVariant, DitherPalette } 
 import { DitherPlasma, DitherRipples, DitherShader, DitherTheme } from "../../ui/lib.slint";
 import { DitherWaves, DitherWavesVariant } from "../../ui/lib.slint";
 import { DitherAnimatedGradient, DitherAnimatedGradientPreset, DitherAurora, DitherMeshGradient, DitherSilk, DitherSmoke } from "../../ui/lib.slint";
+import { DitherBeams, DitherEclipse, DitherHalftone, DitherHalftoneSource, DitherHorizon, DitherLightRays, DitherLightRaysPreset } from "../../ui/lib.slint";
 
 component Heading inherits Text {
     color: DitherTheme.foreground;
@@ -94,6 +95,29 @@ export component BackgroundsPage inherits ScrollView {
             Box { DitherAurora { } }
             Box { DitherSilk { } }
             Box { DitherSmoke { } }
+        }
+
+        Heading { text: "Beams, light rays and eclipse"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherBeams { } }
+            Box { DitherLightRays { preset: DitherLightRaysPreset.sunset-rose; } }
+            Box { DitherEclipse { } }
+        }
+
+        Heading { text: "Horizon and halftone"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherHorizon { } }
+            Box { DitherHalftone { } }
+            Box {
+                DitherHalftone {
+                    source: DitherHalftoneSource.radial;
+                    channels: [DitherPalette.pink, DitherPalette.blue, DitherPalette.orange];
+                }
+            }
         }
 
         Heading { text: "Your own field, written in Rust"; }

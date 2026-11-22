@@ -1,0 +1,35 @@
+---
+title: DitherEclipse
+description: "A dark disc with a glowing rim and a corona that streams outwards and breathes slowly."
+background:
+  field: eclipse
+  params: [0.5, 0.5, 0.24, 0.5, 315, 0.5]
+  palette: ['background', 'ink']
+  still: 5
+  colors: ['sky-color', 'rim-color']
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Size', prop: 'size', index: 2, min: 0.05, max: 0.45, step: 0.01 },
+		{ label: 'Corona', prop: 'corona', index: 3, min: 0, max: 1, step: 0.05 },
+		{ label: 'Light', prop: 'light', index: 4, min: 0, max: 360, step: 1 },
+		{ label: 'Pulse', prop: 'pulse', index: 5, min: 0, max: 1, step: 0.05 },
+	]}
+/>
+
+A dark disc with a glowing rim and a corona that streams outwards and breathes slowly.
+
+| Property | Default | |
+| --- | --- | --- |
+| `center` | `{ x: 0.5, y: 0.5 }` | Centre of the disc, as fractions of the box from the top left. |
+| `size` | `0.24` | Radius of the disc, as a share of the box height. |
+| `corona` | `0.5` | How far the corona reaches past the rim, 0 to 1. |
+| `light` | `315` | Where the rim is brightest, in degrees as in CSS: 0 is the top. |
+| `pulse` | `0.5` | How much the glow breathes, 0 (steady) to 1. |
+| `rim-color` | `DitherTheme.ink` | Colour of the rim and corona. |
+| `sky-color` | `DitherTheme.background` | Colour of the sky and the disc. |

@@ -1,0 +1,32 @@
+---
+title: DitherSilk
+description: "Folds of silk catching the light, with a bright highlight along each crest."
+background:
+  field: silk
+  params: [6, 110, 0.6, 1]
+  palette: ['background', 'mix:background:ink:0.3', 'mix:background:ink:0.65', 'ink']
+  matrix: 2
+  still: 7
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Folds', prop: 'folds', index: 0, min: 1, max: 14, step: 0.5 },
+		{ label: 'Angle', prop: 'angle', index: 1, min: 0, max: 180, step: 1 },
+		{ label: 'Sheen', prop: 'sheen', index: 2, min: 0, max: 1, step: 0.05 },
+		{ label: 'Intensity', prop: 'intensity', index: 3, min: 0, max: 1, step: 0.05 },
+	]}
+/>
+
+Folds of silk catching the light, with a bright highlight along each crest.
+
+| Property | Default | |
+| --- | --- | --- |
+| `folds` | `6` | How many folds cross the box. |
+| `angle` | `110` | Direction the folds run, in degrees as in CSS: 90 runs them left to right. |
+| `sheen` | `0.6` | How narrow and bright the highlights are, 0 to 1. |
+| `intensity` | `1` | The brightest tone. Lower it to sit text on top. |

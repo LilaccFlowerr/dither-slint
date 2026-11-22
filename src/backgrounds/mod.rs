@@ -5,6 +5,11 @@ use crate::field::Field;
 
 mod animated_gradient;
 mod aurora;
+mod beams;
+mod eclipse;
+mod halftone;
+mod horizon;
+mod light_rays;
 mod mesh_gradient;
 mod noise_field;
 mod plasma;
@@ -14,9 +19,14 @@ mod smoke;
 mod waves;
 
 pub fn all() -> HashMap<String, Arc<dyn Field>> {
-    let fields: [(&str, Arc<dyn Field>); 9] = [
+    let fields: [(&str, Arc<dyn Field>); 14] = [
         ("animated-gradient", Arc::new(animated_gradient::AnimatedGradient)),
         ("aurora", Arc::new(aurora::Aurora)),
+        ("beams", Arc::new(beams::Beams)),
+        ("eclipse", Arc::new(eclipse::Eclipse)),
+        ("halftone", Arc::new(halftone::Halftone)),
+        ("horizon", Arc::new(horizon::Horizon)),
+        ("light-rays", Arc::new(light_rays::LightRays)),
         ("mesh-gradient", Arc::new(mesh_gradient::MeshGradient)),
         ("noise-field", Arc::new(noise_field::NoiseField)),
         ("plasma", Arc::new(plasma::Plasma)),

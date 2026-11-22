@@ -49,7 +49,7 @@ export default defineConfig({
 					],
 				},
 				{ label: 'Motion', items: [{ label: 'Overview', slug: 'motion/overview' }] },
-				{ label: 'Backgrounds', items: [{ label: 'Overview', slug: 'backgrounds/overview' }] },
+				{ label: 'Backgrounds', collapsed: true, items: [{ autogenerate: { directory: 'backgrounds' } }] },
 				{
 					label: 'Engine',
 					items: [

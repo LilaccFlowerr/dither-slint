@@ -1,0 +1,67 @@
+import { DitherEngine, DitherPoint } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export enum DitherHalftoneSource { noise, radial, linear }
+
+export component DitherHalftone {
+    in property <DitherHalftoneSource> source: DitherHalftoneSource.noise;
+    in property <DitherPoint> center: { x: 0.5, y: 0.5 };
+    in property <float> radius: 1;
+    in property <float> direction: 0;
+    in property <float> scale: 1;
+    in property <length> size: 10px;
+    in property <float> angle: 45;
+    in property <float> intensity: 0.9;
+    in property <float> drift: 1;
+    in property <color> color: DitherTheme.ink;
+    in property <[color]> channels;
+    in property <color> background: DitherTheme.background;
+    in property <length> cell: 1phx;
+    in property <float> speed: 1;
+    in property <float> still-time: 0;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <[color]> palette: root.channels.length >= 3 ? [
+        root.background,
+        root.channels[0],
+        root.channels[1],
+        DitherEngine.mix(root.channels[0], root.channels[1], 0.5),
+        root.channels[2],
+        DitherEngine.mix(root.channels[0], root.channels[2], 0.5),
+        DitherEngine.mix(root.channels[1], root.channels[2], 0.5),
+        DitherEngine.mix(root.channels[2], DitherEngine.mix(root.channels[0], root.channels[1], 0.5), 0.67),
+    ] : root.channels.length == 2 ? [
+        root.background,
+        root.channels[0],
+        root.channels[1],
+        DitherEngine.mix(root.channels[0], root.channels[1], 0.5),
+    ] : [root.background, root.color];
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "halftone";
+        params: [
+            root.source == DitherHalftoneSource.noise ? 0 : root.source == DitherHalftoneSource.radial ? 1 : 2,
+            root.center.x,
+            root.center.y,
+            root.radius,
+            root.direction,
+            root.scale,
+            root.intensity,
+            root.drift,
+            root.angle,
+            Math.max(3px, root.size) / root.step,
+            Math.max(1, Math.min(3, root.channels.length)),
+        ];
+        palette: root.palette;
+        levels: root.palette.length;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

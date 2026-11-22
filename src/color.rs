@@ -48,8 +48,42 @@ pub fn mix_oklab(base: Rgba, other: Rgba, amount: f32) -> Rgba {
     from_oklab([weight(0), weight(1), weight(2)], alpha)
 }
 
+/// A CSS `hsl()` colour: hue in degrees, saturation and lightness from 0 to 1.
+pub fn hsl(hue: f32, saturation: f32, lightness: f32) -> Rgba {
+    let chroma = (1.0 - (2.0 * lightness - 1.0).abs()) * saturation;
+    let channel = |n: f32| {
+        let k = (n + hue / 30.0).rem_euclid(12.0);
+        lightness - chroma / 2.0 * (k - 3.0).min(9.0 - k).clamp(-1.0, 1.0)
+    };
+    [channel(0.0), channel(8.0), channel(4.0), 1.0]
+}
+
+/// Two shades of one random hue: a strong one and a lighter one.
+pub fn random_pair() -> [Rgba; 2] {
+    use std::hash::{BuildHasher, Hasher};
+    let bits = std::collections::hash_map::RandomState::new().build_hasher().finish();
+    let hue = (bits % 361) as f32;
+    let saturation = 0.6 + ((bits >> 16) % 41) as f32 / 100.0;
+    [hsl(hue, saturation, 0.5), hsl(hue, saturation, 0.65)]
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn hsl_matches_css() {
+        assert_eq!(hsl(0.0, 1.0, 0.5), [1.0, 0.0, 0.0, 1.0]);
+        assert_eq!(hsl(120.0, 1.0, 0.5), [0.0, 1.0, 0.0, 1.0]);
+        let grey = hsl(200.0, 0.0, 0.5);
+        assert!(grey[..3].iter().all(|c| (c - 0.5).abs() < 1e-6));
+    }
+
+    #[test]
+    fn a_random_pair_is_one_hue_in_two_shades() {
+        let [strong, light] = random_pair();
+        let sum = |c: Rgba| c[0] + c[1] + c[2];
+        assert!(sum(light) > sum(strong));
+    }
+
     use super::*;
 
     const INK: Rgba = [0.329, 0.443, 0.961, 1.0];

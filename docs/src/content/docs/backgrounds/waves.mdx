@@ -1,0 +1,30 @@
+---
+title: DitherWaves
+description: "Layered swells under a glowing horizon, or thin lines like a sound wave."
+background:
+  field: waves
+  params: [0, 0.62, 6, 1]
+  palette: ['background', 'mix:background:ink:0.35', 'ink', 'mix:foreground:ink:0.45']
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Variant', prop: 'variant', kind: 'select', options: ['DitherWavesVariant.ocean', 'DitherWavesVariant.lines'], index: 0 },
+		{ label: 'Horizon', prop: 'horizon', index: 1, min: 0.2, max: 0.9, step: 0.01 },
+		{ label: 'Layers', prop: 'layers', index: 2, min: 2, max: 8, step: 1 },
+		{ label: 'Amplitude', prop: 'amplitude', index: 3, min: 0.2, max: 2, step: 0.1 },
+	]}
+/>
+
+Layered swells under a glowing horizon, or thin lines like a sound wave.
+
+| Property | Default | |
+| --- | --- | --- |
+| `variant` | `ocean` | `ocean` or `lines`. |
+| `horizon` | `0.62` | Height of the horizon, for `ocean`. |
+| `layers` | `6` | How many waves, 2 to 8. |
+| `amplitude` | `1` | Height of the waves. |

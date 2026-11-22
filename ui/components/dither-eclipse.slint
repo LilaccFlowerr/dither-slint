@@ -1,0 +1,32 @@
+import { DitherMatrix, DitherPoint } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export component DitherEclipse {
+    in property <DitherPoint> center: { x: 0.5, y: 0.5 };
+    in property <float> size: 0.24;
+    in property <float> corona: 0.5;
+    in property <float> light: 315;
+    in property <float> pulse: 0.5;
+    in property <color> rim-color: DitherTheme.ink;
+    in property <color> sky-color: DitherTheme.background;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 5;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "eclipse";
+        params: [root.center.x, root.center.y, root.size, root.corona, root.light, root.pulse];
+        palette: [root.sky-color, root.rim-color];
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

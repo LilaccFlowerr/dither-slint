@@ -1,0 +1,38 @@
+---
+title: DitherRipples
+description: "Concentric rings from one to four points that cross like drops on still water."
+background:
+  field: ripples
+  params: [2, 12, 1, 1, 0.28, 0.38, 0.74, 0.66, 0.5, 0.5, 0.5, 0.5]
+  palette: ['background', 'mix:background:ink:0.45', 'ink']
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Sources', prop: 'sources', kind: 'count', index: 0, min: 1, max: 4, step: 1 },
+		{ label: 'Rings', prop: 'rings', index: 1, min: 3, max: 30, step: 1 },
+		{ label: 'Decay', prop: 'decay', index: 2, min: 0, max: 3, step: 0.1 },
+		{ label: 'Intensity', prop: 'intensity', index: 3, min: 0, max: 1, step: 0.05 },
+		{ label: 'Source 1 x', prop: 'sources', array: 'sources', index: 4, min: 0, max: 1, step: 0.01 },
+		{ label: 'Source 1 y', prop: 'sources', array: 'sources', index: 5, min: 0, max: 1, step: 0.01 },
+		{ label: 'Source 2 x', prop: 'sources', array: 'sources', index: 6, min: 0, max: 1, step: 0.01 },
+		{ label: 'Source 2 y', prop: 'sources', array: 'sources', index: 7, min: 0, max: 1, step: 0.01 },
+		{ label: 'Source 3 x', prop: 'sources', array: 'sources', index: 8, min: 0, max: 1, step: 0.01 },
+		{ label: 'Source 3 y', prop: 'sources', array: 'sources', index: 9, min: 0, max: 1, step: 0.01 },
+		{ label: 'Source 4 x', prop: 'sources', array: 'sources', index: 10, min: 0, max: 1, step: 0.01 },
+		{ label: 'Source 4 y', prop: 'sources', array: 'sources', index: 11, min: 0, max: 1, step: 0.01 },
+	]}
+/>
+
+Concentric rings from one to four points that cross like drops on still water.
+
+| Property | Default | |
+| --- | --- | --- |
+| `sources` | `[0.28, 0.38, 0.74, 0.66]` | x and y pairs as fractions of the box, up to four. |
+| `rings` | `12` | How many rings fit in the height. |
+| `decay` | `1` | How quickly the rings fade. |
+| `intensity` | `1` | Brightest tone, 0 to 1. |

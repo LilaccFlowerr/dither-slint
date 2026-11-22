@@ -314,6 +314,11 @@ macro_rules! install {
             })
         });
         engine.on_mix(render::mix);
+        engine.on_random_beams(|| {
+            let colors: Vec<$crate::slint::Color> =
+                $crate::color::random_pair().into_iter().map(|[r, g, b, a]| $crate::slint::Color::from_argb_f32(a, r, g, b)).collect();
+            $crate::slint::ModelRc::new($crate::slint::VecModel::from(colors))
+        });
         engine.on_hover(|kind, columns, rows, t, x, y, level, strength, color, matrix| {
             let layer = Layer::new(columns, rows, strength, color, Matrix::ALL[matrix as usize]);
             $crate::lively::hover(Hover::ALL[kind as usize], &layer, t, (x, y), level)

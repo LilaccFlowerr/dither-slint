@@ -1,0 +1,31 @@
+---
+title: DitherPlasma
+description: "Overlapping sine waves that flow into each other."
+background:
+  field: plasma
+  params: [1, 0.3, 1.5, 1]
+  palette: ['background', 'purple', 'ink']
+  still: 9
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Scale', prop: 'scale', index: 0, min: 0.3, max: 3, step: 0.1 },
+		{ label: 'Warp', prop: 'warp', index: 1, min: 0, max: 1, step: 0.05 },
+		{ label: 'Bands', prop: 'bands', index: 2, min: 0.5, max: 6, step: 0.1 },
+		{ label: 'Intensity', prop: 'intensity', index: 3, min: 0, max: 1, step: 0.05 },
+	]}
+/>
+
+Overlapping sine waves that flow into each other.
+
+| Property | Default | |
+| --- | --- | --- |
+| `scale` | `1` | Size of the blobs. |
+| `warp` | `0.3` | How far slow noise bends the pattern. |
+| `bands` | `1.5` | How many times the colours cycle. |
+| `intensity` | `1` | Brightest tone. |

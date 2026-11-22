@@ -1,0 +1,49 @@
+---
+title: DitherAnimatedGradient
+description: "A slow, swirling three-colour gradient."
+background:
+  field: animated-gradient
+  params: [3, -50, 1, 0.01, 30, 0, 50, 16, 47, -299, 0, 45]
+  palette: ['background', 'mix:background:#66b3ff:0.5', '#66b3ff', 'mix:#66b3ff:foreground:0.5', 'foreground']
+  matrix: 2
+  still: 2.5
+  timeSpeed: false
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Rotation', prop: 'rotation', index: 1, min: -180, max: 180, step: 1 },
+		{ label: 'Proportion', prop: 'proportion', index: 2, min: 0, max: 100, step: 1 },
+		{ label: 'Scale', prop: 'scale', index: 3, min: 0, max: 1, step: 0.01 },
+		{ label: 'Speed', prop: 'speed', index: 4, min: 0, max: 100, step: 1 },
+		{ label: 'Distortion', prop: 'distortion', index: 5, min: 0, max: 100, step: 1 },
+		{ label: 'Swirl', prop: 'swirl', index: 6, min: 0, max: 100, step: 1 },
+		{ label: 'Swirl iterations', prop: 'swirl-iterations', index: 7, min: 1, max: 30, step: 1 },
+		{ label: 'Softness', prop: 'softness', index: 8, min: 0, max: 100, step: 1 },
+		{ label: 'Offset', prop: 'offset', index: 9, min: -1000, max: 1000, step: 1 },
+		{ label: 'Shape', prop: 'shape', kind: 'select', options: ['DitherAnimatedGradientShape.checks', 'DitherAnimatedGradientShape.stripes', 'DitherAnimatedGradientShape.edge'], index: 10 },
+		{ label: 'Shape size', prop: 'shape-size', index: 11, min: 0, max: 100, step: 1 },
+	]}
+/>
+
+A slow, swirling three-colour gradient. Pick a `preset` (`prism`, `lava`, `plasma`, `pulse`, `vortex` or `mist`); every other property starts at the preset's value and overrides it when you set it. The demo shows Prism.
+
+| Property | Default | |
+| --- | --- | --- |
+| `preset` | `prism` | Starting values for everything below. |
+| `color1`, `color2`, `color3` | from the preset | The three colours. The palette runs from `color1` through `color2` to `color3`, with a blend between each pair. |
+| `rotation` | from the preset | Angle of the pattern, in degrees. |
+| `proportion` | from the preset | Balance between the colours, 0 to 100. |
+| `scale` | from the preset | Size of the pattern, 0 to 1. |
+| `speed` | from the preset | How fast it swirls, 0 to 100. |
+| `distortion` | from the preset | Noise that bends the pattern, 0 to 100. |
+| `swirl` | from the preset | Strength of the swirl, 0 to 100. |
+| `swirl-iterations` | from the preset | How many times it swirls, 1 to 30. |
+| `softness` | from the preset | Soft or sharp edges between the colours, 0 to 100. |
+| `offset` | from the preset | Where in its loop it starts. |
+| `shape` | from the preset | The pattern the swirl folds: `checks`, `stripes` or `edge`. |
+| `shape-size` | from the preset | Size of that pattern, 0 to 100. |

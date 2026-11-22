@@ -1,0 +1,32 @@
+import { DitherMatrix, DitherPoint } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export component DitherBeams {
+    in property <DitherPoint> origin: { x: 0.18, y: -0.12 };
+    in property <float> angle: 160;
+    in property <float> spread: 80;
+    in property <float> rays: 9;
+    in property <float> sweep: 6;
+    in property <float> reach: 1;
+    in property <[color]> palette: [DitherTheme.background, DitherTheme.ink];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 4;
+    in property <bool> animated: DitherTheme.animated;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "beams";
+        params: [root.origin.x, root.origin.y, root.angle, root.spread, root.rays, root.sweep, root.reach];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

@@ -1,0 +1,81 @@
+import { DitherEngine, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export enum DitherLightRaysPreset { cyber-blue, azure-and-white, sunset-rose, emerald-aurora, neon-violet, solar-flare, monochrome }
+
+export enum DitherLightRaysMode { single, multi, random }
+
+export struct DitherLightRaysParams {
+    intensity: float,
+    rays: float,
+    reach: float,
+    position: float,
+    speed: float,
+    color: color,
+    color2: color,
+}
+
+export component DitherLightRays {
+    in property <DitherLightRaysPreset> preset: DitherLightRaysPreset.cyber-blue;
+    in property <float> intensity: root.preset-values.intensity;
+    in property <float> rays: root.preset-values.rays;
+    in property <float> reach: root.preset-values.reach;
+    in property <float> position: root.preset-values.position;
+    in property <float> speed: root.preset-values.speed;
+    in property <color> color: root.preset-values.color;
+    in property <color> color2: root.preset-values.color2;
+    in property <DitherLightRaysMode> mode: DitherLightRaysMode.multi;
+    in property <color> background: DitherTheme.background;
+    in property <[color]> palette: [
+        root.background,
+        root.mode == DitherLightRaysMode.random ? root.random-pair[0] : root.color,
+        root.mode == DitherLightRaysMode.random ? root.random-pair[1] : root.mode == DitherLightRaysMode.single ? root.color : root.color2,
+    ];
+    in property <DitherMatrix> matrix: DitherMatrix.bayer8;
+    in property <length> cell: 3px;
+    in property <float> still-time: 0;
+    in property <bool> animated: DitherTheme.animated;
+
+    property <DitherLightRaysParams> preset-values: root.values(root.preset);
+    property <[color]> random-pair;
+
+    pure function values(preset: DitherLightRaysPreset) -> DitherLightRaysParams {
+        if preset == DitherLightRaysPreset.azure-and-white {
+            return { intensity: 16, rays: 36, reach: 22, position: 50, speed: 12, color: #2060df, color2: #ffffff };
+        }
+        if preset == DitherLightRaysPreset.sunset-rose {
+            return { intensity: 15, rays: 30, reach: 20, position: 45, speed: 11, color: #ff5e3a, color2: #ff2a68 };
+        }
+        if preset == DitherLightRaysPreset.emerald-aurora {
+            return { intensity: 14, rays: 35, reach: 18, position: 55, speed: 9, color: #00f260, color2: #0575e6 };
+        }
+        if preset == DitherLightRaysPreset.neon-violet {
+            return { intensity: 18, rays: 28, reach: 24, position: 50, speed: 14, color: #a855f7, color2: #ec4899 };
+        }
+        if preset == DitherLightRaysPreset.solar-flare {
+            return { intensity: 20, rays: 40, reach: 25, position: 50, speed: 16, color: #ffa000, color2: #ff3d00 };
+        }
+        if preset == DitherLightRaysPreset.monochrome {
+            return { intensity: 12, rays: 26, reach: 15, position: 50, speed: 8, color: #ffffff, color2: #ffffff };
+        }
+        return { intensity: 13, rays: 32, reach: 16, position: 50, speed: 10, color: #639aff, color2: #639aff };
+    }
+
+    init => {
+        root.random-pair = DitherEngine.random-beams();
+    }
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        field: "light-rays";
+        params: [root.rays, root.intensity, root.position, root.speed, root.reach];
+        palette: root.palette;
+        matrix: root.matrix;
+        cell: root.cell;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

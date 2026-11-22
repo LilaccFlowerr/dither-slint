@@ -34,6 +34,11 @@ export enum DitherPress { ripple, burst, flash, pulse, glitch, none }
 
 export enum DitherIdle { none, shimmer, breathe, twinkle }
 
+export struct DitherPoint {
+    x: float,
+    y: float,
+}
+
 export struct DitherProgressPart {
     label: string,
     value: float,
@@ -180,6 +185,7 @@ export global DitherEngine {
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;
     pure callback shader(field: string, columns: int, rows: int, time: float, params: [float], palette: [color], matrix: DitherMatrix, levels: int) -> image;
     pure callback mix(base: color, other: color, amount: float) -> color;
+    callback random-beams() -> [color];
     pure callback hover(kind: DitherHover, columns: int, rows: int, t: float, x: float, y: float, level: float, strength: float, color: color, matrix: DitherMatrix) -> image;
     pure callback press(kind: DitherPress, columns: int, rows: int, t: float, x: float, y: float, seed: int, strength: float, color: color, matrix: DitherMatrix) -> image;
     pure callback idle(kind: DitherIdle, columns: int, rows: int, t: float, strength: float, color: color, cell: float, matrix: DitherMatrix) -> image;

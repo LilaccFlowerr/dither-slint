@@ -17,6 +17,7 @@ interface Props {
 	params: number[];
 	palette: string[];
 	slots?: 'palette' | 'noise';
+	colors?: string[];
 	matrix?: number;
 	cell?: number;
 	still?: number;
@@ -24,10 +25,10 @@ interface Props {
 	controls?: Control[];
 }
 
-const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, still = 0, timeSpeed = true, controls = [] } = Astro.props;
+const { field, name, params, palette, slots = 'palette', colors, matrix = 1, cell = 3, still = 0, timeSpeed = true, controls = [] } = Astro.props;
 ---
 
-<div class="background" data-field={field} data-name={name} data-slots={slots} data-palette={palette.join(' ')} data-params={JSON.stringify(params)} data-still={still}>
+<div class="background" data-field={field} data-name={name} data-slots={slots} data-colors={colors?.join(' ')} data-palette={palette.join(' ')} data-params={JSON.stringify(params)} data-still={still}>
 	<div class="stage">
 	<div class="view">
 		<canvas></canvas>
@@ -201,16 +202,11 @@ const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, s
 </style>
 
 <script>
-	import { blend, ready, rgba, type Rgba } from '../scripts/dither';
+	import { paletteColor, ready, rgba, type Rgba } from '../scripts/dither';
 	import { shader } from '../engine/dither_slint_engine_web.js';
 
 	const matrixNames = ['bayer2', 'bayer4', 'bayer8', 'blue-noise'];
 	const hex = ([r, g, b]: Rgba) => `#${[r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
-
-	function color(spec: string): Rgba {
-		const [kind, a, b, amount] = spec.split(':');
-		return kind === 'mix' ? blend(rgba(a), rgba(b), Number(amount)) : rgba(spec);
-	}
 
 	ready.then(() => {
 		for (const demo of document.querySelectorAll<HTMLElement>('.background')) {
@@ -219,6 +215,7 @@ const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, s
 			const params = JSON.parse(demo.dataset.params!) as number[];
 			const noise = demo.dataset.slots === 'noise';
 			const slotNames = noise ? ['Background', 'Color', 'Highlight'] : [];
+			const named = demo.dataset.colors?.split(' ');
 			const specs = demo.dataset.palette!.split(' ');
 			const picks: HTMLInputElement[] = [];
 			const input = (name: string) => demo.querySelector<HTMLInputElement>(`[name=${name}]`)!;
@@ -234,8 +231,8 @@ const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, s
 				const label = document.createElement('label');
 				const pick = document.createElement('input');
 				pick.type = 'color';
-				pick.value = hex(color(spec));
-				label.append(noise ? slotNames[index] : String(index + 1), pick);
+				pick.value = hex(paletteColor(spec));
+				label.append(noise ? slotNames[index] : (named?.[index] ?? String(index + 1)), pick);
 				holder.append(label);
 				picks.push(pick);
 			});
@@ -265,6 +262,8 @@ const { field, name, params, palette, slots = 'palette', matrix = 1, cell = 3, s
 				if (noise) {
 					lines.push(`background: ${picks[0].value};`, `color: ${picks[1].value};`);
 					if (highlight!.checked) lines.push(`highlight: ${picks[2].value};`);
+				} else if (named) {
+					named.forEach((prop, index) => lines.push(`${prop}: ${picks[index].value};`));
 				} else {
 					lines.push(`palette: [${picks.map((pick) => pick.value).join(', ')}];`);
 				}
