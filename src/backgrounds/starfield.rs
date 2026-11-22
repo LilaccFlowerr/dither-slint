@@ -37,12 +37,12 @@ impl Field for Starfield {
     // params: density, twinkle, angle in degrees as in CSS, drift in cells per second, nebula,
     // steps (palette colours after the paper)
     fn tone(&self, cell: &Cell) -> f32 {
-        let density = param(cell.params, 0).clamp(0.0, 2.0);
-        let twinkle = param(cell.params, 1).clamp(0.0, 1.0);
-        let angle = param(cell.params, 2).to_radians();
-        let drift = param(cell.params, 3);
-        let nebula = param(cell.params, 4).clamp(0.0, 1.0);
-        let steps = param(cell.params, 5).max(1.0);
+        let [density, twinkle, angle, drift, nebula, steps] = std::array::from_fn(|index| param(cell.params, index));
+        let density = density.clamp(0.0, 2.0);
+        let twinkle = twinkle.clamp(0.0, 1.0);
+        let angle = angle.to_radians();
+        let nebula = nebula.clamp(0.0, 1.0);
+        let steps = steps.max(1.0);
 
         let t = cell.time;
         let position = cell.uv * cell.resolution;

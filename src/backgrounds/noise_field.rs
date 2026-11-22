@@ -44,26 +44,26 @@ struct Settings {
 
 impl Settings {
     fn from(params: &[f32]) -> Self {
-        let at = |i: usize| param(params, i);
+        let [angle, bands, contrast, coverage, detail, flow, intensity, invert, mask, mask_size, scale, variant, warp] = std::array::from_fn(|index| param(params, index));
         Self {
-            angle: at(0),
-            bands: at(1).clamp(1.0, 48.0),
-            contrast: at(2).max(0.0),
-            coverage: at(3).clamp(-1.0, 1.0),
-            detail: at(4).round().clamp(1.0, 6.0) as usize,
-            flow: at(5).max(0.0),
-            intensity: at(6).clamp(0.0, 1.0),
-            invert: at(7) > 0.5,
-            mask: at(8).round() as usize,
-            mask_size: at(9).clamp(0.0, 1.0),
-            scale: at(10).max(0.1),
-            variant: match at(11).round() as usize {
+            angle,
+            bands: bands.clamp(1.0, 48.0),
+            contrast: contrast.max(0.0),
+            coverage: coverage.clamp(-1.0, 1.0),
+            detail: detail.round().clamp(1.0, 6.0) as usize,
+            flow: flow.max(0.0),
+            intensity: intensity.clamp(0.0, 1.0),
+            invert: invert > 0.5,
+            mask: mask.round() as usize,
+            mask_size: mask_size.clamp(0.0, 1.0),
+            scale: scale.max(0.1),
+            variant: match variant.round() as usize {
                 1 => Variant::Ridges,
                 2 => Variant::Contours,
                 3 => Variant::Marble,
                 _ => Variant::Smoke,
             },
-            warp: at(12).max(0.0),
+            warp: warp.max(0.0),
         }
     }
 }

@@ -12,12 +12,13 @@ impl Field for Beams {
     // params: origin x, origin y (fractions of the box from the top left), angle in degrees
     // as in CSS, spread in degrees, rays, sweep in degrees, reach
     fn tone(&self, cell: &Cell) -> f32 {
-        let origin = Vec2::new(param(cell.params, 0), param(cell.params, 1));
-        let angle = param(cell.params, 2).to_radians();
-        let spread = param(cell.params, 3).clamp(1.0, 359.0).to_radians();
-        let rays = param(cell.params, 4).max(1.0);
-        let sweep = param(cell.params, 5).to_radians();
-        let reach = param(cell.params, 6).max(0.05);
+        let [origin_x, origin_y, angle, spread, rays, sweep, reach] = std::array::from_fn(|index| param(cell.params, index));
+        let origin = Vec2::new(origin_x, origin_y);
+        let angle = angle.to_radians();
+        let spread = spread.clamp(1.0, 359.0).to_radians();
+        let rays = rays.max(1.0);
+        let sweep = sweep.to_radians();
+        let reach = reach.max(0.05);
 
         let t = cell.time;
         let aspect = cell.resolution.x / cell.resolution.y;

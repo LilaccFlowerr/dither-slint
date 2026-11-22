@@ -25,17 +25,18 @@ impl Settings {
     // params: source (0 noise, 1 radial, 2 linear), centre x, centre y, radius, direction in
     // degrees, scale, intensity, drift, angle in degrees, pitch in rendered pixels, channels
     fn new(params: &[f32]) -> Self {
+        let [mode, centre_x, centre_y, radius, direction, scale, intensity, drift, angle, pitch, channels] = std::array::from_fn(|index| param(params, index));
         Self {
-            mode: param(params, 0),
-            centre: Vec2::new(param(params, 1), param(params, 2)),
-            radius: param(params, 3).max(0.01),
-            direction: param(params, 4).to_radians(),
-            scale: param(params, 5).max(0.05),
-            intensity: param(params, 6).clamp(0.0, 1.0),
-            drift: param(params, 7),
-            angle: param(params, 8),
-            pitch: param(params, 9).max(1.0),
-            channels: param(params, 10).round().clamp(1.0, MOST_CHANNELS as f32) as usize,
+            mode,
+            centre: Vec2::new(centre_x, centre_y),
+            radius: radius.max(0.01),
+            direction: direction.to_radians(),
+            scale: scale.max(0.05),
+            intensity: intensity.clamp(0.0, 1.0),
+            drift,
+            angle,
+            pitch: pitch.max(1.0),
+            channels: channels.round().clamp(1.0, MOST_CHANNELS as f32) as usize,
         }
     }
 

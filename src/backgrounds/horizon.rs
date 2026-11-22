@@ -27,11 +27,12 @@ fn fbm(mut p: Vec2) -> f32 {
 impl Field for Horizon {
     // params: horizon, curve, glow, aurora, stars
     fn tone(&self, cell: &Cell) -> f32 {
-        let height = param(cell.params, 0).clamp(0.0, 0.95);
-        let curve = param(cell.params, 1).clamp(0.0, 1.0);
-        let strength = param(cell.params, 2).clamp(0.0, 1.0);
-        let aurora = param(cell.params, 3).clamp(0.0, 1.0);
-        let stars = param(cell.params, 4).clamp(0.0, 3.0);
+        let [height, curve, glow, aurora, stars] = std::array::from_fn(|index| param(cell.params, index));
+        let height = height.clamp(0.0, 0.95);
+        let curve = curve.clamp(0.0, 1.0);
+        let strength = glow.clamp(0.0, 1.0);
+        let aurora = aurora.clamp(0.0, 1.0);
+        let stars = stars.clamp(0.0, 3.0);
 
         let (t, uv) = (cell.time, cell.uv);
         let aspect = cell.resolution.x / cell.resolution.y;

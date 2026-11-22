@@ -20,11 +20,16 @@ impl Field for Ripples {
     // params: sources (1 to 4), rings, decay, intensity, then x and y for each source.
     fn tone(&self, cell: &Cell) -> f32 {
         let params = cell.params;
-        let sources = param(params, 0).round().clamp(1.0, 4.0) as usize;
-        let rings = param(params, 1).max(1.0);
-        let decay = param(params, 2).max(0.0);
-        let intensity = param(params, 3).clamp(0.0, 1.0);
-        let source = |i: usize| Vec2::new(param(params, 4 + 2 * i), param(params, 5 + 2 * i));
+        let [sources, rings, decay, intensity] = std::array::from_fn(|index| param(params, index));
+        let sources = sources.round().clamp(1.0, 4.0) as usize;
+        let rings = rings.max(1.0);
+        let decay = decay.max(0.0);
+        let intensity = intensity.clamp(0.0, 1.0);
+        const SOURCE_COORDINATES_START: usize = 4;
+        let source = |i: usize| {
+            let x = SOURCE_COORDINATES_START + 2 * i;
+            Vec2::new(param(params, x), param(params, x + 1))
+        };
 
         let aspect = cell.resolution.x / cell.resolution.y;
         let t = cell.time;

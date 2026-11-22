@@ -21,12 +21,13 @@ fn wrap(v: f32) -> f32 {
 impl Field for Tunnel {
     // params: shape (0 circle, 1 square), rings, spokes, centre x, centre y, sway, fog
     fn tone(&self, cell: &Cell) -> f32 {
-        let square = param(cell.params, 0) > 0.5;
-        let rings = param(cell.params, 1).max(0.25);
-        let spokes = param(cell.params, 2).round().clamp(0.0, 32.0);
-        let centre = Vec2::new(param(cell.params, 3), param(cell.params, 4));
-        let sway = param(cell.params, 5).max(0.0);
-        let fog_size = param(cell.params, 6).max(0.1);
+        let [shape, rings, spokes, centre_x, centre_y, sway, fog_size] = std::array::from_fn(|index| param(cell.params, index));
+        let square = shape > 0.5;
+        let rings = rings.max(0.25);
+        let spokes = spokes.round().clamp(0.0, 32.0);
+        let centre = Vec2::new(centre_x, centre_y);
+        let sway = sway.max(0.0);
+        let fog_size = fog_size.max(0.1);
 
         let (t, uv) = (cell.time, cell.uv);
         let aspect = cell.resolution.x / cell.resolution.y;

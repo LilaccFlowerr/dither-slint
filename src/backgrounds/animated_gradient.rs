@@ -32,18 +32,17 @@ impl Field for AnimatedGradient {
     // cell, rotation, proportion, scale, speed, distortion, swirl, swirl iterations,
     // softness, offset, shape (0 checks, 1 stripes, 2 edge), shape size
     fn tone(&self, cell: &Cell) -> f32 {
-        let size = param(cell.params, 0).max(1.0);
-        let rotation = param(cell.params, 1).to_radians();
-        let proportion = (param(cell.params, 2) / 100.0).clamp(0.0, 1.0);
-        let scale = param(cell.params, 3);
-        let rate = param(cell.params, 4) / 100.0 * 5.0;
-        let distortion = param(cell.params, 5) / 50.0;
-        let swirl = (param(cell.params, 6) / 100.0).clamp(0.0, 2.0);
-        let iterations = if swirl == 0.0 { 0.0 } else { param(cell.params, 7).ceil().clamp(1.0, 30.0) };
-        let softness = (param(cell.params, 8) / 100.0).clamp(0.0, 1.0);
-        let offset = param(cell.params, 9) * 0.01;
-        let shape = param(cell.params, 10);
-        let shape_scale = param(cell.params, 11) / 100.0;
+        let [size, rotation, proportion, scale, rate, distortion, swirl, iterations, softness, offset, shape, shape_scale] = std::array::from_fn(|index| param(cell.params, index));
+        let size = size.max(1.0);
+        let rotation = rotation.to_radians();
+        let proportion = (proportion / 100.0).clamp(0.0, 1.0);
+        let rate = rate / 100.0 * 5.0;
+        let distortion = distortion / 50.0;
+        let swirl = (swirl / 100.0).clamp(0.0, 2.0);
+        let iterations = if swirl == 0.0 { 0.0 } else { iterations.ceil().clamp(1.0, 30.0) };
+        let softness = (softness / 100.0).clamp(0.0, 1.0);
+        let offset = offset * 0.01;
+        let shape_scale = shape_scale / 100.0;
 
         let px = cell.resolution * size;
         let t = 0.5 * (cell.time * rate + offset);

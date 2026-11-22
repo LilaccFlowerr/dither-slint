@@ -19,10 +19,11 @@ fn height(p: Vec2, t: f32, folds: f32) -> f32 {
 impl Field for Silk {
     // params: folds, angle in degrees as in CSS, sheen, intensity
     fn tone(&self, cell: &Cell) -> f32 {
-        let folds = param(cell.params, 0).max(0.5);
-        let angle = (param(cell.params, 1) - 90.0).to_radians();
-        let sheen = param(cell.params, 2).clamp(0.0, 1.0);
-        let intensity = param(cell.params, 3).clamp(0.0, 1.0);
+        let [folds, angle, sheen, intensity] = std::array::from_fn(|index| param(cell.params, index));
+        let folds = folds.max(0.5);
+        let angle = (angle - 90.0).to_radians();
+        let sheen = sheen.clamp(0.0, 1.0);
+        let intensity = intensity.clamp(0.0, 1.0);
 
         let t = cell.time;
         let aspect = cell.resolution.x / cell.resolution.y;

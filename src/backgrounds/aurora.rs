@@ -32,22 +32,23 @@ impl Settings {
     // shimmer, scale, tilt in degrees, drift, down (1 hangs the rays from the top),
     // mask (0 none, 1 top, 2 bottom, 3 edges)
     fn new(params: &[f32], time: f32) -> Self {
+        let [curtains, height, spread, sway, turbulence, rays, length, glow, intensity, shimmer, scale, tilt, drift, down, mask] = std::array::from_fn(|index| param(params, index));
         Self {
-            curtains: param(params, 0).round().clamp(1.0, MOST_CURTAINS as f32) as usize,
-            height: param(params, 1),
-            spread: param(params, 2).clamp(0.0, 0.5),
-            sway: param(params, 3).max(0.0),
-            turbulence: param(params, 4).max(0.0),
-            rays: param(params, 5).clamp(1.0, 32.0),
-            decay: mix(15.0, 2.2, param(params, 6).clamp(0.0, 1.0)),
-            glow: param(params, 7).clamp(0.0, 2.0),
-            intensity: param(params, 8).clamp(0.0, 1.0),
-            shimmer: param(params, 9).clamp(0.0, 1.0),
-            scale: param(params, 10).max(0.1),
-            tilt: param(params, 11).clamp(-45.0, 45.0).to_radians().sin_cos(),
-            drift: param(params, 12).clamp(-2.0, 2.0),
-            down: param(params, 13) > 0.5,
-            mask: param(params, 14),
+            curtains: curtains.round().clamp(1.0, MOST_CURTAINS as f32) as usize,
+            height,
+            spread: spread.clamp(0.0, 0.5),
+            sway: sway.max(0.0),
+            turbulence: turbulence.max(0.0),
+            rays: rays.clamp(1.0, 32.0),
+            decay: mix(15.0, 2.2, length.clamp(0.0, 1.0)),
+            glow: glow.clamp(0.0, 2.0),
+            intensity: intensity.clamp(0.0, 1.0),
+            shimmer: shimmer.clamp(0.0, 1.0),
+            scale: scale.max(0.1),
+            tilt: tilt.clamp(-45.0, 45.0).to_radians().sin_cos(),
+            drift: drift.clamp(-2.0, 2.0),
+            down: down > 0.5,
+            mask,
             time,
         }
     }

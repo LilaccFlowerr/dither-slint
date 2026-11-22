@@ -19,10 +19,10 @@ fn density(p: Vec2, t: f32, wind: f32) -> f32 {
 impl Field for Smoke {
     // params: scale, height, wind, density
     fn tone(&self, cell: &Cell) -> f32 {
-        let scale = param(cell.params, 0).max(0.1);
-        let height = param(cell.params, 1).clamp(0.0, 1.0);
-        let wind = param(cell.params, 2);
-        let amount = param(cell.params, 3).clamp(0.0, 1.5);
+        let [scale, height, wind, amount] = std::array::from_fn(|index| param(cell.params, index));
+        let scale = scale.max(0.1);
+        let height = height.clamp(0.0, 1.0);
+        let amount = amount.clamp(0.0, 1.5);
 
         let t = cell.time;
         let aspect = cell.resolution.x / cell.resolution.y;

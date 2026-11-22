@@ -26,9 +26,10 @@ fn sum(p: Vec2, aspect: f32, unit: f32, count: usize, size: f32, t: f32) -> f32 
 impl Field for Metaballs {
     // params: rings (0 for solid blobs, 1 for contour lines), count, size
     fn tone(&self, cell: &Cell) -> f32 {
-        let rings = param(cell.params, 0) > 0.5;
-        let count = param(cell.params, 1).round().clamp(2.0, 8.0) as usize;
-        let size = param(cell.params, 2).max(0.1);
+        let [rings, count, size] = std::array::from_fn(|index| param(cell.params, index));
+        let rings = rings > 0.5;
+        let count = count.round().clamp(2.0, 8.0) as usize;
+        let size = size.max(0.1);
 
         let aspect = cell.resolution.x / cell.resolution.y;
         let p = Vec2::new(cell.uv.x * aspect, cell.uv.y);

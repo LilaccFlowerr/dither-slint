@@ -58,10 +58,10 @@ fn lines(cell: &Cell, layers: f32, amplitude: f32) -> f32 {
 impl Field for Waves {
     // params: mode (0 ocean, 1 lines), horizon, layers, amplitude
     fn tone(&self, cell: &Cell) -> f32 {
-        let horizon = param(cell.params, 1);
-        let layers = param(cell.params, 2).round().clamp(2.0, 8.0);
-        let amplitude = param(cell.params, 3).max(0.0);
-        if param(cell.params, 0) < 0.5 {
+        let [mode, horizon, layers, amplitude] = std::array::from_fn(|index| param(cell.params, index));
+        let layers = layers.round().clamp(2.0, 8.0);
+        let amplitude = amplitude.max(0.0);
+        if mode < 0.5 {
             ocean(cell, horizon, layers, amplitude)
         } else {
             lines(cell, layers, amplitude)

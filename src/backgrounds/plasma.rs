@@ -11,10 +11,11 @@ pub struct Plasma;
 impl Field for Plasma {
     // params: scale, warp, bands, intensity
     fn tone(&self, cell: &Cell) -> f32 {
-        let scale = param(cell.params, 0).max(0.05);
-        let warp = param(cell.params, 1).max(0.0);
-        let bands = param(cell.params, 2).max(0.1);
-        let intensity = param(cell.params, 3).clamp(0.0, 1.0);
+        let [scale, warp, bands, intensity] = std::array::from_fn(|index| param(cell.params, index));
+        let scale = scale.max(0.05);
+        let warp = warp.max(0.0);
+        let bands = bands.max(0.1);
+        let intensity = intensity.clamp(0.0, 1.0);
 
         let t = cell.time;
         let aspect = cell.resolution.x / cell.resolution.y;

@@ -4,6 +4,8 @@ use super::param;
 use crate::field::{Cell, Field};
 use crate::noise::fbm;
 
+const SIDE_PARAM: usize = 0;
+
 pub struct Fade;
 
 impl Field for Fade {
@@ -11,7 +13,8 @@ impl Field for Fade {
     // The uv of a cell points up.
     fn tone(&self, cell: &Cell) -> f32 {
         let aspect = cell.resolution.x / cell.resolution.y;
-        let (s, along) = match param(cell.params, 0).round() as i32 {
+        let side = param(cell.params, SIDE_PARAM);
+        let (s, along) = match side.round() as i32 {
             1 => (cell.uv.y, cell.uv.x * aspect),
             2 => (cell.uv.x, cell.uv.y / aspect),
             3 => (1.0 - cell.uv.x, cell.uv.y / aspect),

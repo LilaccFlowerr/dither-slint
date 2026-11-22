@@ -24,9 +24,10 @@ fn floor(uv: Vec2, aspect: f32, t: f32, horizon: f32, columns: f32) -> Vec2 {
 impl Field for RetroGrid {
     // params: horizon, sun, columns
     fn tone(&self, cell: &Cell) -> f32 {
-        let horizon = param(cell.params, 0).clamp(0.05, 0.95);
-        let sun = param(cell.params, 1).clamp(0.0, 1.0);
-        let columns = param(cell.params, 2).max(2.0);
+        let [horizon, sun, columns] = std::array::from_fn(|index| param(cell.params, index));
+        let horizon = horizon.clamp(0.05, 0.95);
+        let sun = sun.clamp(0.0, 1.0);
+        let columns = columns.max(2.0);
 
         let (t, uv, resolution) = (cell.time, cell.uv, cell.resolution);
         let aspect = resolution.x / resolution.y;

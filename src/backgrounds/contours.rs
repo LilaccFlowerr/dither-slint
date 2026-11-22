@@ -24,10 +24,11 @@ fn line(h: f32, hx: f32, hy: f32, count: f32, width: f32) -> f32 {
 impl Field for Contours {
     // params: lines, scale, index (every how many lines one is heavier, 0 for none), relief
     fn tone(&self, cell: &Cell) -> f32 {
-        let lines = param(cell.params, 0).clamp(4.0, 32.0);
-        let scale = param(cell.params, 1).max(0.1);
-        let index = param(cell.params, 2).round().max(0.0);
-        let relief = param(cell.params, 3).clamp(0.0, 1.0);
+        let [lines, scale, index, relief] = std::array::from_fn(|index| param(cell.params, index));
+        let lines = lines.clamp(4.0, 32.0);
+        let scale = scale.max(0.1);
+        let index = index.round().max(0.0);
+        let relief = relief.clamp(0.0, 1.0);
 
         let t = cell.time;
         let unit = scale / 200.0;

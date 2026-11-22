@@ -6,15 +6,32 @@ use crate::noise::{fbm, snoise};
 
 pub struct Orb;
 
+struct OrbSettings {
+    glow: f32,
+    lean: Vec2,
+    morph: f32,
+    size: f32,
+}
+
+impl OrbSettings {
+    fn from_params(params: &[f32]) -> Self {
+        let [glow, lean_x, lean_y, morph, size] = std::array::from_fn(|index| param(params, index));
+        // Slint's y axis points down from the top.
+        let lean = Vec2::new(lean_x, -lean_y).clamp(Vec2::splat(-1.0), Vec2::splat(1.0));
+        Self {
+            glow: glow.clamp(0.0, 1.0),
+            lean,
+            morph: morph.max(0.0),
+            size: size.clamp(0.1, 0.5),
+        }
+    }
+}
+
 impl Field for Orb {
-    // params: glow, lean x and y (-1 to 1, y grows downwards), morph, size. With a highlight
-    // colour in the palette the body stays below the top tone.
     fn tone(&self, cell: &Cell) -> f32 {
+        let OrbSettings { glow, lean, morph, size } = OrbSettings::from_params(cell.params);
+        // Leave room for a separate highlight colour.
         let body = if cell.palette.len() > 2 { 0.55 } else { 1.0 };
-        let glow = param(cell.params, 0).clamp(0.0, 1.0);
-        let lean = Vec2::new(param(cell.params, 1), -param(cell.params, 2)).clamp(Vec2::splat(-1.0), Vec2::splat(1.0));
-        let morph = param(cell.params, 3).max(0.0);
-        let size = param(cell.params, 4).clamp(0.1, 0.5);
 
         let aspect = cell.resolution.x / cell.resolution.y;
         let fit = aspect.min(1.0);

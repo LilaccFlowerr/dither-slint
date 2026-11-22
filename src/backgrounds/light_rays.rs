@@ -26,11 +26,12 @@ fn strength(beam: &Beam, coord: Vec2, resolution: Vec2, speed: f32, t: f32, reac
 
 /// How much light each of the two beams gives this cell.
 fn alpha(cell: &Cell) -> Vec2 {
-    let count = param(cell.params, 0).clamp(0.0, 100.0) / 100.0 * 0.3;
-    let intensity = param(cell.params, 1).clamp(0.0, 100.0) / 100.0 * 0.5;
-    let position = param(cell.params, 2) / 100.0;
-    let rate = param(cell.params, 3).max(0.0) / 10.0;
-    let reach = param(cell.params, 4).clamp(0.0, 100.0) / 100.0 * 0.5;
+    let [count, intensity, position, rate, reach] = std::array::from_fn(|index| param(cell.params, index));
+    let count = count.clamp(0.0, 100.0) / 100.0 * 0.3;
+    let intensity = intensity.clamp(0.0, 100.0) / 100.0 * 0.5;
+    let position = position / 100.0;
+    let rate = rate.max(0.0) / 10.0;
+    let reach = reach.clamp(0.0, 100.0) / 100.0 * 0.5;
 
     let resolution = cell.resolution;
     let t = cell.time * rate + START;

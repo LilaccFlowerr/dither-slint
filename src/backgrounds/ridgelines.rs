@@ -20,11 +20,12 @@ struct Settings {
 impl Settings {
     // params: lines, amplitude, spread, shade
     fn new(params: &[f32], time: f32) -> Self {
+        let [lines, amplitude, spread, shade] = std::array::from_fn(|index| param(params, index));
         Self {
-            lines: param(params, 0).round().clamp(6.0, 64.0),
-            amplitude: param(params, 1).max(0.0),
-            spread: param(params, 2).clamp(0.1, 1.0),
-            shade: param(params, 3).clamp(0.0, 0.5),
+            lines: lines.round().clamp(6.0, 64.0),
+            amplitude: amplitude.max(0.0),
+            spread: spread.clamp(0.1, 1.0),
+            shade: shade.clamp(0.0, 0.5),
             time,
         }
     }

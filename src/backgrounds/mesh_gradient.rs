@@ -9,8 +9,9 @@ pub struct MeshGradient;
 impl Field for MeshGradient {
     // params: blobs (3 to 5), size
     fn tone(&self, cell: &Cell) -> f32 {
-        let count = param(cell.params, 0).round().clamp(3.0, 5.0);
-        let size = param(cell.params, 1).max(0.05);
+        let [count, size] = std::array::from_fn(|index| param(cell.params, index));
+        let count = count.round().clamp(3.0, 5.0);
+        let size = size.max(0.05);
         let t = cell.time;
         let aspect = cell.resolution.x / cell.resolution.y;
         let mut p = Vec2::new(cell.uv.x * aspect, cell.uv.y);

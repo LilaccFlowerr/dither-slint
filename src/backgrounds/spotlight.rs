@@ -10,9 +10,10 @@ impl Field for Spotlight {
     // params: x and y of the light as fractions of the box from the top left, radius, intensity.
     // The uv of a cell points up.
     fn tone(&self, cell: &Cell) -> f32 {
-        let origin = Vec2::new(param(cell.params, 0), param(cell.params, 1));
-        let radius = param(cell.params, 2).max(0.05);
-        let intensity = param(cell.params, 3).clamp(0.0, 1.0);
+        let [origin_x, origin_y, radius, intensity] = std::array::from_fn(|index| param(cell.params, index));
+        let origin = Vec2::new(origin_x, origin_y);
+        let radius = radius.max(0.05);
+        let intensity = intensity.clamp(0.0, 1.0);
 
         let aspect = cell.resolution.x / cell.resolution.y;
         let t = cell.time;

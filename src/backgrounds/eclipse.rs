@@ -10,11 +10,12 @@ impl Field for Eclipse {
     // params: centre x, centre y (fractions of the box from the top left), size, corona,
     // light in degrees as in CSS, pulse
     fn tone(&self, cell: &Cell) -> f32 {
-        let centre = Vec2::new(param(cell.params, 0), param(cell.params, 1));
-        let size = param(cell.params, 2).max(0.01);
-        let corona = param(cell.params, 3).clamp(0.0, 1.0);
-        let light = param(cell.params, 4).to_radians();
-        let pulse = param(cell.params, 5).clamp(0.0, 1.0);
+        let [centre_x, centre_y, size, corona, light, pulse] = std::array::from_fn(|index| param(cell.params, index));
+        let centre = Vec2::new(centre_x, centre_y);
+        let size = size.max(0.01);
+        let corona = corona.clamp(0.0, 1.0);
+        let light = light.to_radians();
+        let pulse = pulse.clamp(0.0, 1.0);
 
         let t = cell.time;
         let aspect = cell.resolution.x / cell.resolution.y;
