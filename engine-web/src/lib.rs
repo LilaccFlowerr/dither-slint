@@ -219,6 +219,21 @@ pub fn logo(pixels: &[u8], width: u32, height: u32, columns: u32, rows: u32, fil
 }
 
 #[wasm_bindgen]
+pub fn treemap_layout(values: &[f32], remainder: i32, capacity: f32, progress: f32) -> Vec<f32> {
+    let layout = dither_slint::treemap::layout(values, usize::try_from(remainder).ok(), capacity, progress);
+    let mut flat = vec![layout.used];
+    for tile in layout.tiles {
+        flat.extend([tile.rect.x, tile.rect.y, tile.rect.w, tile.rect.h, tile.value]);
+    }
+    flat
+}
+
+#[wasm_bindgen]
+pub fn treemap_format(value: f32) -> String {
+    dither_slint::treemap::format_value(value)
+}
+
+#[wasm_bindgen]
 pub fn rule(
     columns: u32,
     rows: u32,

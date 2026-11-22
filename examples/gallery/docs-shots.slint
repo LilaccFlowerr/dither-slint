@@ -24,6 +24,7 @@ import { NumberPage } from "number-page.slint";
 import { ImageComparePage } from "image-compare-page.slint";
 import { ScrollRevealPage } from "scroll-reveal-page.slint";
 import { LogoPage } from "logo-page.slint";
+import { TreemapPage } from "treemap-page.slint";
 
 export component Shots inherits Window {
     in property <int> which;
@@ -56,5 +57,6 @@ export component Shots inherits Window {
         if root.which == 21: ImageComparePage { }
         if root.which == 22: ScrollRevealPage { window-height: root.height; }
         if root.which == 23: LogoPage { }
+        if root.which == 24: TreemapPage { }
     }
 }

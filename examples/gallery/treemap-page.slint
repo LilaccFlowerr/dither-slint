@@ -1,0 +1,30 @@
+import { DitherFill, DitherPalette, DitherTheme, DitherTreemap } from "../../ui/lib.slint";
+
+export component TreemapPage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    DitherTreemap {
+        max-width: 640px;
+        title: "Headcount by team";
+        unit: " people";
+        status: "Hover a team for its share.";
+    }
+
+    DitherTreemap {
+        max-width: 640px;
+        title: "Storage";
+        unit: " GB";
+        animated: false;
+        status: "Calculation complete";
+        items: [
+            { label: "Applications", value: 142, color: DitherPalette.blue, fill: DitherFill.gradient, detail: "Binaries & Flatpaks" },
+            { label: "Operating System", value: 64, color: DitherPalette.purple, fill: DitherFill.gradient, detail: "Kernel, /usr & libs" },
+            { label: "Developer", value: 48, color: DitherPalette.green, fill: DitherFill.gradient, detail: "Docker & git repos" },
+            { label: "Photos & Media", value: 32, color: DitherPalette.pink, fill: DitherFill.gradient, detail: "Images & audio" },
+            { label: "Documents", value: 18, color: DitherPalette.orange, fill: DitherFill.gradient, detail: "Configs & cache" },
+            { label: "Free", value: 208, color: DitherPalette.grey, fill: DitherFill.hatched, detail: "Available space", remainder: true },
+        ];
+    }
+}

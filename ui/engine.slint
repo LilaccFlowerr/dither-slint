@@ -17,6 +17,9 @@ export enum DitherIllustration { box, search, folder, planet }
 export enum DitherTabsVariant { pill, underline }
 export enum DitherRevealEnd { photo, dither }
 export struct DitherLogoItem { source: image }
+export struct DitherTreemapItem { label: string, value: float, color: color, fill: DitherFill, detail: string, remainder: bool }
+export struct DitherTreemapTile { x: float, y: float, w: float, h: float, value: float }
+export struct DitherTreemapLayout { tiles: [DitherTreemapTile], used: float, capacity: float }
 export enum DitherLogoSource { alpha, dark }
 export enum DitherLogoTone { mono, original }
 export enum DitherLogoEffect { none, shimmer, scan }
@@ -239,6 +242,8 @@ export global DitherEngine {
     pure callback logo(source: image, columns: int, rows: int, logo-source: DitherLogoSource, tone: DitherLogoTone, effect: DitherLogoEffect, fill: DitherFill, outline: bool, floor: float, matrix: DitherMatrix, color: color, sweep: float) -> image;
     pure callback logo-row(logos: [DitherLogoItem], height: float, gap: float) -> float;
     pure callback logo-width(source: image, height: float) -> float;
+    pure callback treemap-layout(items: [DitherTreemapItem], capacity: float, progress: float) -> DitherTreemapLayout;
+    pure callback treemap-format(value: float) -> string;
     pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;
     pure callback shader(field: string, columns: int, rows: int, time: float, params: [float], palette: [color], matrix: DitherMatrix, levels: int) -> image;

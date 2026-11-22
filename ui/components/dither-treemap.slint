@@ -1,0 +1,312 @@
+import { DitherEdge, DitherEngine, DitherFill, DitherMatrix, DitherTreemapItem, DitherTreemapLayout, DitherTreemapTile } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+
+export enum DitherTreemapSpotlight { opacity, none }
+
+component TreemapTile inherits Rectangle {
+    in property <DitherTreemapItem> item;
+    in property <DitherTreemapTile> tile;
+    in property <color> ink;
+    in property <bool> hovered;
+    in property <bool> dimmed;
+    in property <bool> interactive;
+    in property <DitherMatrix> matrix;
+    in property <length> cell;
+    in property <string> unit;
+    callback entered();
+    callback left();
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+    property <DitherFill> variant: root.item.remainder ? DitherFill.hatched : root.item.fill;
+    property <float> texture-opacity: root.item.remainder ? (root.hovered ? 0.55 : 0.35) : (root.hovered ? 0.45 : 0.25);
+    property <float> faintest: 0.0625;
+    property <float> tall: 18;
+    property <float> short: 12;
+    property <float> roomy: 24;
+    property <float> wide: 18;
+    property <length> least-height: 20px;
+    property <length> least-width: 40px;
+    property <bool> fits: root.height >= root.least-height && root.width >= root.least-width;
+
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: root.hovered ? DitherTheme.foreground : DitherTheme.foreground.with-alpha(root.item.remainder ? 0.2 : 0.15);
+    background: root.item.remainder ? transparent : DitherTheme.foreground.with-alpha(0.04);
+    opacity: root.dimmed ? 0.45 : 1;
+    clip: true;
+    animate opacity { duration: 150ms; easing: ease-out; }
+
+    Image {
+        width: 100%;
+        height: 100%;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        opacity: root.texture-opacity;
+        source: DitherEngine.fill(root.columns, root.rows, root.variant, DitherEdge.bottom, root.rows, 1, root.faintest, root.matrix, root.ink, false);
+    }
+
+    if root.fits && root.tile.h > root.tall: VerticalLayout {
+        padding: 10px;
+        alignment: space-between;
+
+        VerticalLayout {
+            Text {
+                text: root.item.label;
+                color: root.item.remainder ? DitherTheme.foreground.with-alpha(0.6) : DitherTheme.foreground;
+                font-size: 12px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            Text {
+                text: DitherEngine.treemap-format(root.tile.value) + root.unit;
+                color: root.ink;
+                font-size: 12px;
+                font-weight: 600;
+            }
+        }
+
+        if root.item.detail != "" && root.tile.h > root.roomy && root.tile.w > root.wide: Text {
+            text: root.item.detail;
+            color: DitherTheme.foreground.with-alpha(0.6);
+            font-size: 10px;
+            overflow: elide;
+        }
+    }
+
+    if root.fits && root.tile.h <= root.tall: HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 6px;
+
+        Text {
+            text: root.item.label;
+            color: root.item.remainder ? DitherTheme.foreground.with-alpha(0.6) : DitherTheme.foreground;
+            font-size: root.tile.h <= root.short ? 11px : 12px;
+            font-weight: 500;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Text {
+            text: DitherEngine.treemap-format(root.tile.value) + root.unit;
+            color: root.ink;
+            font-size: root.tile.h <= root.short ? 11px : 12px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+
+    TouchArea {
+        enabled: root.interactive;
+        changed has-hover => {
+            if self.has-hover {
+                root.entered();
+            } else {
+                root.left();
+            }
+        }
+    }
+}
+
+export component DitherTreemap inherits Rectangle {
+    in property <string> title;
+    in property <float> capacity;
+    in property <string> unit;
+    in property <[DitherTreemapItem]> items: [
+        { label: "Engineering", value: 48, color: DitherPalette.blue, fill: DitherFill.gradient, detail: "Platform and product" },
+        { label: "Sales", value: 32, color: DitherPalette.purple, fill: DitherFill.gradient, detail: "Direct and partners" },
+        { label: "Marketing", value: 20, color: DitherPalette.green, fill: DitherFill.gradient, detail: "Brand and growth" },
+        { label: "Support", value: 14, color: DitherPalette.pink, fill: DitherFill.gradient, detail: "Customer success" },
+        { label: "Operations", value: 9, color: DitherPalette.orange, fill: DitherFill.gradient, detail: "Finance and legal" },
+    ];
+    in property <duration> duration: 6s;
+    in property <bool> animated: DitherTheme.animated;
+    in property <bool> interactive: true;
+    in property <DitherTreemapSpotlight> spotlight: DitherTreemapSpotlight.opacity;
+    in property <length> cell: 3px;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <bool> header: true;
+    in property <bool> footer: true;
+    in property <bool> readout: true;
+    in property <string> status;
+    in property <string> replay-label: "Replay";
+    in property <length> stage-height: 256px;
+
+    property <float> progress: 1;
+    property <duration> started;
+    property <int> hovered: -1;
+    property <[color]> series: [DitherPalette.blue, DitherPalette.purple, DitherPalette.green, DitherPalette.pink, DitherPalette.orange, DitherPalette.red];
+    property <length> gap: 4px;
+    property <length> tip-margin: 6px;
+    property <float> full-height: 75;
+    property <float> near-top: 25;
+    property <float> right-half: 50;
+    property <length> inset: 16px;
+    property <bool> done: root.progress >= 1;
+    property <float> percent: root.layout.capacity > 0 ? Math.min(100, Math.round(root.layout.used / root.layout.capacity * 100)) : 0;
+    property <float> hovered-share: root.hovered >= 0 && root.layout.capacity > 0 ? Math.round(root.layout.tiles[root.hovered].value / root.layout.capacity * 100) : 0;
+    property <DitherTreemapLayout> layout: DitherEngine.treemap-layout(root.items, root.capacity, root.progress);
+
+    function replay() {
+        root.started = animation-tick();
+        root.progress = 0;
+    }
+
+    function ink-of(index: int) -> color {
+        root.items[index].color.alpha == 0 ? root.series[Math.mod(index, root.series.length)] : root.items[index].color
+    }
+
+    init => {
+        if root.animated {
+            root.replay();
+        }
+    }
+
+    background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.04);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: DitherTheme.foreground.with-alpha(0.15);
+
+    Timer {
+        interval: 16ms;
+        running: root.progress < 1;
+        triggered => {
+            root.progress = Math.min(1, (animation-tick() - root.started) / root.duration);
+        }
+    }
+
+    VerticalLayout {
+        padding: root.inset;
+        spacing: 14px;
+
+        if root.header: HorizontalLayout {
+            spacing: 8px;
+
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                for corner in 4: Rectangle {
+                    x: Math.mod(corner, 2) * 9px;
+                    y: Math.floor(corner / 2) * 9px;
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 1.5px;
+                    background: DitherPalette.blue;
+                }
+            }
+            Text {
+                text: root.title;
+                color: DitherTheme.foreground;
+                font-size: 14px;
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            Rectangle { }
+            if root.readout: Text {
+                text: DitherEngine.treemap-format(root.layout.used) + root.unit + " / " + DitherEngine.treemap-format(root.layout.capacity) + root.unit;
+                color: DitherTheme.foreground.with-alpha(0.7);
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+            if root.readout: Rectangle {
+                width: pct.preferred-width + 12px;
+                border-radius: 4px;
+                background: DitherTheme.foreground.with-alpha(0.1);
+
+                pct := Text {
+                    text: root.percent + "%";
+                    color: DitherTheme.foreground;
+                    font-size: 12px;
+                    font-weight: 500;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        stage := Rectangle {
+            height: root.stage-height;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: DitherTheme.foreground.with-alpha(0.12);
+            background: DitherTheme.background.with-alpha(0.4);
+            clip: true;
+
+            for tile[index] in root.layout.tiles: TreemapTile {
+                x: stage.width * tile.x / 100 + root.gap / 2;
+                y: stage.height * tile.y / 100 + root.gap / 2;
+                width: max(0px, stage.width * tile.w / 100 - root.gap);
+                height: max(0px, stage.height * tile.h / 100 - root.gap);
+                item: root.items[index];
+                tile: tile;
+                ink: root.ink-of(index);
+                hovered: root.hovered == index;
+                dimmed: root.hovered >= 0 && root.hovered != index && root.spotlight == DitherTreemapSpotlight.opacity;
+                interactive: root.interactive;
+                matrix: root.matrix;
+                cell: root.cell;
+                unit: root.unit;
+                entered => { root.hovered = index; }
+                left => { if root.hovered == index { root.hovered = -1; } }
+            }
+
+            if root.hovered >= 0 && root.interactive: Rectangle {
+                property <DitherTreemapTile> hot: root.layout.tiles[root.hovered];
+                property <bool> upper: self.hot.y < root.near-top && self.hot.y + self.hot.h < 75;
+
+                x: self.hot.h >= root.full-height || self.hot.x > root.right-half
+                    ? stage.width - stage.width * Math.max(1, 100 - (self.hot.x + self.hot.w)) / 100 - root.tip-margin - self.width
+                    : stage.width * Math.max(1, self.hot.x) / 100 + root.tip-margin;
+                y: self.hot.h >= root.full-height ? 8px
+                    : self.upper ? stage.height * (self.hot.y + self.hot.h) / 100 + root.tip-margin
+                    : stage.height * self.hot.y / 100 - self.height - root.tip-margin;
+                width: min(stage.width - 16px, tip.preferred-width + 20px);
+                height: tip.preferred-height + 8px;
+                border-radius: 6px;
+                background: DitherEngine.mix(DitherTheme.background, DitherTheme.foreground, 0.08);
+                border-width: 1px;
+                border-color: DitherTheme.foreground.with-alpha(0.2);
+
+                tip := Text {
+                    text: root.items[root.hovered].label + "  " + DitherEngine.treemap-format(root.layout.tiles[root.hovered].value) + root.unit + "  (" + root.hovered-share + "%)" + (root.items[root.hovered].detail != "" ? "  ·  " + root.items[root.hovered].detail : "");
+                    color: DitherTheme.foreground;
+                    font-size: 12px;
+                    overflow: elide;
+                }
+            }
+        }
+
+        if root.footer: HorizontalLayout {
+            spacing: 8px;
+
+            Text {
+                text: root.hovered >= 0
+                    ? root.items[root.hovered].label + ": " + DitherEngine.treemap-format(root.layout.tiles[root.hovered].value) + root.unit + " (" + root.hovered-share + "% of total)"
+                    : root.status;
+                color: DitherTheme.foreground.with-alpha(0.7);
+                font-size: 12px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            Rectangle { }
+            Rectangle {
+                width: again.preferred-width + 16px;
+                border-radius: 6px;
+                background: replay.has-hover ? DitherTheme.foreground.with-alpha(0.08) : transparent;
+
+                again := Text {
+                    text: root.replay-label;
+                    color: DitherTheme.foreground.with-alpha(0.7);
+                    font-size: 12px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                replay := TouchArea {
+                    clicked => { root.replay(); }
+                }
+            }
+        }
+    }
+}

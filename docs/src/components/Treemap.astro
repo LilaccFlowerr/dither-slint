@@ -1,0 +1,302 @@
+---
+interface Item {
+	label: string;
+	value: number;
+	color: string;
+	detail: string;
+	remainder?: boolean;
+}
+
+interface Props {
+	title?: string;
+	unit?: string;
+	capacity?: number;
+	items?: Item[];
+	animate?: boolean;
+	status?: string;
+}
+
+const teams: Item[] = [
+	{ label: 'Engineering', value: 48, color: 'blue', detail: 'Platform and product' },
+	{ label: 'Sales', value: 32, color: 'purple', detail: 'Direct and partners' },
+	{ label: 'Marketing', value: 20, color: 'green', detail: 'Brand and growth' },
+	{ label: 'Support', value: 14, color: 'pink', detail: 'Customer success' },
+	{ label: 'Operations', value: 9, color: 'orange', detail: 'Finance and legal' },
+];
+
+const { title = '', unit = '', capacity = 0, items = teams, animate = true, status = '' } = Astro.props;
+---
+
+<div class="treemap" data-title={title} data-unit={unit} data-capacity={capacity} data-animate={animate} data-status={status} data-items={JSON.stringify(items)}>
+	<div class="head">
+		<span class="name"></span>
+		<span class="stats"></span>
+	</div>
+	<div class="stage"></div>
+	<div class="foot">
+		<span class="status"></span>
+		<button type="button">Replay</button>
+	</div>
+</div>
+
+<style>
+	.treemap {
+		width: 100%;
+		max-width: 640px;
+		box-sizing: border-box;
+		padding: 16px;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 12px;
+		font-size: var(--sl-text-sm);
+		user-select: none;
+	}
+	.head,
+	.foot {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+	}
+	.head {
+		margin-bottom: 14px;
+	}
+	.foot {
+		margin-top: 14px;
+		color: var(--sl-color-gray-3);
+	}
+	.name {
+		font-weight: 600;
+		font-size: var(--sl-text-base);
+	}
+	.stats {
+		color: var(--sl-color-gray-3);
+	}
+	.stage {
+		position: relative;
+		height: 256px;
+		overflow: hidden;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+	}
+	.treemap :global(.tile) {
+		position: absolute;
+		box-sizing: border-box;
+		overflow: hidden;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 6px;
+		transition: opacity 150ms ease-out;
+	}
+	.treemap :global(.tile.remainder) {
+		border-style: dashed;
+	}
+	.treemap :global(.tile.hot) {
+		border-color: var(--sl-color-white);
+	}
+	.treemap :global(.tile.dim) {
+		opacity: 0.45;
+	}
+	.treemap :global(.tile canvas) {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		margin: 0 !important;
+		opacity: 0.25;
+	}
+	.treemap :global(.tile.hot canvas) {
+		opacity: 0.45;
+	}
+	.treemap :global(.tile.remainder canvas) {
+		opacity: 0.35;
+	}
+	.treemap :global(.tile.remainder.hot canvas) {
+		opacity: 0.55;
+	}
+	.treemap :global(.text) {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 100%;
+		box-sizing: border-box;
+		padding: 10px;
+		font-size: 12px;
+	}
+	.treemap :global(.text[hidden]) {
+		display: none;
+	}
+	.treemap :global(.text.compact) {
+		flex-direction: row;
+		align-items: center;
+		gap: 6px;
+		padding: 0 8px;
+	}
+	.treemap :global(.value) {
+		font-family: var(--sl-font-system-mono);
+		font-weight: 600;
+	}
+	.treemap :global(.detail) {
+		color: var(--sl-color-gray-3);
+		font-size: 10px;
+	}
+	.treemap :global(.tip) {
+		position: absolute;
+		z-index: 2;
+		padding: 4px 10px;
+		border: 1px solid var(--sl-color-gray-4);
+		border-radius: 6px;
+		background: var(--sl-color-bg-nav);
+		font-size: 12px;
+		pointer-events: none;
+		white-space: nowrap;
+		max-width: calc(100% - 16px);
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	button {
+		background: none;
+		border: 0;
+		border-radius: 6px;
+		padding: 4px 8px;
+		color: inherit;
+		font: inherit;
+		cursor: pointer;
+	}
+	button:hover {
+		background: var(--sl-color-gray-6);
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { fill, treemap_format, treemap_layout } from '../engine/dither_slint_engine_web.js';
+
+	const cell = 3;
+	const gap = 4;
+	const faintest = 0.0625;
+	const tall = 18;
+	const short = 12;
+	const roomy = 24;
+	const wide = 18;
+	const leastHeight = 20;
+	const leastWidth = 40;
+	const hatched = 2;
+
+	interface Item {
+		label: string;
+		value: number;
+		color: string;
+		detail: string;
+		remainder?: boolean;
+	}
+
+	ready.then(() => {
+		for (const demo of document.querySelectorAll<HTMLElement>('.treemap')) {
+			const items: Item[] = JSON.parse(demo.dataset.items!);
+			const unit = demo.dataset.unit!;
+			const total = items.reduce((sum, item) => sum + item.value, 0);
+			const capacity = Number(demo.dataset.capacity) || total;
+			const remainder = items.findIndex((item) => item.remainder);
+			const stage = demo.querySelector<HTMLElement>('.stage')!;
+			const status = demo.querySelector<HTMLElement>('.status')!;
+			const stats = demo.querySelector<HTMLElement>('.stats')!;
+			const button = demo.querySelector<HTMLButtonElement>('button')!;
+			demo.querySelector<HTMLElement>('.name')!.textContent = demo.dataset.title!;
+			const duration = 6000;
+			let progress = demo.dataset.animate === 'false' ? 1 : 0;
+			let started = performance.now();
+			let hovered = -1;
+			let layout: number[] = [];
+
+			const tiles = items.map((item, index) => {
+				const tile = document.createElement('div');
+				tile.className = item.remainder ? 'tile remainder' : 'tile';
+				const canvas = document.createElement('canvas');
+				const text = document.createElement('div');
+				text.className = 'text';
+				tile.append(canvas, text);
+				tile.addEventListener('pointerenter', () => {
+					hovered = index;
+					render();
+				});
+				tile.addEventListener('pointerleave', () => {
+					hovered = -1;
+					render();
+				});
+				stage.append(tile);
+				return { tile, canvas, text };
+			});
+			const tip = document.createElement('div');
+			tip.className = 'tip';
+			stage.append(tip);
+
+			const at = (index: number) => layout.slice(1 + index * 5, 6 + index * 5);
+			const share = (index: number) => Math.round((at(index)[4] / capacity) * 100);
+
+			function render() {
+				layout = Array.from(treemap_layout(new Float32Array(items.map((item) => item.value)), remainder, capacity, progress));
+				const used = layout[0];
+				const percent = Math.min(100, Math.round((used / capacity) * 100));
+				stats.textContent = `${treemap_format(used)}${unit} / ${treemap_format(capacity)}${unit}  ${percent}%`;
+				const width = stage.clientWidth;
+				const height = stage.clientHeight;
+				items.forEach((item, index) => {
+					const [x, y, w, h, value] = at(index);
+					const { tile, canvas, text } = tiles[index];
+					const pixels = { x: (width * x) / 100 + gap / 2, y: (height * y) / 100 + gap / 2, w: Math.max(0, (width * w) / 100 - gap), h: Math.max(0, (height * h) / 100 - gap) };
+					Object.assign(tile.style, { left: `${pixels.x}px`, top: `${pixels.y}px`, width: `${pixels.w}px`, height: `${pixels.h}px` });
+					tile.classList.toggle('hot', hovered === index);
+					tile.classList.toggle('dim', hovered >= 0 && hovered !== index);
+					const columns = Math.max(1, Math.ceil(pixels.w / cell));
+					const rows = Math.max(1, Math.ceil(pixels.h / cell));
+					const bytes = fill(columns, rows, item.remainder ? hatched : 0, 1, rows, 1, faintest, new Uint8Array(rgba(item.color)), false);
+					canvas.width = columns;
+					canvas.height = rows;
+					canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+					const color = `rgb(${rgba(item.color).slice(0, 3).join(' ')})`;
+					const amount = `<span class="value" style="color: ${color}">${treemap_format(value)}${unit}</span>`;
+					text.hidden = pixels.h < leastHeight || pixels.w < leastWidth;
+					text.classList.toggle('compact', h <= tall);
+					text.innerHTML =
+						h > tall
+							? `<div><div>${item.label}</div>${amount}</div>${item.detail && h > roomy && w > wide ? `<div class="detail">${item.detail}</div>` : ''}`
+							: `<span>${item.label}</span>${amount}`;
+					if (h <= short) text.style.fontSize = '11px';
+				});
+				if (hovered >= 0) {
+					const [x, y, w, h, value] = at(hovered);
+					const item = items[hovered];
+					tip.hidden = false;
+					tip.textContent = `${item.label}  ${treemap_format(value)}${unit}  (${share(hovered)}%)${item.detail ? `  ·  ${item.detail}` : ''}`;
+					const right = h >= 75 || x > 50;
+					Object.assign(tip.style, {
+						left: right ? 'auto' : `calc(${Math.max(1, x)}% + 6px)`,
+						right: right ? `calc(${Math.max(1, 100 - (x + w))}% + 6px)` : 'auto',
+						top: h >= 75 ? '8px' : y < 25 && y + h < 75 ? `calc(${y + h}% + 6px)` : 'auto',
+						bottom: h >= 75 || (y < 25 && y + h < 75) ? 'auto' : `calc(${100 - y}% + 6px)`,
+					});
+				} else {
+					tip.hidden = true;
+				}
+				status.textContent =
+					hovered >= 0 ? `${items[hovered].label}: ${treemap_format(at(hovered)[4])}${unit} (${share(hovered)}% of total)` : demo.dataset.status!;
+			}
+
+			const tick = (now: number) => {
+				progress = Math.min(1, (now - started) / duration);
+				render();
+				if (progress < 1) requestAnimationFrame(tick);
+			};
+			const replay = () => {
+				started = performance.now();
+				progress = 0;
+				requestAnimationFrame(tick);
+			};
+			button.addEventListener('click', replay);
+			new ResizeObserver(render).observe(stage);
+			render();
+			if (progress < 1) replay();
+		}
+	});
+</script>

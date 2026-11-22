@@ -48,6 +48,7 @@ export default defineConfig({
 							label: 'Data',
 							items: [
 								{ label: 'DitherStatCard', slug: 'components/stat-card' },
+								{ label: 'DitherTreemap', slug: 'components/treemap' },
 								{ label: 'DitherSparkline', slug: 'components/sparkline' },
 								{ label: 'DitherUptimeBar', slug: 'components/uptime-bar' },
 								{ label: 'DitherGauge', slug: 'components/gauge' },

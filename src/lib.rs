@@ -22,6 +22,7 @@ pub mod reveal;
 pub mod skeleton;
 pub mod slider;
 pub mod stat;
+pub mod treemap;
 pub mod style;
 pub mod switch;
 pub mod tabs;
@@ -343,6 +344,19 @@ macro_rules! install {
             $crate::logo::row_width(logos.iter().map(|item| (item.source.size().width, item.source.size().height)), height, gap)
         });
         engine.on_logo_width(|source, height| $crate::logo::logo_width((source.size().width, source.size().height), height));
+        engine.on_treemap_layout(|items, capacity, progress| {
+            let values: Vec<f32> = items.iter().map(|item| item.value).collect();
+            let remainder = items.iter().position(|item| item.remainder);
+            let capacity = if capacity > 0.0 { capacity } else { values.iter().map(|value| value.max(0.0)).sum() };
+            let layout = $crate::treemap::layout(&values, remainder, capacity, progress);
+            let tiles: Vec<DitherTreemapTile> = layout
+                .tiles
+                .into_iter()
+                .map(|tile| DitherTreemapTile { x: tile.rect.x, y: tile.rect.y, w: tile.rect.w, h: tile.rect.h, value: tile.value })
+                .collect();
+            DitherTreemapLayout { tiles: $crate::slint::ModelRc::new($crate::slint::VecModel::from(tiles)), used: layout.used, capacity }
+        });
+        engine.on_treemap_format(|value| $crate::treemap::format_value(value).into());
         engine.on_card_glow(|columns, rows, glow, reach, strength, boost, rim, radius, fill, matrix, color| {
             let options = $crate::glow::GlowOptions {
                 glow: Glow::ALL[glow as usize],

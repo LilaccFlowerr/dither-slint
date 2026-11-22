@@ -65,7 +65,7 @@ Run the gallery with `cargo run --example gallery`.
 - **Controls:** `DitherSwitch`, `DitherSlider`, `DitherInput`, `DitherTabs`, `DitherDropdownMenu`
 - **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`, `DitherUptimeBar`, `DitherGauge`, `DitherNumber`
 
-There are also `DitherImage` for dithering a photo, `DitherImageCompare` for a before and after slider, `DitherScrollReveal` for a picture that resolves as it scrolls into view, `DitherLogo` and `DitherLogoMarquee` for logos, twenty-five animated backgrounds (`DitherAnimatedGradient`, `DitherAurora`, `DitherBeams`, `DitherContours`, `DitherDotMap`, `DitherEclipse`, `DitherFade`, `DitherGlobe`, `DitherHalftone`, `DitherHorizon`, `DitherLightRays`, `DitherMeshGradient`, `DitherMetaballs`, `DitherNoiseField`, `DitherOrb`, `DitherPlasma`, `DitherRetroGrid`, `DitherRidgelines`, `DitherRipples`, `DitherSilk`, `DitherSmoke`, `DitherSpotlight`, `DitherStarfield`, `DitherTunnel` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
+There are also `DitherImage` for dithering a photo, `DitherImageCompare` for a before and after slider, `DitherScrollReveal` for a picture that resolves as it scrolls into view, `DitherLogo` and `DitherLogoMarquee` for logos, `DitherTreemap` for a treemap, twenty-five animated backgrounds (`DitherAnimatedGradient`, `DitherAurora`, `DitherBeams`, `DitherContours`, `DitherDotMap`, `DitherEclipse`, `DitherFade`, `DitherGlobe`, `DitherHalftone`, `DitherHorizon`, `DitherLightRays`, `DitherMeshGradient`, `DitherMetaballs`, `DitherNoiseField`, `DitherOrb`, `DitherPlasma`, `DitherRetroGrid`, `DitherRidgelines`, `DitherRipples`, `DitherSilk`, `DitherSmoke`, `DitherSpotlight`, `DitherStarfield`, `DitherTunnel` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
 
 Colours come from `DitherTheme` and `DitherPalette`. Turn motion off everywhere with `DitherTheme.animated = false`.
 
@@ -291,6 +291,41 @@ The logo properties above (`ink`, `tone`, `fill`, `outline`, `floor`, `matrix`, 
 | `fade-width` | `96px` | Width of each end's fade. |
 | `backdrop` | `DitherTheme.background` | The colour the ends fade to. |
 | `pause-button` | `true` | A button on hover that stops the motion. |
+
+### DitherTreemap
+
+A treemap that shows how a whole splits into parts: headcount by team, revenue by region, disk space, the parts of a context window. Each item is a tile sized by its value, and the values grow in when it appears. Hover a tile for its share.
+
+```slint
+DitherTreemap {
+    title: "Headcount by team";
+    unit: " people";
+    items: [
+        { label: "Engineering", value: 48, color: DitherPalette.blue, fill: DitherFill.gradient, detail: "Platform and product" },
+        { label: "Sales", value: 32, color: DitherPalette.purple, fill: DitherFill.gradient, detail: "Direct and partners" },
+        { label: "Support", value: 14, color: DitherPalette.pink, fill: DitherFill.gradient, detail: "Customer success" },
+    ];
+}
+```
+
+Mark one item `remainder: true` and it takes the space left of the `capacity`, on the right, hatched. It shrinks while the other values grow in.
+
+| Property | Default | |
+| --- | --- | --- |
+| `title` | | Headline on the top left. |
+| `items` | a sample | The tiles, each `{ label, value, color, fill, detail, remainder }`. |
+| `capacity` | the sum of the values | The whole, in the same unit as the values. |
+| `unit` | | Shown after every number. Values of a thousand or more are shown in thousands. |
+| `status` | | Text in the footer while nothing is hovered. |
+| `replay-label` | `Replay` | Text of the replay button. |
+| `duration` | `6s` | How long the values take to grow in. |
+| `animated` | `DitherTheme.animated` | `false` shows the finished treemap at once. |
+| `interactive` | `true` | Tooltip and dimming on hover. |
+| `spotlight` | `opacity` | `opacity` dims the other tiles, `none` leaves them. |
+| `cell` | `3px` | Size of one dither cell. |
+| `matrix` | `bayer4` | The dither pattern of the gradient fills. |
+| `header`, `readout`, `footer` | `true` | Show the title row, the used and total readout, and the status line with the replay button. |
+| `stage-height` | `256px` | Height of the treemap. |
 
 ### DitherDivider
 

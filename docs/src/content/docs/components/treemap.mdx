@@ -1,0 +1,107 @@
+---
+title: DitherTreemap
+description: A treemap that shows how a whole splits into parts, with dithered tiles and a growing-in animation.
+---
+
+import Demo from '../../../components/Demo.astro';
+import Treemap from '../../../components/Treemap.astro';
+
+Each item is a tile, sized by its value in a squarified treemap. Use it for anything that adds up to a whole: headcount by team, revenue by region, disk space, the parts of a context window. When it appears the values grow in one after another. Hover a tile to dim the others and see its share.
+
+<Demo
+	title="Basic"
+	code={`DitherTreemap {
+    title: "Headcount by team";
+    unit: " people";
+    status: "Hover a team for its share.";
+    items: [
+        { label: "Engineering", value: 48, color: DitherPalette.blue, fill: DitherFill.gradient, detail: "Platform and product" },
+        { label: "Sales", value: 32, color: DitherPalette.purple, fill: DitherFill.gradient, detail: "Direct and partners" },
+        { label: "Marketing", value: 20, color: DitherPalette.green, fill: DitherFill.gradient, detail: "Brand and growth" },
+    ];
+}`}
+>
+	<Treemap title="Headcount by team" unit=" people" status="Hover a team for its share." />
+</Demo>
+
+## A remainder
+
+Mark one item as the `remainder` and it takes the space that is left of the `capacity`, on the right. It is hatched, and it shrinks while the other values grow in. This suits a disk with free space, a budget with money left, or a context window with room to spare.
+
+<Demo
+	title="Storage"
+	code={`DitherTreemap {
+    title: "Storage";
+    unit: " GB";
+    status: "Calculation complete";
+    items: [
+        { label: "Applications", value: 142, color: DitherPalette.blue, fill: DitherFill.gradient, detail: "Binaries & Flatpaks" },
+        { label: "Documents", value: 18, color: DitherPalette.orange, fill: DitherFill.gradient, detail: "Configs & cache" },
+        { label: "Free", value: 208, color: DitherPalette.grey, fill: DitherFill.hatched, detail: "Available space", remainder: true },
+    ];
+}`}
+>
+	<Treemap
+		title="Storage"
+		unit=" GB"
+		status="Calculation complete"
+		items={[
+			{ label: 'Applications', value: 142, color: 'blue', detail: 'Binaries & Flatpaks' },
+			{ label: 'Operating System', value: 64, color: 'purple', detail: 'Kernel, /usr & libs' },
+			{ label: 'Developer', value: 48, color: 'green', detail: 'Docker & git repos' },
+			{ label: 'Photos & Media', value: 32, color: 'pink', detail: 'Images & audio' },
+			{ label: 'Documents', value: 18, color: 'orange', detail: 'Configs & cache' },
+			{ label: 'Free', value: 208, color: 'grey', detail: 'Available space', remainder: true },
+		]}
+	/>
+</Demo>
+
+<Demo
+	title="Context window"
+	code={`DitherTreemap {
+    title: "Context";
+    unit: "k";
+    capacity: 200000;
+    items: [
+        { label: "Tool definitions", value: 14800, color: DitherPalette.blue, fill: DitherFill.gradient, detail: "System tools" },
+        { label: "Free", value: 157100, color: DitherPalette.grey, fill: DitherFill.hatched, detail: "Available context", remainder: true },
+    ];
+}`}
+>
+	<Treemap
+		title="Context"
+		unit="k"
+		capacity={200000}
+		items={[
+			{ label: 'Tool definitions', value: 14800, color: 'blue', detail: 'System tools' },
+			{ label: 'Project memory', value: 9400, color: 'purple', detail: 'Memory' },
+			{ label: 'checkout.spec', value: 8200, color: 'ink', detail: 'Test suite' },
+			{ label: 'Diff context', value: 6500, color: 'pink', detail: 'Git diff' },
+			{ label: 'Agent scratchpad', value: 4000, color: 'green', detail: 'Scratchpad' },
+			{ label: 'Free', value: 157100, color: 'grey', detail: 'Available context', remainder: true },
+		]}
+	/>
+</Demo>
+
+Values of a thousand or more are shown in thousands, so use `unit: "k"` for numbers like 14800.
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `title` | | Headline on the top left. |
+| `items` | a sample | The tiles, each `{ label, value, color, fill, detail, remainder }`. A transparent `color` takes the next colour of the series. |
+| `capacity` | the sum of the values | The whole, in the same unit as the values. |
+| `unit` | | Shown after every number. |
+| `status` | | Text in the footer while nothing is hovered. |
+| `replay-label` | `Replay` | Text of the button that plays the animation again. |
+| `duration` | `6s` | How long the values take to grow in. |
+| `animated` | `DitherTheme.animated` | `false` shows the finished treemap at once. |
+| `interactive` | `true` | Hover a tile for the tooltip and the dimming. |
+| `spotlight` | `opacity` | `opacity` dims the other tiles, `none` leaves them. |
+| `cell` | `3px` | Size of one dither cell. |
+| `matrix` | `bayer4` | The dither pattern of the gradient fills. |
+| `header` | `true` | Show the title and the readout. |
+| `readout` | `true` | Show the used and total values and the percentage in the header. |
+| `footer` | `true` | Show the status line and the replay button. |
+| `stage-height` | `256px` | Height of the treemap. |
