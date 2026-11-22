@@ -1,0 +1,176 @@
+import { DitherArc, DitherEngine, DitherMarker, DitherMatrix } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+
+export component DitherGlobe {
+    in property <color> color: DitherTheme.ink;
+    in property <color> accent: DitherPalette.orange;
+    in property <[DitherMarker]> markers;
+    in property <[DitherArc]> arcs;
+    in property <float> speed: 6;
+    in property <float> start: 10;
+    in property <float> tilt: 18;
+    in property <float> light: 300;
+    in property <float> ocean: 0.18;
+    in property <bool> atmosphere: true;
+    in property <bool> draggable: true;
+    in property <length> cell: 2px;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <bool> animated: DitherTheme.animated;
+
+    // Steepest the globe can be tilted by hand, in degrees either way.
+    private property <float> tilt-limit: 60;
+    // How quickly a fling slows, per second.
+    private property <float> friction: 3.5;
+    // Fastest fling, in degrees per second.
+    private property <float> max-fling: 600;
+    // How quickly the idle spin comes back after a drag, per second.
+    private property <float> idle-return: 1.2;
+    // A pointer that rested this long before release doesn't fling.
+    private property <float> fling-window: 0.08;
+
+    private property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    private property <int> columns: Math.max(8, Math.floor(root.width / root.step));
+    private property <int> rows: Math.max(8, Math.floor(root.height / root.step));
+    private property <float> degrees-per-pixel: 1 / (Math.min(root.width, root.height) / 1px * 0.42 * 0.017453292);
+
+    private property <float> elapsed;
+    private property <float> frame;
+    private property <float> spin;
+    private property <float> lean;
+    private property <float> fling-spin;
+    private property <float> fling-lean;
+    private property <float> idle: 1;
+    private property <bool> dragging;
+    private property <float> last-x;
+    private property <float> last-y;
+    private property <float> last-time;
+
+    width: 100%;
+    height: 100%;
+    forward-focus: focus;
+
+    // How far the globe may be turned by hand, in degrees on top of `tilt`.
+    pure function clamp-lean(extra: float) -> float {
+        return Math.min(Math.max(root.tilt-limit, root.tilt), Math.max(Math.min(-root.tilt-limit, root.tilt), root.tilt + extra)) - root.tilt;
+    }
+
+    pure function clamp-fling(velocity: float) -> float {
+        return Math.clamp(velocity, -root.max-fling, root.max-fling);
+    }
+
+    function turn(by-spin: float, by-lean: float) {
+        root.spin += by-spin;
+        root.lean = root.clamp-lean(root.lean + by-lean);
+    }
+
+    function advance(now: float) {
+        let delta = Math.max(0, now - root.frame);
+        root.frame = now;
+        root.elapsed = now;
+        if (root.dragging) {
+            root.idle = 0;
+            return;
+        }
+        let decay = Math.exp(-delta * root.friction);
+        let before = root.lean;
+        root.turn(root.fling-spin * (1 - decay) / root.friction, root.fling-lean * (1 - decay) / root.friction);
+        if (root.lean == before) {
+            root.fling-lean = 0;
+        }
+        root.fling-spin *= decay;
+        root.fling-lean *= decay;
+        root.idle += (1 - root.idle) * (1 - Math.exp(-delta * root.idle-return));
+        root.spin += root.speed * root.idle * delta;
+    }
+
+    function nudge(by-spin: float, by-lean: float) {
+        if (root.animated) {
+            root.fling-spin = by-spin != 0 ? by-spin * root.friction : root.fling-spin;
+            root.fling-lean = by-lean != 0 ? by-lean * root.friction : root.fling-lean;
+        } else {
+            root.turn(by-spin, by-lean);
+        }
+    }
+
+    Timer {
+        interval: 1000ms / 30;
+        running: root.animated;
+        triggered => {
+            root.advance(animation-tick() / 1s);
+        }
+    }
+
+    focus := FocusScope {
+        enabled: root.draggable;
+        key-pressed(event) => {
+            if (event.modifiers.alt || event.modifiers.control || event.modifiers.meta) {
+                return reject;
+            }
+            if (event.text == Key.LeftArrow) {
+                root.nudge(20, 0);
+            } else if (event.text == Key.RightArrow) {
+                root.nudge(-20, 0);
+            } else if (event.text == Key.UpArrow) {
+                root.nudge(0, -10);
+            } else if (event.text == Key.DownArrow) {
+                root.nudge(0, 10);
+            } else {
+                return reject;
+            }
+            accept
+        }
+    }
+
+    Image {
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        width: root.columns * root.step;
+        height: root.rows * root.step;
+        image-fit: ImageFit.fill;
+        image-rendering: pixelated;
+        source: DitherEngine.globe(
+            root.columns,
+            root.rows,
+            { spin: root.start + root.spin, tilt: root.tilt + root.lean, time: root.animated ? root.elapsed : 0 },
+            { land: root.color, accent: root.accent, light: root.light, ocean: root.ocean, atmosphere: root.atmosphere, matrix: root.matrix },
+            root.markers,
+            root.arcs
+        );
+    }
+
+    TouchArea {
+        enabled: root.draggable;
+        mouse-cursor: self.pressed ? MouseCursor.grabbing : MouseCursor.grab;
+        pointer-event(event) => {
+            if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
+                focus.focus();
+                root.dragging = true;
+                root.last-x = self.mouse-x / 1px;
+                root.last-y = self.mouse-y / 1px;
+                root.last-time = animation-tick() / 1s;
+                root.fling-spin = 0;
+                root.fling-lean = 0;
+            } else if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
+                if (root.dragging && (!root.animated || animation-tick() / 1s - root.last-time > root.fling-window)) {
+                    root.fling-spin = 0;
+                    root.fling-lean = 0;
+                }
+                root.dragging = false;
+            }
+        }
+        moved => {
+            if (root.dragging) {
+                let now = animation-tick() / 1s;
+                let by-spin = -(self.mouse-x / 1px - root.last-x) * root.degrees-per-pixel;
+                let by-lean = (self.mouse-y / 1px - root.last-y) * root.degrees-per-pixel;
+                let seconds = Math.max(now - root.last-time, 1 / 240);
+                root.fling-spin = root.clamp-fling(root.fling-spin * 0.3 + by-spin / seconds * 0.7);
+                root.fling-lean = root.clamp-fling(root.fling-lean * 0.3 + by-lean / seconds * 0.7);
+                root.turn(by-spin, by-lean);
+                root.last-x = self.mouse-x / 1px;
+                root.last-y = self.mouse-y / 1px;
+                root.last-time = now;
+            }
+        }
+    }
+}

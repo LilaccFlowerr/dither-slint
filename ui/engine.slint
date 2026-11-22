@@ -148,6 +148,55 @@ export struct DitherNumberGlyph {
     tint: float,
 }
 
+/// A pulsing place on the globe or the map. A transparent `color` takes the accent of whatever draws it.
+export struct DitherMarker {
+    lat: float,
+    lon: float,
+    color: color,
+    label: string,
+}
+
+/// A dotted line between two places. A transparent `color` takes the accent of whatever draws it.
+export struct DitherArc {
+    from-lat: float,
+    from-lon: float,
+    to-lat: float,
+    to-lon: float,
+    color: color,
+}
+
+export struct DitherBounds {
+    north: float,
+    south: float,
+    west: float,
+    east: float,
+}
+
+export struct DitherGlobeView {
+    spin: float,
+    tilt: float,
+    time: float,
+}
+
+export struct DitherGlobeStyle {
+    land: color,
+    accent: color,
+    light: float,
+    ocean: float,
+    atmosphere: bool,
+    matrix: DitherMatrix,
+}
+
+export struct DitherMapStyle {
+    color: color,
+    accent: color,
+    columns: int,
+    round: bool,
+    halo: float,
+    ocean: float,
+    bounds: DitherBounds,
+}
+
 export global DitherEngine {
     pure callback linear-gradient(columns: int, rows: int, angle: float, from: float, to: float, matrix: DitherMatrix, palette: [color], levels: int) -> image;
     pure callback fill(columns: int, rows: int, fill: DitherFill, edge: DitherEdge, length: float, from: float, to: float, matrix: DitherMatrix, color: color, frame: bool) -> image;
@@ -184,6 +233,9 @@ export global DitherEngine {
     pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;
     pure callback shader(field: string, columns: int, rows: int, time: float, params: [float], palette: [color], matrix: DitherMatrix, levels: int) -> image;
+    pure callback globe(columns: int, rows: int, view: DitherGlobeView, style: DitherGlobeStyle, markers: [DitherMarker], arcs: [DitherArc]) -> image;
+    pure callback dot-map(scale: int, time: float, animated: bool, style: DitherMapStyle, markers: [DitherMarker], arcs: [DitherArc]) -> image;
+    pure callback dot-map-rows(columns: int, bounds: DitherBounds) -> int;
     pure callback mix(base: color, other: color, amount: float) -> color;
     callback random-beams() -> [color];
     pure callback hover(kind: DitherHover, columns: int, rows: int, t: float, x: float, y: float, level: float, strength: float, color: color, matrix: DitherMatrix) -> image;

@@ -1,0 +1,36 @@
+import { DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherShader } from "dither-shader.slint";
+
+export enum DitherFadeSide { bottom, top, right, left }
+
+export component DitherFade {
+    in property <DitherFadeSide> side: DitherFadeSide.bottom;
+    in property <length> size: 160px;
+    in property <color> color: DitherTheme.background;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 3px;
+    in property <float> speed: 1;
+    in property <float> still-time: 0;
+    in property <bool> animated: false;
+
+    private property <bool> vertical: root.side == DitherFadeSide.bottom || root.side == DitherFadeSide.top;
+
+    width: 100%;
+    height: 100%;
+
+    DitherShader {
+        width: root.vertical ? root.width : min(root.size, root.width);
+        height: root.vertical ? min(root.size, root.height) : root.height;
+        x: root.side == DitherFadeSide.right ? root.width - self.width : 0px;
+        y: root.side == DitherFadeSide.bottom ? root.height - self.height : 0px;
+        field: "fade";
+        params: [root.side == DitherFadeSide.bottom ? 0 : root.side == DitherFadeSide.top ? 1 : root.side == DitherFadeSide.right ? 2 : 3];
+        palette: [transparent, root.color];
+        matrix: root.matrix;
+        cell: root.cell;
+        speed: root.speed;
+        still-time: root.still-time;
+        animated: root.animated;
+    }
+}

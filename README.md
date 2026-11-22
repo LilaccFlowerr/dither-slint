@@ -14,10 +14,10 @@ the docs can be found here
 
 ```toml
 [dependencies]
-dither-slint = "0.4"
+dither-slint = "0.5"
 
 [build-dependencies]
-dither-slint = "0.4"
+dither-slint = "0.5"
 slint-build = "1.18"
 ```
 
@@ -65,7 +65,7 @@ Run the gallery with `cargo run --example gallery`.
 - **Controls:** `DitherSwitch`, `DitherSlider`, `DitherInput`, `DitherTabs`, `DitherDropdownMenu`
 - **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`, `DitherUptimeBar`, `DitherGauge`, `DitherNumber`
 
-There is also `DitherImage` for dithering a photo, nineteen animated backgrounds (`DitherAnimatedGradient`, `DitherAurora`, `DitherBeams`, `DitherContours`, `DitherEclipse`, `DitherHalftone`, `DitherHorizon`, `DitherLightRays`, `DitherMeshGradient`, `DitherNoiseField`, `DitherPlasma`, `DitherRetroGrid`, `DitherRidgelines`, `DitherRipples`, `DitherSilk`, `DitherSmoke`, `DitherStarfield`, `DitherTunnel` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
+There is also `DitherImage` for dithering a photo, twenty-five animated backgrounds (`DitherAnimatedGradient`, `DitherAurora`, `DitherBeams`, `DitherContours`, `DitherDotMap`, `DitherEclipse`, `DitherFade`, `DitherGlobe`, `DitherHalftone`, `DitherHorizon`, `DitherLightRays`, `DitherMeshGradient`, `DitherMetaballs`, `DitherNoiseField`, `DitherOrb`, `DitherPlasma`, `DitherRetroGrid`, `DitherRidgelines`, `DitherRipples`, `DitherSilk`, `DitherSmoke`, `DitherSpotlight`, `DitherStarfield`, `DitherTunnel` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
 
 Colours come from `DitherTheme` and `DitherPalette`. Turn motion off everywhere with `DitherTheme.animated = false`.
 

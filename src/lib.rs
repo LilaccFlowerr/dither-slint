@@ -3,10 +3,12 @@ pub mod backgrounds;
 pub mod bloom;
 pub mod color;
 pub mod diffuse;
+pub mod dot_map;
 pub mod empty;
 pub mod export;
 pub mod field;
 pub mod gauge;
+pub mod globe;
 pub mod glow;
 pub mod lively;
 pub mod loader;
@@ -23,6 +25,7 @@ pub mod switch;
 pub mod tabs;
 pub mod trend;
 pub mod uptime;
+pub mod world;
 
 mod blue_noise;
 
@@ -82,6 +85,27 @@ macro_rules! install {
 
         fn number_roll(roll: &DitherNumberRoll) -> $crate::number::Roll {
             $crate::number::Roll { from: roll.from, to: roll.to, decimals: roll.decimals.max(0) as usize, duration: roll.duration, stagger: roll.stagger }
+        }
+
+        fn markers(markers: &$crate::slint::ModelRc<DitherMarker>) -> Vec<$crate::world::Marker> {
+            markers
+                .iter()
+                .map(|m| $crate::world::Marker { at: $crate::world::Place { lat: m.lat, lon: m.lon }, color: (m.color.alpha() > 0).then_some(m.color) })
+                .collect()
+        }
+
+        fn routes(arcs: &$crate::slint::ModelRc<DitherArc>) -> Vec<$crate::world::Route> {
+            arcs.iter()
+                .map(|a| $crate::world::Route {
+                    from: $crate::world::Place { lat: a.from_lat, lon: a.from_lon },
+                    to: $crate::world::Place { lat: a.to_lat, lon: a.to_lon },
+                    color: (a.color.alpha() > 0).then_some(a.color),
+                })
+                .collect()
+        }
+
+        fn bounds(bounds: &DitherBounds) -> $crate::dot_map::Bounds {
+            $crate::dot_map::Bounds { north: bounds.north, south: bounds.south, west: bounds.west, east: bounds.east }
         }
 
         let engine = $component.global::<DitherEngine>();
@@ -313,6 +337,36 @@ macro_rules! install {
                 levels: cells(levels),
             })
         });
+        engine.on_globe(|columns, rows, view, style, markers_in, arcs_in| {
+            let (markers, arcs) = (markers(&markers_in), routes(&arcs_in));
+            let globe = $crate::globe::Globe {
+                land: style.land,
+                accent: style.accent,
+                markers: &markers,
+                arcs: &arcs,
+                light: style.light,
+                ocean: style.ocean,
+                atmosphere: style.atmosphere,
+                matrix: Matrix::ALL[style.matrix as usize],
+            };
+            $crate::globe::globe(cells(columns), cells(rows), &globe, &$crate::globe::View { spin: view.spin, tilt: view.tilt, time: view.time })
+        });
+        engine.on_dot_map(|scale, time, animated, style, markers_in, arcs_in| {
+            let (markers, arcs) = (markers(&markers_in), routes(&arcs_in));
+            let map = $crate::dot_map::DotMap {
+                markers: &markers,
+                arcs: &arcs,
+                color: style.color,
+                accent: style.accent,
+                columns: cells(style.columns),
+                round: style.round,
+                halo: style.halo,
+                ocean: style.ocean,
+                bounds: bounds(&style.bounds),
+            };
+            $crate::dot_map::dot_map(&map, cells(scale), animated.then_some(time))
+        });
+        engine.on_dot_map_rows(|columns, area| $crate::dot_map::Grid::new(cells(columns), bounds(&area)).rows as i32);
         engine.on_mix(render::mix);
         engine.on_random_beams(|| {
             let colors: Vec<$crate::slint::Color> =

@@ -2,10 +2,13 @@ use dither_slint::Matrix;
 use dither_slint::bloom::Bloom;
 use dither_slint::render::{self, FillOptions, GradientOptions, linear_gradient};
 use dither_slint::diffuse::Method;
+use dither_slint::dot_map::{self, Bounds, DotMap};
 use dither_slint::field::{self, Shader};
+use dither_slint::globe::{self, Globe, View};
 use dither_slint::glow::{self, Glow, GlowOptions};
 use dither_slint::lively::{self, Hover, Idle, Layer, Press};
 use dither_slint::style::{FillEdge, FillVariant};
+use dither_slint::world::{Marker, Place, Route};
 use dither_slint::slint::{Color, Image, Rgba8Pixel, SharedPixelBuffer};
 use wasm_bindgen::prelude::*;
 
@@ -50,6 +53,74 @@ pub fn mix(base: &[u8], other: &[u8], amount: f32) -> Vec<u8> {
     let (base, other) = (colors(base)[0], colors(other)[0]);
     let mixed = render::mix(base, other, amount);
     vec![mixed.red(), mixed.green(), mixed.blue(), mixed.alpha()]
+}
+
+/// Latitude, longitude and an RGBA colour for each marker; a transparent colour takes the accent.
+fn markers(flat: &[f32]) -> Vec<Marker> {
+    flat.chunks_exact(6).map(|m| Marker { at: Place { lat: m[0], lon: m[1] }, color: own_color(&m[2..]) }).collect()
+}
+
+/// The latitude and longitude of both ends and an RGBA colour for each arc.
+fn routes(flat: &[f32]) -> Vec<Route> {
+    flat.chunks_exact(8)
+        .map(|a| Route { from: Place { lat: a[0], lon: a[1] }, to: Place { lat: a[2], lon: a[3] }, color: own_color(&a[4..]) })
+        .collect()
+}
+
+fn own_color(rgba: &[f32]) -> Option<Color> {
+    (rgba[3] > 0.0).then(|| Color::from_argb_u8(rgba[3] as u8, rgba[0] as u8, rgba[1] as u8, rgba[2] as u8))
+}
+
+fn map_bounds(bounds: &[f32]) -> Bounds {
+    Bounds { north: bounds[0], south: bounds[1], west: bounds[2], east: bounds[3] }
+}
+
+#[wasm_bindgen]
+pub fn globe(
+    columns: u32,
+    rows: u32,
+    spin: f32,
+    tilt: f32,
+    time: f32,
+    land: &[u8],
+    accent: &[u8],
+    light: f32,
+    ocean: f32,
+    atmosphere: bool,
+    matrix: usize,
+    markers_in: &[f32],
+    arcs_in: &[f32],
+) -> Vec<u8> {
+    let (markers, arcs) = (markers(markers_in), routes(arcs_in));
+    let style = Globe { land: colors(land)[0], accent: colors(accent)[0], markers: &markers, arcs: &arcs, light, ocean, atmosphere, matrix: Matrix::ALL[matrix] };
+    bytes(globe::globe(columns, rows, &style, &View { spin, tilt, time }))
+}
+
+#[wasm_bindgen]
+pub fn dot_map(
+    scale: u32,
+    time: f32,
+    animated: bool,
+    color: &[u8],
+    accent: &[u8],
+    columns: u32,
+    round: bool,
+    halo: f32,
+    ocean: f32,
+    bounds: &[f32],
+    markers_in: &[f32],
+    arcs_in: &[f32],
+) -> Vec<u8> {
+    let (markers, arcs) = (markers(markers_in), routes(arcs_in));
+    let map = DotMap { markers: &markers, arcs: &arcs, color: colors(color)[0], accent: colors(accent)[0], columns, round, halo, ocean, bounds: map_bounds(bounds) };
+    bytes(dot_map::dot_map(&map, scale, animated.then_some(time)))
+}
+
+/// The dots across and down of a map.
+#[wasm_bindgen]
+pub fn dot_map_grid(columns: u32, bounds: &[f32]) -> Vec<u32> {
+    let grid = dot_map::Grid::new(columns, map_bounds(bounds));
+    vec![grid.columns, grid.rows]
 }
 
 fn bytes(image: Image) -> Vec<u8> {

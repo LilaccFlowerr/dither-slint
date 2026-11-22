@@ -7,10 +7,10 @@ description: Add dither-slint to a Slint app.
 
 ```toml
 [dependencies]
-dither-slint = "0.4"
+dither-slint = "0.5"
 
 [build-dependencies]
-dither-slint = "0.4"
+dither-slint = "0.5"
 slint-build = "1.18"
 ```
 

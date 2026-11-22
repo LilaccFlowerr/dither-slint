@@ -1,0 +1,63 @@
+import { DitherArc, DitherBounds, DitherEngine, DitherMarker } from "../engine.slint";
+import { DitherPalette, DitherTheme } from "../theme.slint";
+
+export component DitherDotMap {
+    in property <[DitherMarker]> markers;
+    in property <[DitherArc]> arcs;
+    in property <color> color: DitherPalette.grey;
+    in property <color> accent: DitherTheme.ink;
+    in property <int> columns: 160;
+    in property <bool> round: false;
+    in property <float> halo: 14;
+    in property <float> ocean: 0;
+    in property <DitherBounds> bounds: { north: 78, south: -56, west: -180, east: 180 };
+    in property <bool> animated: DitherTheme.animated;
+
+    private property <int> dots: Math.max(24, root.columns);
+    private property <int> rows: DitherEngine.dot-map-rows(root.dots, root.bounds);
+    private property <float> elapsed;
+
+    width: 100%;
+    height: self.width * root.rows / root.dots;
+
+    Timer {
+        interval: 1000ms / 30;
+        running: root.animated;
+        triggered => {
+            root.elapsed = animation-tick() / 1s;
+        }
+    }
+
+    Image {
+        width: root.width;
+        height: root.height;
+        image-fit: ImageFit.fill;
+        source: DitherEngine.dot-map(
+            Math.max(4, Math.ceil(root.width / 1phx / root.dots)),
+            root.elapsed,
+            root.animated,
+            { color: root.color, accent: root.accent, columns: root.dots, round: root.round, halo: root.halo, ocean: root.ocean, bounds: root.bounds },
+            root.markers,
+            root.arcs
+        );
+    }
+
+    for marker in root.markers: Rectangle {
+        visible: marker.label != "";
+        x: (marker.lon - root.bounds.west) / (root.bounds.east - root.bounds.west) * root.width + 10px;
+        y: (root.bounds.north - marker.lat) / (root.bounds.east - root.bounds.west) * root.dots / root.rows * root.height - self.height / 2;
+        width: label.preferred-width + 12px;
+        height: label.preferred-height + 4px;
+        border-radius: 2px;
+        background: DitherTheme.background.transparentize(0.2);
+
+        label := Text {
+            x: 6px;
+            y: 2px;
+            text: marker.label;
+            color: DitherTheme.foreground;
+            font-size: 11px;
+            font-family: "monospace";
+        }
+    }
+}

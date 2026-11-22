@@ -1,0 +1,32 @@
+---
+title: DitherDotMap
+description: "A flat world map in dithered dots with pulsing markers and arcs."
+---
+
+import EarthDemo from '../../../components/EarthDemo.astro';
+
+<EarthDemo kind="map" name="DitherDotMap" />
+
+A flat world map drawn in dots, for "customers worldwide" and "global network" sections. Markers pulse and cast a dithered glow on the land around them, and dotted arcs run between places, each with a light that travels along it. The map fills the width it is given and keeps its aspect ratio.
+
+```slint
+DitherDotMap {
+    markers: [{ lat: 48.9, lon: 2.3, label: "Paris" }, { lat: 40.7, lon: -74, label: "New York" }];
+    arcs: [{ from-lat: 48.9, from-lon: 2.3, to-lat: 40.7, to-lon: -74 }];
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `markers` | none | Places to mark, each with `lat`, `lon`, an optional `label` shown beside it and an optional `color`. |
+| `arcs` | none | Dotted lines between places, each with `from-lat`, `from-lon`, `to-lat`, `to-lon` and an optional `color`. |
+| `color` | `DitherPalette.grey` | Colour of the land dots. |
+| `accent` | `DitherTheme.ink` | Colour of markers, halos and arcs unless they set their own. |
+| `columns` | `160` | Dots across the full width, at least 24. |
+| `round` | `false` | Round dots instead of squares. |
+| `halo` | `14` | Radius in degrees of the glow each marker casts on the land. 0 turns it off. |
+| `ocean` | `0` | Share of sea cells with a faint dot, 0 to 1. |
+| `bounds` | `{ north: 78, south: -56, west: -180, east: 180 }` | The part of the world to draw, in degrees. |
+| `animated` | `DitherTheme.animated` | Pulse the markers and run light along the arcs. `false` draws a still map. |
+
+The land comes from [Natural Earth](https://www.naturalearthdata.com) (public domain), stored as a 3.8 KB mask in the crate. Nothing is fetched.

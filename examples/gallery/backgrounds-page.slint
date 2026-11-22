@@ -4,6 +4,7 @@ import { DitherPlasma, DitherRipples, DitherShader, DitherTheme } from "../../ui
 import { DitherWaves, DitherWavesVariant } from "../../ui/lib.slint";
 import { DitherAnimatedGradient, DitherAnimatedGradientPreset, DitherAurora, DitherMeshGradient, DitherSilk, DitherSmoke } from "../../ui/lib.slint";
 import { DitherContours, DitherRetroGrid, DitherRidgelines, DitherStarfield, DitherTunnel, DitherTunnelShape } from "../../ui/lib.slint";
+import { DitherMetaballs, DitherMetaballsVariant, DitherDotMap, DitherFade, DitherFadeSide, DitherGlobe, DitherOrb, DitherSpotlight } from "../../ui/lib.slint";
 import { DitherBeams, DitherEclipse, DitherHalftone, DitherHalftoneSource, DitherHorizon, DitherLightRays, DitherLightRaysPreset } from "../../ui/lib.slint";
 
 component Heading inherits Text {
@@ -137,6 +138,80 @@ export component BackgroundsPage inherits ScrollView {
             Box { DitherTunnel { } }
             Box { DitherTunnel { shape: DitherTunnelShape.square; } }
             Box { DitherStarfield { } }
+        }
+
+        Heading { text: "Metaballs"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherMetaballs { } }
+            Box { DitherMetaballs { variant: DitherMetaballsVariant.rings; } }
+        }
+
+        Heading { text: "Orb"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherOrb { } }
+            Box { DitherOrb { highlight: #ffffff; glow: 0.8; } }
+            Box { DitherOrb { lean: { x: 0.8, y: -0.6 }; morph: 0; } }
+        }
+
+        Heading { text: "Spotlight"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box { DitherSpotlight { } }
+            Box { DitherSpotlight { position: { x: 1, y: 1 }; } }
+            Box { DitherSpotlight { position: { x: 0.5, y: 0.5 }; radius: 0.4; } }
+        }
+
+        Heading { text: "Fade"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box {
+                DitherStarfield { }
+                DitherFade { }
+            }
+            Box {
+                DitherStarfield { }
+                DitherFade { side: DitherFadeSide.top; size: 100px; color: DitherTheme.ink; }
+            }
+            Box {
+                DitherStarfield { }
+                DitherFade { side: DitherFadeSide.right; animated: true; }
+            }
+        }
+
+        Heading { text: "Globe"; }
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            Box {
+                width: 250px;
+                height: 250px;
+                DitherGlobe {
+                    markers: [{ lat: 48.9, lon: 2.3 }, { lat: 40.7, lon: -74 }, { lat: 35.7, lon: 139.7 }];
+                    arcs: [{ from-lat: 48.9, from-lon: 2.3, to-lat: 40.7, to-lon: -74 }, { from-lat: 48.9, from-lon: 2.3, to-lat: 35.7, to-lon: 139.7 }];
+                }
+            }
+            Box {
+                width: 250px;
+                height: 250px;
+                DitherGlobe { color: DitherPalette.green; accent: DitherPalette.pink; light: 60; speed: -4; }
+            }
+        }
+
+        Heading { text: "Dot map"; }
+        Rectangle {
+            width: 520px;
+            height: 220px;
+            DitherDotMap {
+                markers: [{ lat: 48.9, lon: 2.3, label: "Paris" }, { lat: 40.7, lon: -74, label: "New York" }, { lat: 35.7, lon: 139.7, label: "Tokyo" }, { lat: -33.9, lon: 151.2, label: "Sydney" }];
+                arcs: [{ from-lat: 48.9, from-lon: 2.3, to-lat: 40.7, to-lon: -74 }, { from-lat: 48.9, from-lon: 2.3, to-lat: 35.7, to-lon: 139.7 }];
+                accent: DitherPalette.orange;
+            }
         }
 
         Heading { text: "Your own field, written in Rust"; }

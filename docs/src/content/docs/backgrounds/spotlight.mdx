@@ -1,0 +1,29 @@
+---
+title: DitherSpotlight
+description: "A soft dithered light from an edge, a corner or any point."
+background:
+  field: spotlight
+  params: [0.5, -0.05, 0.7, 0.75]
+  palette: ['background', 'ink']
+  matrix: 2
+  still: 6
+---
+
+import Background from '../../../components/Background.astro';
+
+<Background
+	{...frontmatter.background}
+	name={frontmatter.title}
+	controls={[
+		{ label: 'Radius', prop: 'radius', index: 2, min: 0.1, max: 2, step: 0.05 },
+		{ label: 'Intensity', prop: 'intensity', index: 3, min: 0, max: 1, step: 0.05 },
+	]}
+/>
+
+The quiet spotlight behind a hero or a card. It breathes slowly and its edge wavers a little, so it never looks like a plain gradient.
+
+| Property | Default | |
+| --- | --- | --- |
+| `position` | `{ x: 0.5, y: -0.05 }` | Where the light comes from, as fractions of the box from the top left. Just outside the box lights it from an edge. |
+| `radius` | `0.7` | How far the light reaches: 1 reaches the farthest corner. |
+| `intensity` | `0.75` | Brightness at the centre, 0 to 1. |
