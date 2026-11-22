@@ -1,0 +1,58 @@
+---
+title: DitherScrollReveal
+description: A picture that resolves out of coarse dithered blocks as it scrolls into view.
+---
+
+import Demo from '../../../components/Demo.astro';
+import ScrollReveal from '../../../components/ScrollReveal.astro';
+
+The picture starts as a few large dithered blocks, sharpens step by step until it is dithered at one cell, and then dissolves cell by cell into the photo. Progress follows the scroll position, so scrolling back reverses it.
+
+<Demo
+	title="Basic"
+	code={`DitherScrollReveal {
+    source: @image-url("cover.png");
+    viewport-height: root.height;
+    width: 400px;
+    height: 225px;
+}`}
+>
+	<ScrollReveal />
+</Demo>
+
+<Demo
+	title="Ending on the dither"
+	code={`DitherScrollReveal {
+    source: @image-url("cover.png");
+    end: DitherRevealEnd.dither;
+    viewport-height: root.height;
+    width: 400px;
+    height: 225px;
+}`}
+>
+	<ScrollReveal toPhoto={false} />
+</Demo>
+
+## Following the scroll
+
+Slint does not tell a child where its scroll area is, so set `viewport-height` to the height of the area that scrolls. The picture then measures its own position against it. If the area does not start at the top of the window, set `viewport-top` too.
+
+Or leave `viewport-height` at `0` and drive it yourself with `progress`, from 0 to 1.
+
+## Properties
+
+| Property | Default | |
+| --- | --- | --- |
+| `source` | | The picture. |
+| `method` | `floyd-steinberg` | `bayer4`, `bayer8`, `blue-noise`, `floyd-steinberg`, `atkinson` or `sierra-lite`. |
+| `threshold` | `0.5` | Brightness cut-off, 0 to 1. |
+| `cell` | `2px` | Size of one dither cell. |
+| `palette` | background, foreground | Two or more colours. |
+| `end` | `photo` | `photo` ends on the picture itself, `dither` on the finest dither. |
+| `coarsest` | `24` | How many cells wide the first, coarsest blocks are. |
+| `start` | `1` | Where the top edge is when the reveal starts, as a share of the scroll area from the top. 1 is the bottom edge. |
+| `finish` | `0.3` | Where the top edge is when the reveal is done. |
+| `viewport-height` | `0` | Height of the scroll area. Set it and the reveal follows the scroll. |
+| `viewport-top` | `0` | Where the scroll area starts in the window. |
+| `progress` | `0` | The reveal by hand, 0 to 1. Used when `viewport-height` is `0`. |
+| `shown` | | The progress being drawn, read only. |

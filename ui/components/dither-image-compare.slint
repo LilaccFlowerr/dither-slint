@@ -1,0 +1,189 @@
+import { DitherMethod } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherImage } from "dither-image.slint";
+
+export component DitherImageCompare inherits Rectangle {
+    in property <image> source;
+    in property <DitherMethod> method: DitherMethod.floyd-steinberg;
+    in property <float> threshold: 0.5;
+    in property <length> cell: 2px;
+    in property <[color]> palette: [DitherTheme.background, DitherTheme.foreground];
+    in property <string> before-label: "DITHERED";
+    in property <string> after-label: "ORIGINAL";
+    in property <bool> labels: true;
+    in property <bool> hint: true;
+    in-out property <float> value: 50;
+    callback changed(float);
+
+    property <duration> hint-step: 520ms;
+    property <[float]> hint-stops: [-14, 10, 0];
+    property <int> hint-stage: root.hint ? 0 : root.hint-stops.length;
+    property <float> hint-origin;
+    property <float> shown: root.value;
+    property <length> grip-height: 44px;
+    property <length> grip-width: 28px;
+
+    function stop-hint() {
+        root.hint-stage = root.hint-stops.length;
+    }
+
+    function move-to(percent: float) {
+        root.value = Math.round(Math.min(100, Math.max(0, percent)) * 10) / 10;
+        root.changed(root.value);
+    }
+
+    background: root.palette[0];
+    clip: true;
+    forward-focus: keys;
+
+    animate shown {
+        duration: root.hint-stage > 0 && root.hint-stage < root.hint-stops.length ? 500ms : 200ms;
+        easing: ease-out;
+    }
+
+    Timer {
+        interval: root.hint-step;
+        running: root.hint-stage < root.hint-stops.length;
+        triggered => {
+            if root.hint-stage == 0 {
+                root.hint-origin = root.value;
+            }
+            root.move-to(root.hint-origin + root.hint-stops[root.hint-stage]);
+            root.hint-stage += 1;
+        }
+    }
+
+    Image {
+        width: 100%;
+        height: 100%;
+        source: root.source;
+        image-fit: ImageFit.contain;
+    }
+
+    Rectangle {
+        x: 0;
+        width: root.width * root.shown / 100;
+        height: 100%;
+        clip: true;
+
+        DitherImage {
+            x: 0;
+            y: 0;
+            width: root.width;
+            height: root.height;
+            source: root.source;
+            method: root.method;
+            threshold: root.threshold;
+            cell: root.cell;
+            palette: root.palette;
+        }
+    }
+
+    if root.labels: Rectangle {
+        x: 12px;
+        y: 12px;
+        width: before.preferred-width + 16px;
+        height: before.preferred-height + 8px;
+        border-radius: 6px;
+        background: #0000008c;
+        opacity: root.shown < 18 ? 0 : 1;
+        animate opacity { duration: 200ms; easing: ease-out; }
+
+        before := Text {
+            text: root.before-label;
+            color: white;
+            font-size: 10px;
+            letter-spacing: 1.2px;
+        }
+    }
+
+    if root.labels: Rectangle {
+        x: root.width - self.width - 12px;
+        y: 12px;
+        width: after.preferred-width + 16px;
+        height: after.preferred-height + 8px;
+        border-radius: 6px;
+        background: #0000008c;
+        opacity: root.shown > 82 ? 0 : 1;
+        animate opacity { duration: 200ms; easing: ease-out; }
+
+        after := Text {
+            text: root.after-label;
+            color: white;
+            font-size: 10px;
+            letter-spacing: 1.2px;
+        }
+    }
+
+    Rectangle {
+        x: root.width * root.shown / 100 - 1px;
+        width: 2px;
+        height: 100%;
+        background: #ffffffe6;
+    }
+
+    Rectangle {
+        x: root.width * root.shown / 100 - root.grip-width / 2;
+        y: (root.height - root.grip-height) / 2;
+        width: root.grip-width;
+        height: root.grip-height;
+        border-radius: 10px;
+        background: white;
+        border-width: keys.has-focus ? 2px : 1px;
+        border-color: keys.has-focus ? DitherTheme.ink : #0000001a;
+
+        for row in 5: Rectangle {
+            x: (parent.width - 5px) / 2;
+            y: (parent.height - 14px) / 2 + row * 3px;
+            width: 5px;
+            height: 2px;
+
+            for column in 2: Rectangle {
+                x: column * 3px;
+                width: 2px;
+                height: 2px;
+                background: #171717;
+            }
+        }
+    }
+
+    keys := FocusScope {
+        key-pressed(event) => {
+            root.stop-hint();
+            if event.text == Key.LeftArrow || event.text == Key.DownArrow {
+                root.move-to(root.value - (event.modifiers.shift ? 10 : 1));
+            } else if event.text == Key.RightArrow || event.text == Key.UpArrow {
+                root.move-to(root.value + (event.modifiers.shift ? 10 : 1));
+            } else if event.text == Key.PageDown {
+                root.move-to(root.value - 10);
+            } else if event.text == Key.PageUp {
+                root.move-to(root.value + 10);
+            } else if event.text == Key.Home {
+                root.move-to(0);
+            } else if event.text == Key.End {
+                root.move-to(100);
+            } else {
+                return reject;
+            }
+            return accept;
+        }
+    }
+
+    TouchArea {
+        mouse-cursor: self.pressed ? MouseCursor.grabbing : MouseCursor.col-resize;
+
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                root.stop-hint();
+                keys.focus();
+                root.move-to(self.mouse-x / root.width * 100);
+            }
+        }
+
+        moved => {
+            if self.pressed {
+                root.move-to(self.mouse-x / root.width * 100);
+            }
+        }
+    }
+}

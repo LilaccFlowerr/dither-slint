@@ -21,6 +21,9 @@ import { SparklinePage } from "sparkline-page.slint";
 import { UptimePage } from "uptime-page.slint";
 import { GaugePage } from "gauge-page.slint";
 import { NumberPage } from "number-page.slint";
+import { ImageComparePage } from "image-compare-page.slint";
+import { ScrollRevealPage } from "scroll-reveal-page.slint";
+import { LogoPage } from "logo-page.slint";
 
 export component Shots inherits Window {
     in property <int> which;
@@ -50,5 +53,8 @@ export component Shots inherits Window {
         if root.which == 18: UptimePage { }
         if root.which == 19: GaugePage { }
         if root.which == 20: NumberPage { }
+        if root.which == 21: ImageComparePage { }
+        if root.which == 22: ScrollRevealPage { window-height: root.height; }
+        if root.which == 23: LogoPage { }
     }
 }

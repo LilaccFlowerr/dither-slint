@@ -12,11 +12,13 @@ pub mod globe;
 pub mod glow;
 pub mod lively;
 pub mod loader;
+pub mod logo;
 pub mod matrix;
 pub mod noise;
 pub mod number;
 pub mod progress;
 pub mod render;
+pub mod reveal;
 pub mod skeleton;
 pub mod slider;
 pub mod stat;
@@ -303,6 +305,44 @@ macro_rules! install {
             let options = render::PictureOptions { method, threshold, palette: palette.iter().collect() };
             render::picture(&source, cells(columns), cells(rows), &options)
         });
+        engine.on_reveal(|source, columns, rows, method, threshold, palette, coarsest, progress, end| {
+            let method = Method::ALL[method as usize];
+            let options = render::PictureOptions { method, threshold, palette: palette.iter().collect() };
+            let end = match end {
+                DitherRevealEnd::Photo => $crate::reveal::RevealEnd::Photo,
+                DitherRevealEnd::Dither => $crate::reveal::RevealEnd::Dither,
+            };
+            let reveal = $crate::reveal::Reveal { coarsest: cells(coarsest), progress, end };
+            $crate::reveal::reveal(&source, cells(columns), cells(rows), &options, &reveal)
+        });
+        engine.on_logo(|source, columns, rows, logo_source, tone, effect, fill, outline, floor, matrix, color, sweep| {
+            let options = $crate::logo::LogoOptions {
+                source: match logo_source {
+                    DitherLogoSource::Alpha => $crate::logo::LogoSource::Alpha,
+                    DitherLogoSource::Dark => $crate::logo::LogoSource::Dark,
+                },
+                tone: match tone {
+                    DitherLogoTone::Mono => $crate::logo::LogoTone::Mono,
+                    DitherLogoTone::Original => $crate::logo::LogoTone::Original,
+                },
+                fill: FillVariant::ALL[fill as usize],
+                outline,
+                floor,
+                matrix: Matrix::ALL[matrix as usize],
+                color,
+                effect: match effect {
+                    DitherLogoEffect::None => $crate::logo::LogoEffect::None,
+                    DitherLogoEffect::Shimmer => $crate::logo::LogoEffect::Shimmer,
+                    DitherLogoEffect::Scan => $crate::logo::LogoEffect::Scan,
+                },
+                sweep,
+            };
+            $crate::logo::logo(&source, cells(columns), cells(rows), &options)
+        });
+        engine.on_logo_row(|logos, height, gap| {
+            $crate::logo::row_width(logos.iter().map(|item| (item.source.size().width, item.source.size().height)), height, gap)
+        });
+        engine.on_logo_width(|source, height| $crate::logo::logo_width((source.size().width, source.size().height), height));
         engine.on_card_glow(|columns, rows, glow, reach, strength, boost, rim, radius, fill, matrix, color| {
             let options = $crate::glow::GlowOptions {
                 glow: Glow::ALL[glow as usize],

@@ -1,0 +1,89 @@
+---
+interface Props {
+	toPhoto?: boolean;
+	coarsest?: number;
+}
+
+const { toPhoto = true, coarsest = 24 } = Astro.props;
+---
+
+<div class="reveal" data-to-photo={toPhoto} data-coarsest={coarsest}>
+	<div class="scroller">
+		<p>Scroll down</p>
+		<canvas></canvas>
+		<div class="after"></div>
+	</div>
+</div>
+
+<style>
+	.reveal {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+	.scroller {
+		height: 320px;
+		overflow-y: auto;
+		padding: 1rem;
+		box-sizing: border-box;
+	}
+	p {
+		margin: 0 !important;
+		height: 240px;
+		color: var(--sl-color-gray-3);
+	}
+	canvas {
+		display: block;
+		width: 400px;
+		max-width: 100%;
+		aspect-ratio: 16 / 9;
+		image-rendering: pixelated;
+		margin: 0 !important;
+		background: #1b1a19;
+	}
+	.after {
+		height: 240px;
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { reveal } from '../engine/dither_slint_engine_web.js';
+
+	const width = 400;
+	const height = 225;
+	const cell = 2;
+	const start = 1;
+	const finish = 0.3;
+	const source = `${import.meta.env.BASE_URL}compare.jpg`;
+
+	async function photo() {
+		const bitmap = await createImageBitmap(await (await fetch(source)).blob());
+		const canvas = new OffscreenCanvas(width, height);
+		const painter = canvas.getContext('2d')!;
+		painter.drawImage(bitmap, 0, 0, width, height);
+		return new Uint8Array(painter.getImageData(0, 0, width, height).data.buffer);
+	}
+
+	Promise.all([ready, photo()]).then(([, pixels]) => {
+		const palette = new Uint8Array(['#1b1a19', '#ebe5d9'].flatMap((hex) => rgba(hex)));
+		for (const demo of document.querySelectorAll<HTMLElement>('.reveal')) {
+			const scroller = demo.querySelector<HTMLElement>('.scroller')!;
+			const canvas = demo.querySelector<HTMLCanvasElement>('canvas')!;
+			const context = canvas.getContext('2d')!;
+			const columns = Math.round(width / cell);
+			const rows = Math.round(height / cell);
+			canvas.width = columns;
+			canvas.height = rows;
+			const draw = () => {
+				const area = scroller.getBoundingClientRect();
+				const edge = (canvas.getBoundingClientRect().top - area.top) / area.height;
+				const progress = Math.min(1, Math.max(0, (start - edge) / (start - finish)));
+				const bytes = reveal(pixels, width, height, columns, rows, 3, 0.5, palette, Number(demo.dataset.coarsest), progress, demo.dataset.toPhoto === 'true');
+				context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+			};
+			scroller.addEventListener('scroll', draw, { passive: true });
+			draw();
+		}
+	});
+</script>

@@ -192,6 +192,33 @@ pub fn picture(pixels: &[u8], width: u32, height: u32, columns: u32, rows: u32, 
 }
 
 #[wasm_bindgen]
+pub fn reveal(pixels: &[u8], width: u32, height: u32, columns: u32, rows: u32, method: usize, threshold: f32, palette: &[u8], coarsest: u32, progress: f32, to_photo: bool) -> Vec<u8> {
+    use dither_slint::reveal::{Reveal, RevealEnd};
+    let source = Image::from_rgba8(SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(pixels, width, height));
+    let options = render::PictureOptions { method: Method::ALL[method], threshold, palette: colors(palette) };
+    let end = if to_photo { RevealEnd::Photo } else { RevealEnd::Dither };
+    bytes(dither_slint::reveal::reveal(&source, columns, rows, &options, &Reveal { coarsest, progress, end }))
+}
+
+#[wasm_bindgen]
+pub fn logo(pixels: &[u8], width: u32, height: u32, columns: u32, rows: u32, fill: usize, matrix: usize, color: &[u8], original: bool, effect: usize, sweep: f32, outline: bool, floor: f32) -> Vec<u8> {
+    use dither_slint::logo::{LogoEffect, LogoOptions, LogoSource, LogoTone};
+    let source = Image::from_rgba8(SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(pixels, width, height));
+    let options = LogoOptions {
+        source: LogoSource::Alpha,
+        tone: if original { LogoTone::Original } else { LogoTone::Mono },
+        fill: FillVariant::ALL[fill],
+        outline,
+        floor,
+        matrix: Matrix::ALL[matrix],
+        color: colors(color)[0],
+        effect: [LogoEffect::None, LogoEffect::Shimmer, LogoEffect::Scan][effect],
+        sweep,
+    };
+    bytes(dither_slint::logo::logo(&source, columns, rows, &options))
+}
+
+#[wasm_bindgen]
 pub fn rule(
     columns: u32,
     rows: u32,

@@ -28,7 +28,6 @@ jobs:
         with:
           workspaces: |
             engine-web
-            web
 
       - uses: taiki-e/install-action@v2
         with:
@@ -36,9 +35,6 @@ jobs:
 
       - name: Build the engine for the docs
         run: ./engine-web/build.sh
-
-      - name: Build the live demo
-        run: ./web/build.sh
 
       - uses: actions/setup-node@v4
         with:

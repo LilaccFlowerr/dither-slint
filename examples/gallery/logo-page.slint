@@ -1,0 +1,54 @@
+import { DitherFill, DitherLogo, DitherLogoEffect, DitherLogoItem, DitherLogoMarquee, DitherMarqueeDirection, DitherMarqueeFade, DitherMarqueeVariant, DitherPalette, DitherTheme } from "../../ui/lib.slint";
+
+export component LogoPage inherits VerticalLayout {
+    property <[DitherLogoItem]> logos: [
+        { source: @image-url("logos/ring.png") },
+        { source: @image-url("logos/peak.png") },
+        { source: @image-url("logos/gem.png") },
+        { source: @image-url("logos/stack.png") },
+    ];
+
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    Text { text: "gradient, dotted, hatched, solid"; color: DitherTheme.foreground; }
+    HorizontalLayout {
+        spacing: 24px;
+        alignment: start;
+
+        for fill in [DitherFill.gradient, DitherFill.dotted, DitherFill.hatched, DitherFill.solid]: DitherLogo {
+            source: @image-url("logos/ring.png");
+            fill: fill;
+            width: 120px;
+            height: 44px;
+        }
+    }
+
+    Text { text: "shimmer"; color: DitherTheme.foreground; }
+    DitherLogo {
+        source: @image-url("logos/stack.png");
+        effect: DitherLogoEffect.shimmer;
+        ink: DitherPalette.green;
+        width: 120px;
+        height: 44px;
+    }
+
+    Text { text: "marquee"; color: DitherTheme.foreground; }
+    DitherLogoMarquee {
+        logos: root.logos;
+    }
+
+    Text { text: "marquee, dithered fade"; color: DitherTheme.foreground; }
+    DitherLogoMarquee {
+        logos: root.logos;
+        fade: DitherMarqueeFade.dither;
+        direction: DitherMarqueeDirection.right;
+    }
+
+    Text { text: "wall"; color: DitherTheme.foreground; }
+    DitherLogoMarquee {
+        logos: root.logos;
+        variant: DitherMarqueeVariant.wall;
+    }
+}

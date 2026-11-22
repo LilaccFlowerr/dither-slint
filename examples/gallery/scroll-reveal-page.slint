@@ -1,0 +1,45 @@
+import { DitherRevealEnd, DitherScrollReveal, DitherTheme } from "../../ui/lib.slint";
+
+export component ScrollRevealPage inherits Flickable {
+    in property <length> window-height;
+
+    property <length> picture-width: 400px;
+    property <length> picture-height: 225px;
+    property <length> gap: 16px;
+    property <length> lead: root.window-height * 0.7;
+
+    content-height: root.lead + 2 * (root.picture-height + 2 * root.gap + 24px) + root.window-height * 0.5;
+
+    Text {
+        x: 24px;
+        y: 24px;
+        text: "Scroll down. The picture resolves as it comes into view.";
+        color: DitherTheme.foreground;
+    }
+
+    DitherScrollReveal {
+        x: 24px;
+        y: root.lead;
+        source: @image-url("compare.png");
+        viewport-height: root.window-height;
+        width: root.picture-width;
+        height: root.picture-height;
+    }
+
+    Text {
+        x: 24px;
+        y: root.lead + root.picture-height + root.gap;
+        text: "Ends on the dither";
+        color: DitherTheme.foreground;
+    }
+
+    DitherScrollReveal {
+        x: 24px;
+        y: root.lead + root.picture-height + root.gap + 24px;
+        source: @image-url("compare.png");
+        end: DitherRevealEnd.dither;
+        viewport-height: root.window-height;
+        width: root.picture-width;
+        height: root.picture-height;
+    }
+}

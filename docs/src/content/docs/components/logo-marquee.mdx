@@ -1,0 +1,62 @@
+---
+title: DitherLogoMarquee
+description: A row of dithered logos that scrolls sideways, or a still wall.
+---
+
+import Demo from '../../../components/Demo.astro';
+import Logo from '../../../components/Logo.astro';
+
+The row loops without a seam and coasts to a stop on hover. Turn animations off with `DitherTheme.animated = false` and it becomes a still row.
+
+<Demo
+	title="Marquee"
+	code={`DitherLogoMarquee {
+    logos: [
+        { source: @image-url("ring.png") },
+        { source: @image-url("peak.png") },
+        { source: @image-url("gem.png") },
+        { source: @image-url("stack.png") },
+    ];
+}`}
+>
+	<Logo />
+</Demo>
+
+<Demo
+	title="Dithered fade, moving right"
+	code={`DitherLogoMarquee {
+    logos: root.logos;
+    fade: DitherMarqueeFade.dither;
+    direction: DitherMarqueeDirection.right;
+}`}
+>
+	<Logo fade="dither" direction="right" />
+</Demo>
+
+<Demo
+	title="Wall"
+	code={`DitherLogoMarquee {
+    logos: root.logos;
+    variant: DitherMarqueeVariant.wall;
+}`}
+>
+	<Logo variant="wall" />
+</Demo>
+
+## Properties
+
+The logo properties of [DitherLogo](../logo/) (`ink`, `tone`, `fill`, `outline`, `floor`, `matrix`, `cell`, `effect` and `period`) apply to every logo in the row.
+
+| Property | Default | |
+| --- | --- | --- |
+| `logos` | | The logos, in order. Each is `{ source: image }`. |
+| `variant` | `marquee` | `marquee` scrolls, `wall` is a still grid with hairline dividers. |
+| `logo-height` | `28px` | Height of each logo. The width follows its ratio. |
+| `gap` | `64px` | Space between logos in the row. |
+| `speed` | `32px` | Scroll speed in pixels per second. |
+| `direction` | `left` | `left` or `right`. |
+| `fade` | `soft` | How the ends fade out: `soft`, `dither` or `none`. |
+| `fade-width` | `96px` | Width of each end's fade. |
+| `backdrop` | `DitherTheme.background` | The colour the ends fade to. Set it to your page background. |
+| `pause-button` | `true` | A small button on hover that stops the motion. |
+| `animate` | `DitherTheme.animated` | `false` gives a still, centred row. |

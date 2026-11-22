@@ -1,0 +1,188 @@
+---
+interface Props {
+	variant?: 'single' | 'marquee' | 'wall';
+	fill?: number;
+	effect?: number;
+	fade?: 'soft' | 'dither' | 'none';
+	direction?: 'left' | 'right';
+	color?: string;
+}
+
+const { variant = 'marquee', fill = 0, effect = 0, fade = 'soft', direction = 'left', color = 'ink' } = Astro.props;
+const names = ['ring', 'peak', 'gem', 'stack'];
+---
+
+<div class="logos" data-variant={variant} data-fill={fill} data-effect={effect} data-fade={fade} data-direction={direction} data-color={color} data-names={names.join(',')}>
+	<div class="track"></div>
+</div>
+
+<style>
+	.logos {
+		--fade: 96px;
+		width: 100%;
+		position: relative;
+		overflow: hidden;
+		padding: 0.5rem 0;
+	}
+	.logos[data-variant='marquee'][data-fade='soft'] {
+		mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+	}
+	.track {
+		display: flex;
+		width: max-content;
+		animation: slide var(--duration, 20s) linear infinite;
+	}
+	.logos[data-direction='right'] .track {
+		animation-direction: reverse;
+	}
+	.logos:hover .track {
+		animation-play-state: paused;
+	}
+	.logos[data-variant='single'] .track,
+	.logos[data-variant='wall'] .track {
+		animation: none;
+		width: auto;
+	}
+	.logos[data-variant='wall'] .track {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+		border-top: 1px solid var(--sl-color-gray-5);
+		border-left: 1px solid var(--sl-color-gray-5);
+	}
+	.logos :global(.cell) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 36px 24px;
+		border-right: 1px solid var(--sl-color-gray-5);
+		border-bottom: 1px solid var(--sl-color-gray-5);
+	}
+	.logos :global(.group) {
+		display: flex;
+		align-items: center;
+		gap: 64px;
+		padding-right: 64px;
+	}
+	.logos :global(canvas) {
+		display: block;
+		image-rendering: pixelated;
+		margin: 0 !important;
+	}
+	@keyframes slide {
+		to {
+			transform: translateX(var(--shift));
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.track {
+			animation: none;
+		}
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { fill, logo } from '../engine/dither_slint_engine_web.js';
+
+	const height = 28;
+	const speed = 32;
+	const period = 6;
+	const names = ['ring', 'peak', 'gem', 'stack'];
+	const fadeCell = 3;
+	const fadeWidth = 96;
+	const ditherRows = 4;
+
+	function fadeTile(edge: number) {
+		const columns = fadeWidth / fadeCell;
+		const bytes = fill(columns, ditherRows, 0, edge, columns, 0, 1, new Uint8Array([0, 0, 0, 255]), false);
+		const canvas = document.createElement('canvas');
+		canvas.width = columns;
+		canvas.height = ditherRows;
+		canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, ditherRows), 0, 0);
+		return `url(${canvas.toDataURL()})`;
+	}
+
+	function ditherMask(demo: HTMLElement) {
+		const tile = `${fadeWidth}px ${ditherRows * fadeCell}px`;
+		const image = `${fadeTile(2)}, ${fadeTile(3)}, linear-gradient(#000, #000)`;
+		const size = `${tile}, ${tile}, calc(100% - ${fadeWidth * 2}px) 100%`;
+		const position = 'left top, right top, center';
+		const repeat = 'repeat-y, repeat-y, no-repeat';
+		Object.assign(demo.style, { maskImage: image, maskSize: size, maskPosition: position, maskRepeat: repeat });
+	}
+
+	async function load(name: string) {
+		const bitmap = await createImageBitmap(await (await fetch(`${import.meta.env.BASE_URL}logos/${name}.png`)).blob());
+		const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+		const painter = canvas.getContext('2d')!;
+		painter.drawImage(bitmap, 0, 0);
+		return { width: bitmap.width, height: bitmap.height, pixels: new Uint8Array(painter.getImageData(0, 0, bitmap.width, bitmap.height).data.buffer) };
+	}
+
+	Promise.all([ready, Promise.all(names.map(load))]).then(([, images]) => {
+		for (const demo of document.querySelectorAll<HTMLElement>('.logos')) {
+			const track = demo.querySelector<HTMLElement>('.track')!;
+			const variant = demo.dataset.variant!;
+			if (variant === 'marquee' && demo.dataset.fade === 'dither') ditherMask(demo);
+			const ink = new Uint8Array(rgba(demo.dataset.color!));
+			const fill = Number(demo.dataset.fill);
+			const effect = Number(demo.dataset.effect);
+			const canvases: { canvas: HTMLCanvasElement; image: (typeof images)[number]; phase: number }[] = [];
+
+			const group = (copy: number) => {
+				const box = document.createElement('div');
+				box.className = 'group';
+				if (copy > 0) box.setAttribute('aria-hidden', 'true');
+				images.forEach((image, index) => {
+					const width = Math.round((image.width / image.height) * height);
+					const canvas = document.createElement('canvas');
+					canvas.width = width;
+					canvas.height = height;
+					canvas.style.width = `${width}px`;
+					canvas.style.height = `${height}px`;
+					canvases.push({ canvas, image, phase: index / images.length });
+					if (variant === 'wall') {
+						const cell = document.createElement('div');
+						cell.className = 'cell';
+						cell.append(canvas);
+						track.append(cell);
+					} else {
+						box.append(canvas);
+					}
+				});
+				return box;
+			};
+
+			const draw = (time: number) => {
+				for (const { canvas, image, phase } of canvases) {
+					const sweep = effect === 0 ? 0 : (((time / period + phase) % 1) + 1) % 1;
+					const bytes = logo(image.pixels, image.width, image.height, canvas.width, canvas.height, fill, 1, ink, false, effect, sweep, true, 0.3);
+					canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), canvas.width, canvas.height), 0, 0);
+				}
+			};
+
+			if (variant === 'wall') {
+				group(0);
+			} else if (variant === 'single') {
+				track.append(group(0));
+			} else {
+				const first = group(0);
+				track.append(first);
+				const width = first.getBoundingClientRect().width;
+				const copies = Math.min(8, Math.max(2, Math.ceil(demo.clientWidth / width) + 1));
+				for (let copy = 1; copy < copies; copy++) track.append(group(copy));
+				track.style.setProperty('--shift', `-${width}px`);
+				track.style.setProperty('--duration', `${width / speed}s`);
+			}
+
+			draw(0);
+			if (effect !== 0) {
+				const loop = (now: number) => {
+					draw(now / 1000);
+					setTimeout(() => requestAnimationFrame(loop), 1000 / 30);
+				};
+				requestAnimationFrame(loop);
+			}
+		}
+	});
+</script>

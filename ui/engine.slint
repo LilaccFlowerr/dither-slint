@@ -15,6 +15,11 @@ export enum DitherSkeletonAnimation { sweep, pulse, none }
 export enum DitherIllustration { box, search, folder, planet }
 
 export enum DitherTabsVariant { pill, underline }
+export enum DitherRevealEnd { photo, dither }
+export struct DitherLogoItem { source: image }
+export enum DitherLogoSource { alpha, dark }
+export enum DitherLogoTone { mono, original }
+export enum DitherLogoEffect { none, shimmer, scan }
 
 export enum DitherStatDirection { up, down, flat }
 
@@ -230,6 +235,10 @@ export global DitherEngine {
     pure callback stat-change(delta: float, good: DitherStatDirection) -> DitherStatChange;
     pure callback format-number(value: float) -> string;
     pure callback picture(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color]) -> image;
+    pure callback reveal(source: image, columns: int, rows: int, method: DitherMethod, threshold: float, palette: [color], coarsest: int, progress: float, end: DitherRevealEnd) -> image;
+    pure callback logo(source: image, columns: int, rows: int, logo-source: DitherLogoSource, tone: DitherLogoTone, effect: DitherLogoEffect, fill: DitherFill, outline: bool, floor: float, matrix: DitherMatrix, color: color, sweep: float) -> image;
+    pure callback logo-row(logos: [DitherLogoItem], height: float, gap: float) -> float;
+    pure callback logo-width(source: image, height: float) -> float;
     pure callback card-glow(columns: int, rows: int, glow: DitherGlow, reach: float, strength: float, boost: float, rim: bool, radius: float, fill: DitherFill, matrix: DitherMatrix, color: color) -> image;
     pure callback card-sparkles(columns: int, rows: int, cell: float, tick: float, glow: DitherGlow, reach: float, color: color) -> image;
     pure callback shader(field: string, columns: int, rows: int, time: float, params: [float], palette: [color], matrix: DitherMatrix, levels: int) -> image;

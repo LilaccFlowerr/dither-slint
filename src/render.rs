@@ -222,7 +222,7 @@ pub struct PictureOptions {
     pub palette: Vec<Color>,
 }
 
-fn shrink(source: &[Rgba8Pixel], width: u32, height: u32, columns: u32, rows: u32) -> Vec<u8> {
+pub(crate) fn shrink(source: &[Rgba8Pixel], width: u32, height: u32, columns: u32, rows: u32) -> Vec<u8> {
     let mut out = Vec::with_capacity((columns * rows * 4) as usize);
     for ty in 0..rows {
         let (y0, y1) = (ty * height / rows, ((ty + 1) * height / rows).max(ty * height / rows + 1));
@@ -244,6 +244,11 @@ fn shrink(source: &[Rgba8Pixel], width: u32, height: u32, columns: u32, rows: u3
     out
 }
 
+pub(crate) fn fit(width: u32, height: u32, columns: u32, rows: u32) -> (u32, u32) {
+    let scale = (columns as f32 / width as f32).min(rows as f32 / height as f32);
+    (((width as f32 * scale).round() as u32).max(1), ((height as f32 * scale).round() as u32).max(1))
+}
+
 pub fn picture(source: &Image, columns: u32, rows: u32, options: &PictureOptions) -> Image {
     let blank = || Image::from_rgba8(SharedPixelBuffer::<Rgba8Pixel>::new(1, 1));
     let Some(buffer) = source.to_rgba8() else { return blank() };
@@ -251,9 +256,7 @@ pub fn picture(source: &Image, columns: u32, rows: u32, options: &PictureOptions
     if width == 0 || height == 0 || columns == 0 || rows == 0 {
         return blank();
     }
-    let scale = (columns as f32 / width as f32).min(rows as f32 / height as f32);
-    let columns = ((width as f32 * scale).round() as u32).max(1);
-    let rows = ((height as f32 * scale).round() as u32).max(1);
+    let (columns, rows) = fit(width, height, columns, rows);
 
     let small = shrink(buffer.as_slice(), width, height, columns, rows);
     let rgb = |c: Color| [c.red(), c.green(), c.blue()].map(|v| v as f32 / 255.0);

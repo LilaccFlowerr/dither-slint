@@ -68,3 +68,22 @@ export function layer(box: HTMLElement, step: number, options: Layer) {
 	canvas.style.setProperty('--opacity', String(opacity));
 	box.append(canvas);
 }
+
+export function sampleScene(width: number, height: number) {
+	const image = new ImageData(width, height);
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			const dx = (x - 100) / 48;
+			const dy = (y - 65) / 48;
+			const inside = dx * dx + dy * dy < 1;
+			const z = Math.sqrt(Math.max(0, 1 - dx * dx - dy * dy));
+			const lit = Math.max(0, -dx * 0.5 - dy * 0.55 + z * 0.65);
+			const floor = y > 98 ? 0.3 + 0.25 * ((y - 98) / 32) : 0;
+			const shadow = Math.hypot((x - 112) / 62, (y - 108) / 9) < 1 ? 0.55 : 1;
+			const back = floor ? floor * shadow : 0.25 + 0.45 * (1 - y / 98);
+			const value = (inside ? 0.12 + 0.88 * lit : back) * 255;
+			image.data.set([value, value * 0.92, value * 0.8, 255], (y * width + x) * 4);
+		}
+	}
+	return image;
+}

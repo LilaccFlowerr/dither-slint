@@ -65,7 +65,7 @@ Run the gallery with `cargo run --example gallery`.
 - **Controls:** `DitherSwitch`, `DitherSlider`, `DitherInput`, `DitherTabs`, `DitherDropdownMenu`
 - **Identity and feedback:** `DitherAvatar`, `DitherLoader`, `DitherProgressBar`, `DitherSkeleton`, `DitherEmptyState`, `DitherStatCard`, `DitherSparkline`, `DitherUptimeBar`, `DitherGauge`, `DitherNumber`
 
-There is also `DitherImage` for dithering a photo, twenty-five animated backgrounds (`DitherAnimatedGradient`, `DitherAurora`, `DitherBeams`, `DitherContours`, `DitherDotMap`, `DitherEclipse`, `DitherFade`, `DitherGlobe`, `DitherHalftone`, `DitherHorizon`, `DitherLightRays`, `DitherMeshGradient`, `DitherMetaballs`, `DitherNoiseField`, `DitherOrb`, `DitherPlasma`, `DitherRetroGrid`, `DitherRidgelines`, `DitherRipples`, `DitherSilk`, `DitherSmoke`, `DitherSpotlight`, `DitherStarfield`, `DitherTunnel` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
+There are also `DitherImage` for dithering a photo, `DitherImageCompare` for a before and after slider, `DitherScrollReveal` for a picture that resolves as it scrolls into view, `DitherLogo` and `DitherLogoMarquee` for logos, twenty-five animated backgrounds (`DitherAnimatedGradient`, `DitherAurora`, `DitherBeams`, `DitherContours`, `DitherDotMap`, `DitherEclipse`, `DitherFade`, `DitherGlobe`, `DitherHalftone`, `DitherHorizon`, `DitherLightRays`, `DitherMeshGradient`, `DitherMetaballs`, `DitherNoiseField`, `DitherOrb`, `DitherPlasma`, `DitherRetroGrid`, `DitherRidgelines`, `DitherRipples`, `DitherSilk`, `DitherSmoke`, `DitherSpotlight`, `DitherStarfield`, `DitherTunnel` and `DitherWaves`) with `DitherShader` to write your own, and `DitherFx` for hover, press and idle effects. The docs in `docs/` show every one of them live. Build the engine for the browser with `./engine-web/build.sh`, then run `npm install` and `npm run dev` in `docs/`.
 
 Colours come from `DitherTheme` and `DitherPalette`. Turn motion off everywhere with `DitherTheme.animated = false`.
 
@@ -178,6 +178,119 @@ DitherCard {
 | `radius` | `14px` | Corner radius, which the rim follows. |
 | `inset` | `24px` | Space between the edge and your content. |
 | `spacing` | `16px` | Space between the children. |
+
+### DitherImageCompare
+
+A before and after slider over one photo: the left side is dithered, the right side is the original. Drag the divider, click anywhere, or use the arrow keys. The divider nudges once when it first appears.
+
+```slint
+DitherImageCompare {
+    source: @image-url("cover.png");
+    width: 400px;
+    height: 225px;
+    changed(value) => { debug(value); }
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `source` | | The picture. |
+| `method` | `floyd-steinberg` | `bayer4`, `bayer8`, `blue-noise`, `floyd-steinberg`, `atkinson` or `sierra-lite`. |
+| `threshold` | `0.5` | Brightness cut-off, 0 to 1. |
+| `cell` | `2px` | Size of one dither cell. |
+| `palette` | background, foreground | Two or more colours. |
+| `before-label` | `DITHERED` | Label on the left side. |
+| `after-label` | `ORIGINAL` | Label on the right side. |
+| `labels` | `true` | Show the corner labels. |
+| `hint` | `true` | Nudge the divider once when it first appears. |
+| `value` | `50` | Divider position from the left, 0 to 100. |
+
+`changed(float)` fires with the new position while dragging or on key presses.
+
+### DitherScrollReveal
+
+A picture that starts as a few coarse dithered blocks, sharpens step by step and then dissolves cell by cell into the photo as it scrolls into view.
+
+```slint
+DitherScrollReveal {
+    source: @image-url("cover.png");
+    viewport-height: root.height;
+    width: 400px;
+    height: 225px;
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `source` | | The picture. |
+| `method` | `floyd-steinberg` | `bayer4`, `bayer8`, `blue-noise`, `floyd-steinberg`, `atkinson` or `sierra-lite`. |
+| `threshold` | `0.5` | Brightness cut-off, 0 to 1. |
+| `cell` | `2px` | Size of one dither cell. |
+| `palette` | background, foreground | Two or more colours. |
+| `end` | `photo` | `photo` ends on the picture itself, `dither` on the finest dither. |
+| `coarsest` | `24` | How many cells wide the first blocks are. |
+| `start` | `1` | Where the top edge is when the reveal starts, as a share of the scroll area from the top. |
+| `finish` | `0.3` | Where the top edge is when the reveal is done. |
+| `viewport-height` | `0` | Height of the scroll area. Set it and the reveal follows the scroll. |
+| `viewport-top` | `0` | Where the scroll area starts in the window. |
+| `progress` | `0` | The reveal by hand, 0 to 1. Used when `viewport-height` is `0`. |
+
+### DitherLogo
+
+A logo drawn in dithered ink. Edges land on whole cells, so the shapes stay sharp while the inside takes a dither texture, with an optional shimmer or scan line. Use a PNG with a transparent background.
+
+```slint
+DitherLogo {
+    source: @image-url("logo.png");
+    fill: DitherFill.dotted;
+    effect: DitherLogoEffect.shimmer;
+    width: 120px;
+    height: 44px;
+}
+```
+
+| Property | Default | |
+| --- | --- | --- |
+| `source` | | The logo. |
+| `ink` | `DitherTheme.ink` | Colour of the ink when `tone` is `mono`. |
+| `tone` | `mono` | `mono` is one ink, `original` keeps the file's own colours. |
+| `logo-source` | `alpha` | `alpha` reads the transparent background, `dark` reads a dark logo on a light background. |
+| `fill` | `gradient` | `gradient`, `dotted`, `hatched` or `solid`. |
+| `outline` | `true` | Keep a solid outline one cell wide. |
+| `floor` | `0.3` | Gradient fill: how much ink is left at the bottom, 0 to 1. |
+| `matrix` | `bayer4` | Threshold pattern of the gradient fill. |
+| `cell` | `1px` | Size of one cell. |
+| `effect` | `none` | `none`, `shimmer` or `scan`. |
+| `period` | `6s` | Time per sweep. |
+| `phase` | `0` | Where in the sweep this logo starts, 0 to 1. |
+
+### DitherLogoMarquee
+
+A row of dithered logos that loops without a seam, coasts to a stop on hover and has a pause button. `variant: DitherMarqueeVariant.wall` makes a still grid with hairline dividers instead.
+
+```slint
+DitherLogoMarquee {
+    logos: [
+        { source: @image-url("ring.png") },
+        { source: @image-url("peak.png") },
+    ];
+}
+```
+
+The logo properties above (`ink`, `tone`, `fill`, `outline`, `floor`, `matrix`, `cell`, `effect` and `period`) apply to every logo.
+
+| Property | Default | |
+| --- | --- | --- |
+| `logos` | | The logos, each `{ source: image }`. |
+| `variant` | `marquee` | `marquee` or `wall`. |
+| `logo-height` | `28px` | Height of each logo. |
+| `gap` | `64px` | Space between logos. |
+| `speed` | `32px` | Scroll speed in pixels per second. |
+| `direction` | `left` | `left` or `right`. |
+| `fade` | `soft` | `soft`, `dither` or `none`. |
+| `fade-width` | `96px` | Width of each end's fade. |
+| `backdrop` | `DitherTheme.background` | The colour the ends fade to. |
+| `pause-button` | `true` | A button on hover that stops the motion. |
 
 ### DitherDivider
 

@@ -1,0 +1,184 @@
+---
+interface Props {
+	value?: number;
+	method?: number;
+	labels?: boolean;
+}
+
+const { value = 50, method = 3, labels = true } = Astro.props;
+---
+
+<div class="compare" data-value={value} data-method={method} tabindex="0" role="slider" aria-label="Dithered and original divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow={value}>
+	<canvas class="original"></canvas>
+	<div class="before"><canvas class="dithered"></canvas></div>
+	{labels && <span class="label left">DITHERED</span>}
+	{labels && <span class="label right">ORIGINAL</span>}
+	<div class="line"></div>
+	<div class="grip"><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<style>
+	.compare {
+		position: relative;
+		width: 400px;
+		max-width: 100%;
+		height: 225px;
+		overflow: hidden;
+		cursor: col-resize;
+		user-select: none;
+		touch-action: pan-y;
+		background: #1b1a19;
+		outline-offset: 2px;
+	}
+	canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+	.dithered {
+		image-rendering: pixelated;
+		width: 100%;
+	}
+	.before {
+		position: absolute;
+		inset: 0;
+		clip-path: inset(0 calc(100% - var(--position)) 0 0);
+	}
+	.label {
+		position: absolute;
+		top: 12px;
+		padding: 4px 8px;
+		border-radius: 6px;
+		background: rgb(0 0 0 / 0.55);
+		color: white;
+		font: 10px var(--sl-font-system-mono);
+		letter-spacing: 0.12em;
+		transition: opacity 0.2s ease-out;
+	}
+	.left {
+		left: 12px;
+		opacity: var(--left-label);
+	}
+	.right {
+		right: 12px;
+		opacity: var(--right-label);
+	}
+	.line {
+		position: absolute;
+		inset-block: 0;
+		left: calc(var(--position) - 1px);
+		width: 2px;
+		background: rgb(255 255 255 / 0.9);
+	}
+	.grip {
+		position: absolute;
+		top: 50%;
+		left: var(--position);
+		width: 28px;
+		height: 44px;
+		transform: translate(-50%, -50%);
+		border-radius: 10px;
+		background: white;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 1px;
+	}
+	.grip i {
+		width: 5px;
+		height: 2px;
+		background: linear-gradient(90deg, #171717 2px, transparent 2px, transparent 3px, #171717 3px);
+	}
+	.compare:focus-visible .grip {
+		outline: 2px solid var(--sl-color-accent);
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { picture } from '../engine/dither_slint_engine_web.js';
+
+	const width = 400;
+	const height = 225;
+	const source = `${import.meta.env.BASE_URL}compare.jpg`;
+	const hintStops = [-14, 10, 0];
+	const hintStepMs = 520;
+
+	async function photo() {
+		const bitmap = await createImageBitmap(await (await fetch(source)).blob());
+		const canvas = new OffscreenCanvas(width, height);
+		const painter = canvas.getContext('2d')!;
+		painter.drawImage(bitmap, 0, 0, width, height);
+		return painter.getImageData(0, 0, width, height);
+	}
+
+	Promise.all([ready, photo()]).then(([, scene]) => {
+		const pixels = new Uint8Array(scene.data.buffer);
+		for (const compare of document.querySelectorAll<HTMLElement>('.compare')) {
+			const original = compare.querySelector<HTMLCanvasElement>('.original')!;
+			original.width = width;
+			original.height = height;
+			original.getContext('2d')!.putImageData(scene, 0, 0);
+
+			const columns = Math.round(compare.clientWidth / 2);
+			const rows = Math.round(compare.clientHeight / 2);
+			const dithered = compare.querySelector<HTMLCanvasElement>('.dithered')!;
+			const scale = Math.min(columns / width, rows / height);
+			const picked = [Math.round(width * scale), Math.round(height * scale)];
+			const palette = new Uint8Array(['#1b1a19', '#ebe5d9'].flatMap((hex) => rgba(hex)));
+			const bytes = picture(pixels, width, height, columns, rows, Number(compare.dataset.method), 0.5, palette);
+			dithered.width = picked[0];
+			dithered.height = picked[1];
+			dithered.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), picked[0], picked[1]), 0, 0);
+
+			let value = Number(compare.dataset.value);
+			const show = (next: number) => {
+				value = Math.round(Math.min(100, Math.max(0, next)) * 10) / 10;
+				compare.style.setProperty('--position', `${value}%`);
+				compare.style.setProperty('--left-label', value < 18 ? '0' : '1');
+				compare.style.setProperty('--right-label', value > 82 ? '0' : '1');
+				compare.setAttribute('aria-valuenow', String(Math.round(value)));
+			};
+			const at = (event: PointerEvent) => {
+				const box = compare.getBoundingClientRect();
+				show(((event.clientX - box.left) / box.width) * 100);
+			};
+			show(value);
+
+			const timers: number[] = [];
+			const stopHint = () => timers.forEach((timer) => clearTimeout(timer));
+			const origin = value;
+			hintStops.forEach((offset, index) => {
+				timers.push(window.setTimeout(() => show(origin + offset), (index + 1) * hintStepMs));
+			});
+
+			compare.addEventListener('pointerdown', (event) => {
+				stopHint();
+				compare.setPointerCapture(event.pointerId);
+				at(event);
+			});
+			compare.addEventListener('pointermove', (event) => {
+				if (compare.hasPointerCapture(event.pointerId)) at(event);
+			});
+			compare.addEventListener('keydown', (event) => {
+				const step = event.shiftKey ? 10 : 1;
+				const next: Record<string, number> = {
+					ArrowLeft: value - step,
+					ArrowDown: value - step,
+					ArrowRight: value + step,
+					ArrowUp: value + step,
+					PageDown: value - 10,
+					PageUp: value + 10,
+					Home: 0,
+					End: 100,
+				};
+				if (!(event.key in next)) return;
+				event.preventDefault();
+				stopHint();
+				show(next[event.key]);
+			});
+		}
+	});
+</script>

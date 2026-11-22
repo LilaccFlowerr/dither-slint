@@ -1,0 +1,26 @@
+import { DitherImageCompare, DitherMethod, DitherTheme } from "../../ui/lib.slint";
+
+export component ImageComparePage inherits VerticalLayout {
+    padding: 24px;
+    spacing: 16px;
+    alignment: start;
+
+    Text { text: "floyd-steinberg"; color: DitherTheme.foreground; }
+    DitherImageCompare {
+        source: @image-url("compare.png");
+        width: 400px;
+        height: 225px;
+        changed(value) => { debug(value); }
+    }
+
+    Text { text: "bayer 4, no labels"; color: DitherTheme.foreground; }
+    DitherImageCompare {
+        source: @image-url("compare.png");
+        method: DitherMethod.bayer4;
+        labels: false;
+        hint: false;
+        value: 30;
+        width: 400px;
+        height: 225px;
+    }
+}

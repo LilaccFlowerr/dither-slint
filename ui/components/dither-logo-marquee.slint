@@ -1,0 +1,183 @@
+import { DitherEdge, DitherEngine, DitherFill, DitherLogoEffect, DitherLogoItem, DitherLogoTone, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+import { DitherLogo } from "dither-logo.slint";
+
+export enum DitherMarqueeVariant { marquee, wall }
+export enum DitherMarqueeDirection { left, right }
+export enum DitherMarqueeFade { soft, dither, none }
+
+export component DitherLogoMarquee inherits Rectangle {
+    in property <[DitherLogoItem]> logos;
+    in property <DitherMarqueeVariant> variant: DitherMarqueeVariant.marquee;
+    in property <length> logo-height: 28px;
+    in property <length> gap: 64px;
+    in property <length> speed: 32px;
+    in property <DitherMarqueeDirection> direction: DitherMarqueeDirection.left;
+    in property <DitherMarqueeFade> fade: DitherMarqueeFade.soft;
+    in property <length> fade-width: 96px;
+    in property <color> backdrop: DitherTheme.background;
+    in property <bool> pause-button: true;
+    in property <bool> animate: DitherTheme.animated;
+    in property <color> ink: DitherTheme.ink;
+    in property <DitherLogoTone> tone: DitherLogoTone.mono;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <bool> outline: true;
+    in property <float> floor: 0.3;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 1px;
+    in property <DitherLogoEffect> effect: DitherLogoEffect.none;
+    in property <duration> period: 6s;
+
+    property <float> frame-seconds: 0.016;
+    property <float> ease-ms: 450;
+    property <int> most-copies: 8;
+    property <float> fade-cell: 3;
+    property <length> wall-padding: 36px;
+    property <length> wide-wall: 672px;
+
+    property <length> group-width: DitherEngine.logo-row(root.logos, root.logo-height / 1px, root.gap / 1px) * 1px;
+    property <int> copies: root.group-width > 0 ? Math.min(root.most-copies, Math.max(2, Math.ceil(root.width / root.group-width) + 1)) : 2;
+    property <bool> moving: root.variant == DitherMarqueeVariant.marquee && root.animate;
+    property <bool> paused;
+    property <bool> held: area.has-hover || root.paused;
+    property <float> rate: root.held ? 0 : 1;
+    property <float> travelled;
+    property <int> wall-columns: root.width >= root.wide-wall ? 4 : 2;
+    property <length> wall-cell-width: root.width / root.wall-columns;
+    property <length> wall-cell-height: root.logo-height + 2 * root.wall-padding;
+
+    animate rate { duration: root.ease-ms * 1ms; easing: ease-out; }
+
+    height: root.variant == DitherMarqueeVariant.wall
+        ? Math.ceil(root.logos.length / root.wall-columns) * root.wall-cell-height
+        : root.logo-height + 16px;
+    clip: true;
+
+    Timer {
+        interval: 16ms;
+        running: root.moving && root.group-width > 0;
+        triggered => {
+            root.travelled = Math.mod(root.travelled + root.speed / 1px * root.rate * root.frame-seconds, root.group-width / 1px);
+        }
+    }
+
+    if root.variant == DitherMarqueeVariant.marquee: Rectangle {
+        clip: true;
+
+        Rectangle {
+            x: !root.moving ? (root.width - root.group-width + root.gap) / 2
+                : root.direction == DitherMarqueeDirection.left ? -root.travelled * 1px
+                : root.travelled * 1px - root.group-width;
+            y: 8px;
+            width: root.group-width * (root.moving ? root.copies : 1);
+            height: root.logo-height;
+
+            for copy in root.moving ? root.copies : 1: HorizontalLayout {
+                x: copy * root.group-width;
+                width: root.group-width;
+                spacing: root.gap;
+                padding-right: root.gap;
+
+                for logo[index] in root.logos: DitherLogo {
+                    source: logo.source;
+                    width: DitherEngine.logo-width(logo.source, root.logo-height / 1px) * 1px;
+                    height: root.logo-height;
+                    ink: root.ink;
+                    tone: root.tone;
+                    fill: root.fill;
+                    outline: root.outline;
+                    floor: root.floor;
+                    matrix: root.matrix;
+                    cell: root.cell;
+                    effect: root.effect;
+                    period: root.period;
+                    phase: index / Math.max(1, root.logos.length);
+                    animate: root.animate;
+                }
+            }
+        }
+
+        if root.moving && root.fade == DitherMarqueeFade.soft: Rectangle {
+            x: 0;
+            width: root.fade-width;
+            background: @linear-gradient(90deg, root.backdrop, transparent);
+        }
+
+        if root.moving && root.fade == DitherMarqueeFade.soft: Rectangle {
+            x: root.width - root.fade-width;
+            width: root.fade-width;
+            background: @linear-gradient(90deg, transparent, root.backdrop);
+        }
+
+        if root.moving && root.fade == DitherMarqueeFade.dither: Image {
+            x: 0;
+            width: root.fade-width;
+            height: 100%;
+            image-rendering: pixelated;
+            source: DitherEngine.fill(Math.ceil(self.width / 3px), Math.ceil(self.height / 3px), DitherFill.gradient, DitherEdge.left, Math.ceil(self.width / 3px), 1, 0, DitherMatrix.bayer4, root.backdrop, false);
+        }
+
+        if root.moving && root.fade == DitherMarqueeFade.dither: Image {
+            x: root.width - root.fade-width;
+            width: root.fade-width;
+            height: 100%;
+            image-rendering: pixelated;
+            source: DitherEngine.fill(Math.ceil(self.width / 3px), Math.ceil(self.height / 3px), DitherFill.gradient, DitherEdge.right, Math.ceil(self.width / 3px), 1, 0, DitherMatrix.bayer4, root.backdrop, false);
+        }
+    }
+
+    if root.variant == DitherMarqueeVariant.wall: Rectangle {
+        for logo[index] in root.logos: Rectangle {
+            x: Math.mod(index, root.wall-columns) * root.wall-cell-width;
+            y: Math.floor(index / root.wall-columns) * root.wall-cell-height;
+            width: root.wall-cell-width;
+            height: root.wall-cell-height;
+            border-width: 0.5px;
+            border-color: DitherTheme.foreground.with-alpha(0.2);
+
+            DitherLogo {
+                source: logo.source;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                width: DitherEngine.logo-width(logo.source, root.logo-height / 1px) * 1px;
+                height: root.logo-height;
+                ink: root.ink;
+                tone: root.tone;
+                fill: root.fill;
+                outline: root.outline;
+                floor: root.floor;
+                matrix: root.matrix;
+                cell: root.cell;
+                effect: root.effect;
+                period: root.period;
+                phase: index / Math.max(1, root.logos.length);
+                animate: root.animate;
+            }
+        }
+    }
+
+    area := TouchArea { }
+
+    if root.moving && root.pause-button && (area.has-hover || root.paused): Rectangle {
+        x: root.width - self.width - 4px;
+        y: (root.height - self.height) / 2;
+        width: 28px;
+        height: 28px;
+        border-radius: 14px;
+        background: root.backdrop.with-alpha(0.8);
+        border-width: 1px;
+        border-color: DitherTheme.foreground.with-alpha(0.25);
+
+        Text {
+            text: root.paused ? "▶" : "❚❚";
+            color: DitherTheme.foreground;
+            font-size: 10px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        TouchArea {
+            clicked => { root.paused = !root.paused; }
+        }
+    }
+}

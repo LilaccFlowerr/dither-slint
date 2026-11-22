@@ -16,6 +16,5 @@ if ! command -v wasm-bindgen >/dev/null 2>&1; then
 fi
 
 engine-web/build.sh
-web/build.sh
 cd docs
 npm run build

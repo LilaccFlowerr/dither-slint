@@ -1,0 +1,41 @@
+import { DitherEngine, DitherFill, DitherLogoEffect, DitherLogoSource, DitherLogoTone, DitherMatrix } from "../engine.slint";
+import { DitherTheme } from "../theme.slint";
+
+export component DitherLogo inherits Rectangle {
+    in property <image> source;
+    in property <color> ink: DitherTheme.ink;
+    in property <DitherLogoTone> tone: DitherLogoTone.mono;
+    in property <DitherLogoSource> logo-source: DitherLogoSource.alpha;
+    in property <DitherFill> fill: DitherFill.gradient;
+    in property <bool> outline: true;
+    in property <float> floor: 0.3;
+    in property <DitherMatrix> matrix: DitherMatrix.bayer4;
+    in property <length> cell: 1px;
+    in property <DitherLogoEffect> effect: DitherLogoEffect.none;
+    in property <duration> period: 6s;
+    in property <float> phase: 0;
+    in property <bool> animate: DitherTheme.animated;
+
+    property <length> step: max(1phx, Math.round(root.cell / 1phx) * 1phx);
+    property <int> columns: Math.ceil(root.width / root.step);
+    property <int> rows: Math.ceil(root.height / root.step);
+    property <float> sweep: 0;
+
+    clip: true;
+
+    Timer {
+        interval: 33ms;
+        running: root.animate && root.effect != DitherLogoEffect.none;
+        triggered => {
+            root.sweep = Math.mod(animation-tick() / root.period + root.phase, 1);
+        }
+    }
+
+    Image {
+        width: 100%;
+        height: 100%;
+        image-fit: ImageFit.contain;
+        image-rendering: pixelated;
+        source: DitherEngine.logo(root.source, root.columns, root.rows, root.logo-source, root.tone, root.effect, root.fill, root.outline, root.floor, root.matrix, root.ink, root.sweep);
+    }
+}

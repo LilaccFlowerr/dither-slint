@@ -23,6 +23,9 @@ import { SparklinePage } from "sparkline-page.slint";
 import { UptimePage } from "uptime-page.slint";
 import { GaugePage } from "gauge-page.slint";
 import { NumberPage } from "number-page.slint";
+import { ImageComparePage } from "image-compare-page.slint";
+import { ScrollRevealPage } from "scroll-reveal-page.slint";
+import { LogoPage } from "logo-page.slint";
 
 export component Gallery inherits Window {
     title: "dither-slint";
@@ -32,7 +35,7 @@ export component Gallery inherits Window {
 
     in property <image> sample;
 
-    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch", "Slider", "Input", "Dropdown", "Avatar", "Loader", "Skeleton", "Empty state", "Progress", "Stat card", "Sparkline", "Uptime bar", "Gauge", "Number"];
+    property <[string]> pages: ["Gradient", "Button", "Badge", "Card", "Tabs", "Motion", "Image", "Backgrounds", "Divider", "Switch", "Slider", "Input", "Dropdown", "Avatar", "Loader", "Skeleton", "Empty state", "Progress", "Stat card", "Sparkline", "Uptime bar", "Gauge", "Number", "Image compare", "Scroll reveal", "Logo"];
     property <int> page: 0;
 
     HorizontalLayout {
@@ -84,6 +87,9 @@ export component Gallery inherits Window {
             if root.page == 20: UptimePage { }
             if root.page == 21: GaugePage { }
             if root.page == 22: NumberPage { }
+            if root.page == 23: ImageComparePage { }
+            if root.page == 24: ScrollRevealPage { window-height: root.height; }
+            if root.page == 25: LogoPage { }
         }
     }
 }
