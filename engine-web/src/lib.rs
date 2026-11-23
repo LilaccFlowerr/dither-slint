@@ -12,6 +12,13 @@ use dither_slint::world::{Marker, Place, Route};
 use dither_slint::slint::{Color, Image, Rgba8Pixel, SharedPixelBuffer};
 use wasm_bindgen::prelude::*;
 
+mod moonrise;
+
+#[wasm_bindgen(start)]
+fn start() {
+    moonrise::register();
+}
+
 fn colors(rgba: &[u8]) -> Vec<Color> {
     rgba.chunks_exact(4).map(|c| Color::from_argb_u8(c[3], c[0], c[1], c[2])).collect()
 }

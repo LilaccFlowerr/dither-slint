@@ -1,0 +1,69 @@
+---
+const strips = [
+	{ label: 'Two colours', colors: ['#1b1a19', '#e8e4dc'], levels: 0 },
+	{ label: 'Three colours', colors: ['#0b1020', '#5471f5', '#e8e4dc'], levels: 0 },
+	{ label: 'Four colours', colors: ['#1b1a19', '#5471f5', '#32b364', '#e8e4dc'], levels: 0 },
+	{ label: 'Two colours, levels: 4', colors: ['#1b1a19', '#e8e4dc'], levels: 4 },
+];
+---
+
+<div class="compare">
+	{strips.map((strip) => (
+		<figure data-colors={strip.colors.join(' ')} data-levels={strip.levels}>
+			<canvas></canvas>
+			<figcaption>{strip.label}</figcaption>
+		</figure>
+	))}
+</div>
+
+<style>
+	.compare {
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+		margin: 1.5rem 0;
+	}
+	figure {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+	canvas {
+		display: block;
+		width: 100%;
+		height: 3.25rem;
+		image-rendering: pixelated;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 6px;
+	}
+	figcaption {
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+</style>
+
+<script>
+	import init, { gradient } from '../engine/dither_slint_engine_web.js';
+
+	const CELL = 4;
+	const rgba = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).concat(255);
+
+	init().then(() => {
+		for (const figure of document.querySelectorAll<HTMLElement>('.compare figure')) {
+			const canvas = figure.querySelector('canvas')!;
+			const palette = new Uint8Array(figure.dataset.colors!.split(' ').flatMap(rgba));
+			const levels = Number(figure.dataset.levels);
+			const draw = () => {
+				const columns = Math.max(1, Math.round(canvas.clientWidth / CELL));
+				const rows = Math.max(1, Math.round(canvas.clientHeight / CELL));
+				const bytes = gradient(columns, rows, 90, 0, 1, 1, palette, levels);
+				canvas.width = columns;
+				canvas.height = rows;
+				canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+			};
+			new ResizeObserver(draw).observe(canvas);
+			draw();
+		}
+	});
+</script>

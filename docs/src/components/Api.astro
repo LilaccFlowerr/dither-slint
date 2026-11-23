@@ -1,5 +1,6 @@
 ---
-import { componentsOf, descriptions, shared, typeNames, withInherited } from '../scripts/slint-api';
+import { Code } from '@astrojs/starlight/components';
+import { componentsOf, descriptions, enumsUsedBy, exportedNames, shared, typeNames, withInherited } from '../scripts/slint-api';
 
 interface Props {
 	file: string;
@@ -30,6 +31,13 @@ const components = componentsOf(file)
 		functions: visible(component.functions),
 	}));
 
+const exported = exportedNames();
+const importLine = (component: { name: string; properties: { type: string; name: string }[]; callbacks: any[]; functions: any[] }) => {
+	const names = [component.name, ...enumsUsedBy(component as any).sort()];
+	for (const name of names) if (!exported.has(name) && import.meta.env.DEV) console.warn(`[api] ${file}: ${name} is not exported from lib.slint`);
+	return `import { ${names.join(', ')} } from "@dither/lib.slint";`;
+};
+
 const missing: string[] = [];
 const describe = (component: string, name: string, base = '') => {
 	const text = described[component]?.[name] ?? inheritedText(base, name) ?? common[name];
@@ -44,6 +52,7 @@ if (missing.length && import.meta.env.DEV) console.warn(`[api] ${file}: no descr
 {components.map((component) => (
 	<section class="api">
 		{components.length > 1 && <h3>{component.name}</h3>}
+		<Code code={importLine(component)} lang="slint" title="Import" />
 		{component.properties.length > 0 && (
 			<>
 			<p class="note">Set these on the component. A dash means there is no default, and the types link to the <a href={`${base}/reference/types/`}>type reference</a>.</p>

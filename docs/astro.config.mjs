@@ -19,7 +19,11 @@ export default defineConfig({
 					label: 'Get started',
 					items: [
 						{ label: 'Introduction', slug: 'guides/introduction' },
-						{ label: 'Installation', slug: 'guides/installation' },
+						{ label: 'Quick start', slug: 'guides/installation' },
+						{ label: 'Concepts', slug: 'guides/concepts' },
+						{ label: 'Importing', slug: 'guides/importing' },
+						{ label: 'Theming', slug: 'guides/theming' },
+						{ label: 'Troubleshooting', slug: 'guides/troubleshooting' },
 						{ label: 'Credits', slug: 'guides/credits' },
 					],
 				},
@@ -153,11 +157,17 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Engine',
+					label: 'Dithering',
 					items: [
 						{ label: 'Matrices', slug: 'engine/matrices' },
 						{ label: 'Palettes', slug: 'engine/palettes' },
+					],
+				},
+				{
+					label: 'Advanced',
+					items: [
 						{ label: 'Write your own dither', slug: 'engine/write-your-own' },
+						{ label: 'Outside Slint', slug: 'engine/without-slint' },
 					],
 				},
 				{

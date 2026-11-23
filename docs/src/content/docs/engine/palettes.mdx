@@ -1,0 +1,65 @@
+---
+title: Palettes
+description: "The colours a dither draws with, and how it moves between them."
+---
+
+import PaletteCompare from '../../../components/PaletteCompare.astro';
+
+A dither draws with a small set of colours. By default that is two: the **paper** behind and the **ink** on top. A **palette** is that set, written as a list of colours, and it can be longer than two.
+
+<PaletteCompare />
+
+Every strip is the same ramp from the first colour to the last. With two colours it is the classic look, dots on a flat page. With more colours the dots move through the colours one after the other.
+
+## Which components take a palette
+
+Components that draw a whole picture have a `palette` property: `DitherGradient`, the photo components (`DitherImage`, `DitherImageCompare`, `DitherScrollReveal`), `DitherShader` and all the animated [backgrounds](../../backgrounds/overview/). The default is `[DitherTheme.background, DitherTheme.foreground]`.
+
+Components that draw one thing, such as a button, a chart or a badge, take a single `color` instead: the paper is the background and the dots are in that colour.
+
+## Gradients and backgrounds
+
+Write the colours in order, from paper to ink:
+
+```slint
+DitherGradient {
+    palette: [DitherTheme.background, DitherPalette.blue, DitherPalette.green, DitherTheme.foreground];
+}
+```
+
+The tone of the gradient is spread evenly over the list. Tone 0 is the first colour and tone 1 is the last. Between two neighbours the matrix decides, cell by cell, which of the two colours the cell gets, so halfway between blue and green you see an even mix of blue dots and green dots. Colours are never blended into new ones: every dot is exactly one of the colours in your list.
+
+Put the colours in the order of how much they stand out against the paper. The first colour is the background, and the last one is the strongest. Swapping two colours in the middle changes the story the gradient tells more than changing their hue does.
+
+## Photos
+
+A photo works the other way around. Each pixel takes the palette colour that is closest to its own colour, and the error is passed on to the neighbours (see [Matrices](../matrices/)). So the order of the colours does not matter, and the colours should be ones that suit the photo:
+
+```slint
+DitherImage {
+    source: @image-url("photo.png");
+    palette: [#1b1a19, #e8e4dc];
+}
+```
+
+Two colours gives the look of a printed newspaper. Add a third colour near the mid-tones to keep more detail.
+
+## Levels
+
+`levels` snaps the tone to a fixed number of steps before the dots are chosen. The default is every tone the matrix can draw, which is 17 for `bayer4`. Fewer levels give visible bands, a posterised look, as in the last strip above:
+
+```slint
+DitherGradient { levels: 4; }
+```
+
+It is not the same as `level` on a chart, which says how dense a fill is. [Concepts](../../guides/concepts/) tells them apart.
+
+## Cells and pixel scale
+
+One dither cell is a square of `cell` pixels. Small cells read as texture and large ones as pixel art. To keep the grid crisp the cell is rounded to whole device pixels, so a 3px cell is exactly 6 device pixels on a 2x screen.
+
+| Cell | |
+| --- | --- |
+| 2 to 3px | Fine grain. A good default behind text. |
+| 4 to 6px | Clearly a dither from across the room. |
+| 8px and up | Pixel art. Pair it with fewer `levels`. |

@@ -1,0 +1,70 @@
+---
+title: Concepts
+description: "What ink, cell, matrix, level, fill and bloom mean, and which property changes what."
+---
+
+import GradientDemo from '../../../components/GradientDemo.astro';
+
+Dithering draws a tone with dots of one colour. Where the tone is dark the dots are close together, where it is light they are far apart, and from a distance your eye blends them back into a smooth gradient. Every component here is drawn that way, so a handful of words come back on every page.
+
+<GradientDemo />
+
+Move the sliders above and watch what each one changes. The rest of this page says what they mean in a component.
+
+## Ink and paper
+
+A dither has two colours. The **paper** is the flat colour behind, and the **ink** is the colour of the dots on top of it. By default the paper is `DitherTheme.background` and the ink is `DitherTheme.ink`. A component can take its own colour with `color`, and one colour is enough: the paper is the background and the dots are drawn in the colour you gave.
+
+Components that show data, such as charts, take a colour per item. The named colours are in `DitherPalette`, for example `DitherPalette.green`.
+
+## Cell
+
+A **cell** is one dot. `cell` is its size in pixels, so `cell: 3px` draws dots of 3 by 3. Small cells look like fine grain and large ones look like pixel art. Large cells are also cheaper to draw. The size is rounded to whole device pixels, which keeps the grid crisp on every screen.
+
+## Matrix
+
+The **matrix** is the pattern that decides which cells become ink. It is a small grid of thresholds that repeats over the surface. A cell turns to ink when the tone is above its threshold.
+
+| `matrix` | Looks like |
+| --- | --- |
+| `bayer2` | A coarse crosshatch with few tones. |
+| `bayer4` | The default. A regular, printed look. |
+| `bayer8` | The same, with more tones. |
+| `blue-noise` | No visible grid, like film grain. |
+
+The same tone always gives the same dots, so animations stay calm instead of flickering. [Matrices](../../engine/matrices/) goes deeper.
+
+## Levels
+
+`levels` rounds the tone to a fixed number of steps before the dots are chosen. With few levels you see bands, a posterised look. Leave it at its default for a smooth result. It lives on the components that draw whole gradients and images, and it is explained under [Palettes](../../engine/palettes/).
+
+## Fill
+
+`fill` is the texture of a coloured area, such as a bar, a slice or a fill under a line.
+
+| `fill` | Looks like |
+| --- | --- |
+| `gradient` | Dots that step from thin to dense. How it runs depends on the component, and its page says so. |
+| `dotted` | An even grid of dots. |
+| `hatched` | Diagonal lines. |
+| `solid` | A flat colour, without dots. |
+
+## Level
+
+`level` is how many of the cells are ink, from 0 (empty) to 1 (solid). Components with a gradient fill use it for the densest part of the gradient. A lower `level` gives a lighter, airier result. It is a different word from `levels`: `level` is how dense, `levels` is how many steps.
+
+## Bloom
+
+`bloom` adds a soft glow in the ink colour behind the dots. It comes in three strengths, `off`, `low` and `high`, and it is used to make something stand out, such as an outage in an uptime bar.
+
+## Palette
+
+A **palette** is a list of more than two colours that a dither moves through. Instead of ink on paper you get a gradient from one colour to the next, dithered between each pair. See [Palettes](../../engine/palettes/).
+
+## Motion
+
+`animated` turns the motion of a component on or off, and it follows `DitherTheme.animated` by default, so one switch stills the whole app. The hover, press and idle effects are described under [Motion](../../motion/overview/). Both are set once for the whole app in the [theme](../../reference/theme/).
+
+## Where the dots come from
+
+The dots are drawn by a small engine written in Rust, not by Slint itself. That is why an app must connect the engine once with `dither_slint::install!`. Without it a component still lays out, but it is drawn flat, with no dots. [Quick start](../installation/) shows where the call goes.

@@ -1,0 +1,242 @@
+---
+title: Write your own dither
+description: "A tutorial: build an animated night sky over water, one layer at a time."
+---
+
+import Api from '../../../components/Api.astro';
+import FieldPreview from '../../../components/FieldPreview.astro';
+
+The animated [backgrounds](../../backgrounds/overview/) are all made the same way, and you can make your own. In this tutorial you build a moon over dark water, one layer at a time, and end with an animated dither you can put behind anything.
+
+<FieldPreview field="moonrise-5" palette={['#0b1020', '#33407a', '#e6e1d4']} params={[0.7, 0.4]} controls={[{ label: 'Moon', index: 0, min: 0.1, max: 0.9, step: 0.01 }, { label: 'Horizon', index: 1, min: 0.2, max: 0.7, step: 0.01 }]} height={300} />
+
+You need a Slint app that already runs, as in the [quick start](../../guides/installation/).
+
+## How it works
+
+You write one small Rust function, a **field**. The engine calls it for every cell of the picture and the function answers one question: how much ink is here? The answer is a number called the **tone**, from 0 (paper) to 1 (ink). The engine turns the tones into dots with the [matrix](../matrices/), colours them from your palette, and calls the function again for every frame. You never draw a dot yourself.
+
+The function gets a `Cell`. `cell.uv` is where the cell is: `uv.x` runs from 0 on the left to 1 on the right, and `uv.y` from 0 at the bottom to 1 at the top. `cell.time` is the number of seconds since the start.
+
+## Step 1: the sky
+
+Start with a glow along the horizon. Put the `use` line at the top of your `main.rs`, and the `field::register` call in `main`, next to `install!`:
+
+```rust
+use dither_slint::field::{self, Cell};
+
+field::register("moonrise", |cell: &Cell| {
+    let horizon = 0.4;
+    (1.0 - (cell.uv.y - horizon).abs() * 2.5).max(0.0) * 0.5
+});
+```
+
+`register` gives the field a name. `cell.uv.y - horizon` is how far the cell is from the horizon, and `.abs()` makes that distance the same above and below. Taking it from 1 gives a number that is 1 on the line and falls off on both sides, `.max(0.0)` stops it going below 0, and `* 0.5` keeps it a soft glow, half ink.
+
+Now show it in your `.slint` file with a `DitherShader`. The palette is the colours from paper to ink: night, dusk and moonlight.
+
+```slint
+import { DitherShader } from "@dither/lib.slint";
+
+DitherShader {
+    field: "moonrise";
+    height: 300px;
+    palette: [#0b1020, #33407a, #e6e1d4];
+}
+```
+
+A shader is as wide and tall as the box around it, which inside a layout can be all of it, so give it a `height`. The name is plain text, so a typo draws nothing and gives no error.
+
+<FieldPreview field="moonrise-1" palette={['#0b1020', '#33407a', '#e6e1d4']} />
+
+## Step 2: the moon
+
+A moon is a round spot, so you need the distance to a point. `uv` stretches with the box, so a circle in `uv` becomes an oval on a wide screen. Multiply x by the aspect ratio, which you get from `cell.resolution`, and a distance is the same in every direction. Replace the field with:
+
+```rust
+use dither_slint::field::{self, Cell};
+use dither_slint::glam::Vec2;
+
+field::register("moonrise", |cell: &Cell| {
+    let aspect = cell.resolution.x / cell.resolution.y;
+    let (moon_x, horizon) = (0.7, 0.4);
+    let moon = Vec2::new(moon_x * aspect, horizon + 0.3);
+    let at = Vec2::new(cell.uv.x * aspect, cell.uv.y);
+
+    let glow = (1.0 - (cell.uv.y - horizon).abs() * 2.5).max(0.0) * 0.5;
+    let distance = at.distance(moon);
+    let disc = ((0.07 - distance) * 60.0).clamp(0.0, 1.0);
+    let halo = (1.0 - distance * 3.0).max(0.0) * 0.3;
+    glow.max(halo).max(disc)
+});
+```
+
+The moon sits `moon_x` of the way across and 0.3 above the horizon. The disc is 1 inside a radius of 0.07 and drops to 0 over a short distance, which gives it a crisp edge. The halo is a faint glow that fades out with distance. `max` combines the three: where several layers overlap, the brightest one wins.
+
+<FieldPreview field="moonrise-2" palette={['#0b1020', '#33407a', '#e6e1d4']} />
+
+## Step 3: the clouds
+
+Noise makes soft, irregular shapes. `fbm` from the `noise` module gives a number from 0 to 1 for every point. Look it up at a point that moves with time and the clouds drift:
+
+```rust
+use dither_slint::field::{self, Cell};
+use dither_slint::glam::Vec2;
+use dither_slint::noise::fbm;
+
+field::register("moonrise", |cell: &Cell| {
+    let aspect = cell.resolution.x / cell.resolution.y;
+    let (moon_x, horizon) = (0.7, 0.4);
+    let moon = Vec2::new(moon_x * aspect, horizon + 0.3);
+    let at = Vec2::new(cell.uv.x * aspect, cell.uv.y);
+
+    let glow = (1.0 - (cell.uv.y - horizon).abs() * 2.5).max(0.0) * 0.5;
+    let distance = at.distance(moon);
+    let disc = ((0.07 - distance) * 60.0).clamp(0.0, 1.0);
+    let halo = (1.0 - distance * 3.0).max(0.0) * 0.3;
+    let sky = glow.max(halo).max(disc);
+
+    let drift = Vec2::new(cell.time * 0.03, 0.0);
+    let clouds = (fbm(at * 2.5 + drift) - 0.5).max(0.0) * (1.0 - cell.uv.y);
+    (sky + clouds * 0.6).min(1.0)
+});
+```
+
+`at * 2.5` sets the size of the clouds, and `drift` slides the lookup along x as time passes. Subtracting 0.5 keeps only the brighter half of the noise, so there are gaps. Multiplying by `1.0 - cell.uv.y` fades them out towards the top. The clouds are added at 0.6, and `min(1.0)` keeps the sum from passing full ink.
+
+<FieldPreview field="moonrise-3" palette={['#0b1020', '#33407a', '#e6e1d4']} />
+
+## Step 4: the water
+
+Below the horizon the field draws something else, so the function returns early for the sky and the rest is the water:
+
+```rust
+use dither_slint::field::{self, Cell};
+use dither_slint::glam::Vec2;
+use dither_slint::noise::fbm;
+
+field::register("moonrise", |cell: &Cell| {
+    let aspect = cell.resolution.x / cell.resolution.y;
+    let (moon_x, horizon) = (0.7, 0.4);
+    let moon = Vec2::new(moon_x * aspect, horizon + 0.3);
+    let at = Vec2::new(cell.uv.x * aspect, cell.uv.y);
+
+    let glow = (1.0 - (cell.uv.y - horizon).abs() * 2.5).max(0.0) * 0.5;
+    let distance = at.distance(moon);
+    let disc = ((0.07 - distance) * 60.0).clamp(0.0, 1.0);
+    let halo = (1.0 - distance * 3.0).max(0.0) * 0.3;
+    let sky = glow.max(halo).max(disc);
+
+    let drift = Vec2::new(cell.time * 0.03, 0.0);
+    let clouds = (fbm(at * 2.5 + drift) - 0.5).max(0.0) * (1.0 - cell.uv.y);
+    if cell.uv.y >= horizon {
+        return (sky + clouds * 0.6).min(1.0);
+    }
+
+    let depth = (horizon - cell.uv.y) / horizon;
+    let column = (1.0 - (at.x - moon.x).abs() * 6.0).max(0.0);
+    let ripple = 0.5 + 0.5 * (cell.uv.y * 120.0 + fbm(at * 6.0) * 6.0 - cell.time * 1.5).sin();
+    ripple * (0.18 + column * 0.9) * (1.0 - depth)
+});
+```
+
+`depth` is 0 at the horizon and 1 at the bottom. `column` is a strip straight below the moon, 1 in the middle and 0 a sixth of the width away. `ripple` is stripes along the water, bent by noise so they are not straight, and moving with time. The tone is the ripples, faint everywhere and bright in the moon's column, fading with depth.
+
+<FieldPreview field="moonrise-4" palette={['#0b1020', '#33407a', '#e6e1d4']} />
+
+## Step 5: make it yours
+
+The moon position and the horizon are fixed in the code. Pass them from Slint instead, with `params`, and read them as `cell.params`. One line changes, the one that sets `moon_x` and `horizon`:
+
+```rust
+use dither_slint::field::{self, Cell};
+use dither_slint::glam::Vec2;
+use dither_slint::noise::fbm;
+
+field::register("moonrise", |cell: &Cell| {
+    let aspect = cell.resolution.x / cell.resolution.y;
+    let (moon_x, horizon) = (cell.params[0], cell.params[1]);
+    let moon = Vec2::new(moon_x * aspect, horizon + 0.3);
+    let at = Vec2::new(cell.uv.x * aspect, cell.uv.y);
+
+    let glow = (1.0 - (cell.uv.y - horizon).abs() * 2.5).max(0.0) * 0.5;
+    let distance = at.distance(moon);
+    let disc = ((0.07 - distance) * 60.0).clamp(0.0, 1.0);
+    let halo = (1.0 - distance * 3.0).max(0.0) * 0.3;
+    let sky = glow.max(halo).max(disc);
+
+    let drift = Vec2::new(cell.time * 0.03, 0.0);
+    let clouds = (fbm(at * 2.5 + drift) - 0.5).max(0.0) * (1.0 - cell.uv.y);
+    if cell.uv.y >= horizon {
+        return (sky + clouds * 0.6).min(1.0);
+    }
+
+    let depth = (horizon - cell.uv.y) / horizon;
+    let column = (1.0 - (at.x - moon.x).abs() * 6.0).max(0.0);
+    let ripple = 0.5 + 0.5 * (cell.uv.y * 120.0 + fbm(at * 6.0) * 6.0 - cell.time * 1.5).sin();
+    ripple * (0.18 + column * 0.9) * (1.0 - depth)
+});
+```
+
+```slint
+DitherShader {
+    field: "moonrise";
+    height: 300px;
+    params: [0.7, 0.4];
+    palette: [#0b1020, #33407a, #e6e1d4];
+}
+```
+
+Now one field can look different every place you use it. Drag the sliders in the picture at the top of this page to see what the two numbers do. `matrix`, `levels`, `cell` and `speed` work on a shader as on any other component, and with `animated: false` the picture stands still at `still-time`.
+
+## What a cell gives you
+
+| Field | |
+| --- | --- |
+| `uv` | Where the cell is, from 0 to 1 on both axes, with y pointing up. |
+| `resolution` | The size of the picture in cells. |
+| `time` | Seconds, scaled by `speed`. |
+| `params` | The numbers you pass from Slint. |
+| `palette` | The palette, with `entry(i)` for one colour and `ramp(x)` for a blend. |
+
+## Helpers
+
+The `dither_slint::noise` module has what the backgrounds are built from:
+
+| Function | Gives |
+| --- | --- |
+| `fbm(p)` | Soft cloudy noise from 0 to 1. |
+| `snoise(p)` | Simplex noise from -1 to 1. |
+| `hash21(p)` | A random-looking number from 0 to 1 that is the same for the same input. |
+| `spectrum(h)` | A rainbow colour for `h` from 0 to 1. |
+
+`dither_slint::glam` re-exports the vector types, so you do not need to add `glam` yourself.
+
+## Going further: colours of their own
+
+By default the dots take their colour from the palette. For colours of your own, implement the `Field` trait instead of writing a function. `tone` decides where the dots go, and `color` gives the colour of each dot. Cells without a dot stay the first palette colour.
+
+```rust
+use dither_slint::field::{self, Cell, Field};
+use dither_slint::glam::Vec4;
+
+struct Rainbow;
+
+impl Field for Rainbow {
+    fn tone(&self, cell: &Cell) -> f32 {
+        cell.uv.y
+    }
+
+    fn color(&self, cell: &Cell) -> Option<Vec4> {
+        Some(Vec4::new(cell.uv.x, 0.2, 1.0 - cell.uv.x, 1.0))
+    }
+}
+
+field::register("rainbow", Rainbow);
+```
+
+The colour is red, green, blue and alpha, each from 0 to 1. Return `None` for a cell to use the palette instead.
+
+## Properties
+
+<Api file="dither-shader" />

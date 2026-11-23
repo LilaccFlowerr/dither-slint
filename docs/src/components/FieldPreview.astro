@@ -1,0 +1,106 @@
+---
+interface Control {
+	label: string;
+	index: number;
+	min: number;
+	max: number;
+	step: number;
+}
+
+interface Props {
+	field: string;
+	palette: string[];
+	params?: number[];
+	controls?: Control[];
+	height?: number;
+	cell?: number;
+}
+
+const { field, palette, params = [], controls = [], height = 260, cell = 3 } = Astro.props;
+---
+
+<figure class="preview" data-field={field} data-palette={palette.join(' ')} data-params={JSON.stringify(params)} data-cell={cell}>
+	<canvas style={`height: ${height}px`}></canvas>
+	{controls.length > 0 && (
+		<div class="controls">
+			{controls.map((control) => (
+				<label>
+					<span>{control.label}</span>
+					<input type="range" data-index={control.index} min={control.min} max={control.max} step={control.step} value={params[control.index]} />
+				</label>
+			))}
+		</div>
+	)}
+</figure>
+
+<style>
+	.preview {
+		margin: 1.25rem 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+	canvas {
+		display: block;
+		width: 100%;
+		image-rendering: pixelated;
+	}
+	.controls {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: 0.75rem 1rem;
+		padding: 0.8rem 1rem;
+		border-top: 1px solid var(--sl-color-gray-5);
+		font-size: var(--sl-text-sm);
+	}
+	label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		margin: 0 !important;
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { shader } from '../engine/dither_slint_engine_web.js';
+
+	const FRAME_MS = 1000 / 30;
+
+	ready.then(() => {
+		for (const preview of document.querySelectorAll<HTMLElement>('.preview[data-field]')) {
+			const canvas = preview.querySelector('canvas')!;
+			const context = canvas.getContext('2d')!;
+			const cell = Number(preview.dataset.cell);
+			const palette = new Uint8Array(preview.dataset.palette!.split(' ').flatMap((color) => rgba(color)));
+			const params = JSON.parse(preview.dataset.params!) as number[];
+			let visible = false;
+			let last = 0;
+
+			for (const input of preview.querySelectorAll<HTMLInputElement>('input[data-index]')) {
+				input.addEventListener('input', () => {
+					params[Number(input.dataset.index)] = Number(input.value);
+				});
+			}
+
+			const draw = (now: number) => {
+				if (!visible) return;
+				requestAnimationFrame(draw);
+				if (now - last < FRAME_MS) return;
+				last = now;
+				const columns = Math.max(1, Math.round(canvas.clientWidth / cell));
+				const rows = Math.max(1, Math.round(canvas.clientHeight / cell));
+				const bytes = shader(preview.dataset.field!, columns, rows, now / 1000, new Float32Array(params), palette, 1, 0);
+				canvas.width = columns;
+				canvas.height = rows;
+				context.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+			};
+
+			new IntersectionObserver(([entry]) => {
+				const wasVisible = visible;
+				visible = entry.isIntersecting;
+				if (visible && !wasVisible) requestAnimationFrame(draw);
+			}).observe(preview);
+		}
+	});
+</script>

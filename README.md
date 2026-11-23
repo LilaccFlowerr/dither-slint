@@ -45,7 +45,7 @@ export component App inherits Window {
 }
 ```
 
-The gradients are drawn in Rust, so connect the engine once after creating your window:
+The dots are drawn in Rust, so connect the engine once after creating your window. Without `install!` and the `export { DitherEngine }` line above, the components are drawn flat:
 
 ```rust
 slint::include_modules!();

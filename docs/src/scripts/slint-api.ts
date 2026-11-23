@@ -190,3 +190,26 @@ export function withInherited(file: string, component: Component, bases: string[
 	void file;
 	return merged;
 }
+
+export function exportedNames(): Set<string> {
+	const text = fs.readFileSync(path.join(root, 'lib.slint'), 'utf8');
+	const names = new Set<string>();
+	for (const match of text.matchAll(/export\s*\{([^}]*)\}/g)) {
+		for (const name of match[1].split(',')) names.add(name.trim());
+	}
+	return names;
+}
+
+export function enumsUsedBy(component: Component): string[] {
+	const used = new Set<string>();
+	const visit = (type: string) => {
+		for (const name of typeNames(type)) {
+			const found = allTypes().get(name);
+			if (!found || used.has(name)) continue;
+			if (found.kind === 'enum') used.add(name);
+			else for (const field of found.fields) visit(field.type);
+		}
+	};
+	for (const member of component.properties) visit(member.type);
+	return [...used];
+}

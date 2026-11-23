@@ -1,0 +1,71 @@
+---
+const matrices = ['bayer2', 'bayer4', 'bayer8', 'blue-noise'];
+---
+
+<div class="compare">
+	{matrices.map((name, index) => (
+		<figure data-matrix={index}>
+			<canvas class="ramp"></canvas>
+			<canvas class="patch"></canvas>
+			<figcaption><code>{name}</code></figcaption>
+		</figure>
+	))}
+</div>
+
+<style>
+	.compare {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+		gap: 1rem;
+		margin: 1.5rem 0;
+	}
+	figure {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	canvas {
+		display: block;
+		width: 100%;
+		image-rendering: pixelated;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 6px;
+	}
+	.ramp {
+		height: 7rem;
+	}
+	.patch {
+		height: 3.5rem;
+	}
+	figcaption {
+		text-align: center;
+		font-size: var(--sl-text-sm);
+	}
+</style>
+
+<script>
+	import init, { gradient } from '../engine/dither_slint_engine_web.js';
+
+	const palette = new Uint8Array([27, 26, 25, 255, 232, 228, 220, 255]);
+	const CELL = { ramp: 4, patch: 8 };
+
+	init().then(() => {
+		for (const figure of document.querySelectorAll<HTMLElement>('.compare figure')) {
+			const matrix = Number(figure.dataset.matrix);
+			for (const [kind, from, to] of [['ramp', 0, 1], ['patch', 0.5, 0.5]] as const) {
+				const canvas = figure.querySelector<HTMLCanvasElement>(`.${kind}`)!;
+				const draw = () => {
+					const columns = Math.max(1, Math.round(canvas.clientWidth / CELL[kind]));
+					const rows = Math.max(1, Math.round(canvas.clientHeight / CELL[kind]));
+					const bytes = gradient(columns, rows, 180, from, to, matrix, palette, 0);
+					canvas.width = columns;
+					canvas.height = rows;
+					canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(bytes), columns, rows), 0, 0);
+				};
+				new ResizeObserver(draw).observe(canvas);
+				draw();
+			}
+		}
+	});
+</script>

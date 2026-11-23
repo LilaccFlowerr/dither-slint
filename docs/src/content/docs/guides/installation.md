@@ -1,29 +1,28 @@
 ---
-title: Installation
-description: Add dither-slint to a Slint app.
+title: Quick start
+description: A running dither-slint app in four files.
 ---
 
-## Add the crate
+dither-slint is a Slint library with a small Rust engine behind it, so it needs four things: the crate, a `build.rs` that tells the Slint compiler where the library is, one line in your `.slint` file, and one line in `main.rs`. Create a new project with `cargo new my-app` and use these files.
+
+## Cargo.toml
 
 ```toml
 [dependencies]
 dither-slint = "1"
+slint = "1.18"
 
 [build-dependencies]
 dither-slint = "1"
 slint-build = "1.18"
-```
 
-The dithering runs on the CPU in Rust, so turn optimisation on for your dependencies. Without it a debug build is slow:
-
-```toml
 [profile.dev.package."*"]
 opt-level = 3
 ```
 
-## Point the Slint compiler at the library
+The crate is in both lists. Your app uses the engine, and your `build.rs` uses the path to the `.slint` files. The last block turns optimisation on for dependencies: the dots are computed on the CPU, and a debug build without it is slow.
 
-In your `build.rs`:
+## build.rs
 
 ```rust
 fn main() {
@@ -33,41 +32,51 @@ fn main() {
 }
 ```
 
-## Use a component
+`library_paths()` makes `@dither` mean "the dither-slint library" in your `.slint` files.
+
+## ui/app.slint
 
 ```slint
 import { DitherButton } from "@dither/lib.slint";
 export { DitherEngine } from "@dither/lib.slint";
 
-export component App inherits Window {
-    DitherButton { text: "Deploy"; }
+export component AppWindow inherits Window {
+    width: 320px;
+    height: 160px;
+
+    DitherButton {
+        text: "Deploy";
+        clicked => {
+            debug("deployed");
+        }
+    }
 }
 ```
 
-## Connect the engine
+You import every name you use, including enums such as `DitherFill`. [Importing](../importing/) explains how, and every component page starts with the line to copy. The `export { DitherEngine }` line is what the next step needs.
 
-The pictures are drawn in Rust, so connect the engine once after you create the window:
+## src/main.rs
 
 ```rust
 slint::include_modules!();
 
 fn main() -> Result<(), slint::PlatformError> {
-    let app = App::new()?;
+    let app = AppWindow::new()?;
     dither_slint::install!(app);
     app.run()
 }
 ```
 
-Without `export { DitherEngine }` in your `.slint` file and the `install!` call, the components draw nothing.
+The dots are drawn in Rust, so `install!` connects the engine to your window. Call it once, right after you create the window and before `run()`.
 
-## Colours
+## Run it
 
-The components read their colours from `DitherTheme` and `DitherPalette`. Change them once at start-up:
-
-```slint
-DitherTheme.background = #1b1a19;
-DitherTheme.foreground = #ebe5d9;
-DitherTheme.ink = #5471f5;
+```bash
+cargo run
 ```
 
-Turn all motion off with `DitherTheme.animated = false`.
+You should see a button with a band of dots along its top and bottom edge. If the button is flat and has no dots, the engine is not connected: check the `install!` line and the `export { DitherEngine }` line. [Troubleshooting](../troubleshooting/) lists the other messages you can run into.
+
+## Next
+
+[Concepts](../concepts/) explains what cell, matrix, level, fill and bloom mean. [Theming](../theming/) sets the colours and the motion of the whole app in one place.

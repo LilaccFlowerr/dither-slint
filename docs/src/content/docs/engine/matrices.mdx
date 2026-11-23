@@ -1,0 +1,59 @@
+---
+title: Matrices
+description: "The pattern that decides which cell becomes a dot."
+---
+
+import MatrixCompare from '../../../components/MatrixCompare.astro';
+
+For every cell a dither has to decide: ink or paper. The **matrix** is the rule it decides with. Pick another matrix and the same picture gets a different texture.
+
+<MatrixCompare />
+
+Each column is one matrix. The top square is a ramp from paper to ink. The bottom square is a flat half-tone, drawn with bigger cells so you can see the pattern itself.
+
+## How a cell is decided
+
+A matrix is a small grid of numbers that repeats over the whole surface. Each number is a **threshold**. A cell takes the threshold at its place in the grid, and turns to ink when the tone is above it. This is the `bayer4` grid, as the order in which cells turn on:
+
+```text
+ 0   8   2  10
+12   4  14   6
+ 3  11   1   9
+15   7  13   5
+```
+
+Cell `0` turns on first, at the faintest tone. Cell `15` turns on last, only at the darkest. At a tone of 0.5, eight of the sixteen cells are ink, so half the surface is dotted. At 0.25 it is four, and the dots sit evenly apart because the order spreads them out.
+
+## The four matrices
+
+| `matrix` | Grid | Tones | Looks like |
+| --- | --- | --- | --- |
+| `bayer2` | 2 by 2 | 5 | A coarse, graphic crosshatch. |
+| `bayer4` | 4 by 4 | 17 | The default. A regular, printed look. |
+| `bayer8` | 8 by 8 | 65 | The same, with smoother gradients. |
+| `blue-noise` | 64 by 64 | 257 | No visible grid, like film grain. |
+
+"Tones" is how many steps of grey the matrix can draw. More tones means smoother gradients, and `levels` can ask for fewer (see [Palettes](../palettes/)).
+
+## Which one to use
+
+- **`bayer4`** is the safe default, and the one most components start with.
+- **`bayer8`** for large smooth surfaces where `bayer4` shows bands.
+- **`blue-noise`** for photos and big soft areas. It has no grid, so no pattern stands out.
+- **`bayer2`** when you want the pattern to be the look: chunky, with a big `cell`.
+
+## The same dots every frame
+
+The threshold only depends on where the cell is, never on the time. The same tone therefore always gives the same dots, and an animation changes only the cells whose tone crosses their threshold. That is why moving things look calm instead of flickering.
+
+## Where you set it
+
+Every component that draws dots has a `matrix` property. `DitherMotion.matrix` sets it for the hover, press and idle effects. The [Theming](../../guides/theming/) page shows the global.
+
+## Images have more methods
+
+`DitherImage` has a `method` as well, and it can do more than the matrices: `floyd-steinberg`, `atkinson` and `sierra-lite` do not use a grid. They look at each pixel and pass the leftover error on to its neighbours, which suits photos. `bayer4`, `bayer8` and `blue-noise` are the matrices from this page.
+
+## Your own matrix
+
+The four matrices are fixed, and a matrix is not something you can pass in, so you cannot add your own pattern. To get a different texture, change the `cell` size, the number of `levels` or the palette. To decide the tone of every cell yourself, [write your own dither](../write-your-own/).

@@ -1,0 +1,11 @@
+{
+  "DitherShader": {
+    "field": "The name of the field to draw, as registered in Rust with <code>field::register</code>. The built-in backgrounds are fields too.",
+    "params": "Numbers passed to the field, which reads them as <code>cell.params[0]</code>, <code>cell.params[1]</code> and so on.",
+    "palette": "The colours, from paper to ink. A field with more than two colours moves through them as the tone rises. See <a href=\"../../engine/palettes/\">Palettes</a>.",
+    "levels": "Rounds the tone to this many steps before the dots are chosen. 0 uses every tone the matrix can draw.",
+    "speed": "Speeds up the time the field sees. 2 runs twice as fast.",
+    "fps": "How many times per second the picture is redrawn. Lower is cheaper.",
+    "still-time": "The moment in the animation to show while <code>animated</code> is off, in seconds."
+  }
+}
