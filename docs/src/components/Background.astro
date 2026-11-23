@@ -304,7 +304,9 @@ const { field, name, params, palette, slots = 'palette', colors, matrix = 1, cel
 					}
 					lines.push(`${control.dataset.prop}: ${value(control)};`);
 				}
-				demo.querySelector('code')!.textContent = `${demo.dataset.name} {\n${lines.map((line) => `    ${line}\n`).join('')}}`;
+				const text = `${demo.dataset.name} {\n${lines.map((line) => `    ${line}\n`).join('')}}`;
+				const block = demo.querySelector('code')!;
+				if (block.textContent !== text) block.textContent = text;
 			};
 
 			const sourceInputs = controls.filter((item) => item.dataset.array);

@@ -9,11 +9,7 @@ The button, the badge, the card and the input all play the same [effects](../eff
 
 <FxPreview hover="spotlight" press="burst" idle="breathe" />
 
-You need a Slint app that already runs, as in the [quick start](../../guides/installation/). Make a new file `ui/fx-tile.slint`. Everything in this tutorial goes in it, and the first line is the import:
-
-```slint
-import { DitherFx, DitherHover, DitherIdle, DitherMotion, DitherPress, DitherTheme } from "@dither/lib.slint";
-```
+You need a Slint app that already runs, as in the [quick start](../../guides/installation/). Make a new file `ui/fx-tile.slint`. Every step shows the whole file, so you can copy it over the one you have.
 
 ## Step 1: the box
 
@@ -41,9 +37,11 @@ export component Tile inherits Rectangle {
 
 ## Step 2: the glow
 
-`DitherFx` is a transparent layer that fills the box it is in and draws dots on it. Add it after the text, so it is drawn on top. An idle effect plays by itself, so this one is enough. Every step shows the whole component, so replace the one you have:
+`DitherFx` is a transparent layer that fills the box it is in and draws dots on it. Add it after the text, so it is drawn on top. An idle effect plays by itself, so this one is enough. Add the import on the first line:
 
 ```slint
+import { DitherFx, DitherIdle } from "@dither/lib.slint";
+
 export component Tile inherits Rectangle {
     background: #1b1a19;
     border-radius: 12px;
@@ -72,6 +70,8 @@ export component Tile inherits Rectangle {
 `DitherFx` draws the effects but it cannot see the pointer. The box can, with a `TouchArea`, and it tells `DitherFx` where the pointer is. Give the layer a name so you can call it, set a hover effect, and add the `TouchArea` after it:
 
 ```slint
+import { DitherFx, DitherHover, DitherIdle } from "@dither/lib.slint";
+
 export component Tile inherits Rectangle {
     background: #1b1a19;
     border-radius: 12px;
@@ -116,6 +116,8 @@ export component Tile inherits Rectangle {
 A press effect starts where you press. Set one on the layer, and tell it when the pointer goes down:
 
 ```slint
+import { DitherFx, DitherHover, DitherIdle, DitherPress } from "@dither/lib.slint";
+
 export component Tile inherits Rectangle {
     background: #1b1a19;
     border-radius: 12px;
@@ -163,6 +165,8 @@ Click this one:
 Make the tile do something. Add a `clicked` callback, and let a `FocusScope` make it reachable with the keyboard. Enter and Space click the tile and play the press effect in the middle, and the border lights up while the tile has focus:
 
 ```slint
+import { DitherFx, DitherHover, DitherIdle, DitherPress } from "@dither/lib.slint";
+
 export component Tile inherits Rectangle {
     callback clicked;
 
@@ -225,6 +229,8 @@ export component Tile inherits Rectangle {
 Right now the text, the colour and the effects are fixed. Rename `Tile` to `FxTile` and turn them into properties, with the same defaults the built-in components use. The effects start from `DitherMotion`, so the tile follows the rest of your app until you say otherwise:
 
 ```slint
+import { DitherFx, DitherHover, DitherIdle, DitherMotion, DitherPress, DitherTheme } from "@dither/lib.slint";
+
 export component FxTile inherits Rectangle {
     in property <string> text;
     in property <color> ink: DitherTheme.ink;
@@ -289,13 +295,18 @@ export component FxTile inherits Rectangle {
 The colour is called `ink`, because a `Rectangle` already has a `color` of its own. Use it like any other component:
 
 ```slint
-FxTile {
-    text: "Deploy";
-    ink: DitherPalette.green;
-    hover-effect: DitherHover.trace;
-    idle-effect: DitherIdle.none;
-    clicked => {
-        debug("deployed");
+import { DitherHover, DitherIdle, DitherPalette } from "@dither/lib.slint";
+import { FxTile } from "fx-tile.slint";
+
+export component AppWindow inherits Window {
+    FxTile {
+        text: "Deploy";
+        ink: DitherPalette.green;
+        hover-effect: DitherHover.trace;
+        idle-effect: DitherIdle.none;
+        clicked => {
+            debug("deployed");
+        }
     }
 }
 ```
