@@ -1,0 +1,305 @@
+---
+title: Build your own
+description: "A tutorial: make a tile that glows, follows the pointer, bursts when pressed and works with the keyboard."
+---
+
+import FxPreview from '../../../components/FxPreview.astro';
+
+The button, the badge, the card and the input all play the same [effects](../effects/), and you can give them to your own components. In this tutorial you build `FxTile`, a box that glows by itself, follows the pointer, bursts when you press it and works with the keyboard. At the end it is a component you can use anywhere.
+
+<FxPreview hover="spotlight" press="burst" idle="breathe" />
+
+You need a Slint app that already runs, as in the [quick start](../../guides/installation/). Make a new file `ui/fx-tile.slint`. Everything in this tutorial goes in it, and the first line is the import:
+
+```slint
+import { DitherFx, DitherHover, DitherIdle, DitherMotion, DitherPress, DitherTheme } from "@dither/lib.slint";
+```
+
+## Step 1: the box
+
+Start with the box itself, without any effect:
+
+```slint
+export component Tile inherits Rectangle {
+    background: #1b1a19;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #ebe5d9.transparentize(0.85);
+    clip: true;
+
+    Text {
+        text: "Deploy";
+        color: #ebe5d9;
+        font-size: 16px;
+    }
+}
+```
+
+`clip: true` keeps everything drawn inside the box within its rounded corners, which matters as soon as dots are drawn over it. Import it in your window with `import { Tile } from "fx-tile.slint";` and add `Tile {}` to see it.
+
+<FxPreview />
+
+## Step 2: the glow
+
+`DitherFx` is a transparent layer that fills the box it is in and draws dots on it. Add it after the text, so it is drawn on top. An idle effect plays by itself, so this one is enough. Every step shows the whole component, so replace the one you have:
+
+```slint
+export component Tile inherits Rectangle {
+    background: #1b1a19;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #ebe5d9.transparentize(0.85);
+    clip: true;
+
+    Text {
+        text: "Deploy";
+        color: #ebe5d9;
+        font-size: 16px;
+    }
+
+    DitherFx {
+        idle: DitherIdle.breathe;
+    }
+}
+```
+
+`breathe` makes the edge glow in and out.
+
+<FxPreview idle="breathe" />
+
+## Step 3: follow the pointer
+
+`DitherFx` draws the effects but it cannot see the pointer. The box can, with a `TouchArea`, and it tells `DitherFx` where the pointer is. Give the layer a name so you can call it, set a hover effect, and add the `TouchArea` after it:
+
+```slint
+export component Tile inherits Rectangle {
+    background: #1b1a19;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #ebe5d9.transparentize(0.85);
+    clip: true;
+
+    Text {
+        text: "Deploy";
+        color: #ebe5d9;
+        font-size: 16px;
+    }
+
+    fx := DitherFx {
+        idle: DitherIdle.breathe;
+        hover: DitherHover.spotlight;
+    }
+
+    TouchArea {
+        changed has-hover => {
+            if self.has-hover {
+                fx.pointer-enter(self.mouse-x, self.mouse-y);
+            } else {
+                fx.pointer-leave();
+            }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.move {
+                fx.pointer-move(self.mouse-x, self.mouse-y);
+            }
+        }
+    }
+}
+```
+
+`pointer-enter` and `pointer-leave` say when the pointer comes in and goes out, and `pointer-move` says where it is. The positions are the ones the `TouchArea` reports, which is the position in the box. Move the pointer over this one:
+
+<FxPreview idle="breathe" hover="spotlight" />
+
+## Step 4: press
+
+A press effect starts where you press. Set one on the layer, and tell it when the pointer goes down:
+
+```slint
+export component Tile inherits Rectangle {
+    background: #1b1a19;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #ebe5d9.transparentize(0.85);
+    clip: true;
+
+    Text {
+        text: "Deploy";
+        color: #ebe5d9;
+        font-size: 16px;
+    }
+
+    fx := DitherFx {
+        idle: DitherIdle.breathe;
+        hover: DitherHover.spotlight;
+        press: DitherPress.burst;
+    }
+
+    TouchArea {
+        changed has-hover => {
+            if self.has-hover {
+                fx.pointer-enter(self.mouse-x, self.mouse-y);
+            } else {
+                fx.pointer-leave();
+            }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                fx.pointer-down(self.mouse-x, self.mouse-y);
+            } else if event.kind == PointerEventKind.move {
+                fx.pointer-move(self.mouse-x, self.mouse-y);
+            }
+        }
+    }
+}
+```
+
+Click this one:
+
+<FxPreview idle="breathe" hover="spotlight" press="burst" />
+
+## Step 5: clicks and the keyboard
+
+Make the tile do something. Add a `clicked` callback, and let a `FocusScope` make it reachable with the keyboard. Enter and Space click the tile and play the press effect in the middle, and the border lights up while the tile has focus:
+
+```slint
+export component Tile inherits Rectangle {
+    callback clicked;
+
+    background: #1b1a19;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: focus.has-focus ? #ebe5d9 : #ebe5d9.transparentize(0.85);
+    clip: true;
+
+    Text {
+        text: "Deploy";
+        color: #ebe5d9;
+        font-size: 16px;
+    }
+
+    fx := DitherFx {
+        idle: DitherIdle.breathe;
+        hover: DitherHover.spotlight;
+        press: DitherPress.burst;
+    }
+
+    focus := FocusScope {
+        key-pressed(event) => {
+            if event.text == " " || event.text == Key.Return {
+                fx.pointer-down(root.width / 2, root.height / 2);
+                root.clicked();
+                return accept;
+            }
+            return reject;
+        }
+    }
+
+    TouchArea {
+        clicked => {
+            focus.focus();
+            root.clicked();
+        }
+        changed has-hover => {
+            if self.has-hover {
+                fx.pointer-enter(self.mouse-x, self.mouse-y);
+            } else {
+                fx.pointer-leave();
+            }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                fx.pointer-down(self.mouse-x, self.mouse-y);
+            } else if event.kind == PointerEventKind.move {
+                fx.pointer-move(self.mouse-x, self.mouse-y);
+            }
+        }
+    }
+}
+```
+
+`focus.focus()` in the `TouchArea` moves the focus to the tile when you click it, so the border shows after a click as well.
+
+## Step 6: make it a component
+
+Right now the text, the colour and the effects are fixed. Rename `Tile` to `FxTile` and turn them into properties, with the same defaults the built-in components use. The effects start from `DitherMotion`, so the tile follows the rest of your app until you say otherwise:
+
+```slint
+export component FxTile inherits Rectangle {
+    in property <string> text;
+    in property <color> ink: DitherTheme.ink;
+    in property <DitherHover> hover-effect: DitherMotion.hover;
+    in property <DitherPress> press-effect: DitherMotion.press;
+    in property <DitherIdle> idle-effect: DitherMotion.idle;
+    callback clicked;
+
+    background: #1b1a19;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: focus.has-focus ? root.ink : root.ink.transparentize(0.6);
+    clip: true;
+
+    Text {
+        text: root.text;
+        color: #ebe5d9;
+        font-size: 16px;
+    }
+
+    fx := DitherFx {
+        color: root.ink;
+        hover: root.hover-effect;
+        press: root.press-effect;
+        idle: root.idle-effect;
+    }
+
+    focus := FocusScope {
+        key-pressed(event) => {
+            if event.text == " " || event.text == Key.Return {
+                fx.pointer-down(root.width / 2, root.height / 2);
+                root.clicked();
+                return accept;
+            }
+            return reject;
+        }
+    }
+
+    TouchArea {
+        clicked => {
+            focus.focus();
+            root.clicked();
+        }
+        changed has-hover => {
+            if self.has-hover {
+                fx.pointer-enter(self.mouse-x, self.mouse-y);
+            } else {
+                fx.pointer-leave();
+            }
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                fx.pointer-down(self.mouse-x, self.mouse-y);
+            } else if event.kind == PointerEventKind.move {
+                fx.pointer-move(self.mouse-x, self.mouse-y);
+            }
+        }
+    }
+}
+```
+
+The colour is called `ink`, because a `Rectangle` already has a `color` of its own. Use it like any other component:
+
+```slint
+FxTile {
+    text: "Deploy";
+    ink: DitherPalette.green;
+    hover-effect: DitherHover.trace;
+    idle-effect: DitherIdle.none;
+    clicked => {
+        debug("deployed");
+    }
+}
+```
+
+<FxPreview color="green" hover="trace" press="ripple" />
+
+That is all of it: a box, a layer that draws the effects, and a `TouchArea` that tells the layer what the pointer does. The same four calls work in any component you make. [DitherFx](../dither-fx/) lists them, with every property of the layer.

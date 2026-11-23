@@ -99,7 +99,15 @@ export default defineConfig({
 						},
 					],
 				},
-				{ label: 'Motion', items: [{ label: 'Overview', slug: 'motion/overview' }] },
+				{
+					label: 'Motion',
+					items: [
+						{ label: 'Overview', slug: 'motion/overview' },
+						{ label: 'Effects', slug: 'motion/effects' },
+						{ label: 'Build your own', slug: 'motion/build-your-own' },
+						{ label: 'DitherFx', slug: 'motion/dither-fx' },
+					],
+				},
 				{
 					label: 'Backgrounds',
 					collapsed: true,

@@ -1,0 +1,57 @@
+---
+interface Props {
+	label?: string;
+	color?: string;
+	hover?: string;
+	press?: string;
+	idle?: string;
+}
+
+const { label = 'Deploy', color = 'ink', hover = 'none', press = 'none', idle = 'none' } = Astro.props;
+---
+
+<div class="fx-preview" data-color={color} data-hover={hover} data-press={press} data-idle={idle}>
+	<span>{label}</span>
+</div>
+
+<style>
+	.fx-preview {
+		position: relative;
+		display: grid;
+		place-items: center;
+		height: 110px;
+		margin: 1.25rem 0;
+		overflow: hidden;
+		border: 1px solid rgba(235, 229, 217, 0.15);
+		border-radius: 12px;
+		background: #1b1a19;
+		color: #ebe5d9;
+		font-size: 16px;
+		user-select: none;
+	}
+	.fx-preview :global(canvas) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		image-rendering: pixelated;
+		pointer-events: none;
+	}
+	span {
+		position: relative;
+	}
+</style>
+
+<script>
+	import { ready, rgba } from '../scripts/dither';
+	import { attachFx } from '../scripts/fx';
+
+	ready.then(() => {
+		for (const tile of document.querySelectorAll<HTMLElement>('.fx-preview')) {
+			const host = document.createElement('div');
+			host.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+			tile.prepend(host);
+			const { color, hover, press, idle } = tile.dataset;
+			attachFx(host, tile, { color: rgba(color!), strength: 0.7, effect: { hover, press, idle } as never });
+		}
+	});
+</script>

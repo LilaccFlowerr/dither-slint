@@ -1,0 +1,41 @@
+---
+title: DitherFx
+description: "The layer that draws the hover, press and idle effects, with its properties and the calls it listens to."
+---
+
+import Api from '../../../components/Api.astro';
+
+`DitherFx` is the layer behind the effects of the button, the badge, the card and the input. It is a transparent box that fills the box it is in and draws dots on it. To see it put to use, follow [Build your own](../build-your-own/).
+
+```slint
+fx := DitherFx {
+    hover: DitherHover.spotlight;
+    press: DitherPress.burst;
+    idle: DitherIdle.breathe;
+}
+```
+
+## The calls
+
+`DitherFx` draws the effects, but it cannot see the pointer. Your component sees it, and tells `DitherFx` with these calls. The positions are the pointer position inside the box, which is what `mouse-x` and `mouse-y` of a `TouchArea` give you.
+
+| Call | When |
+| --- | --- |
+| `pointer-enter(x, y)` | The pointer comes in. Starts the hover effect. |
+| `pointer-move(x, y)` | The pointer moves. `spotlight` uses it to follow the pointer. |
+| `pointer-leave()` | The pointer goes out. `spotlight` and `rise` fade out. |
+| `pointer-down(x, y)` | The pointer goes down. Starts the press effect there. |
+| `pointer-focus()` | The box got keyboard focus. Starts the hover effects that play once. |
+
+## Things to know
+
+- **Order matters.** Slint draws in the order of the file, so a `DitherFx` after your text draws over the text, and one before it draws behind.
+- **Clip the box.** `DitherFx` is a plain rectangle. With rounded corners, add `clip: true` to the box so the dots stay inside them.
+- **Idle needs no calls.** An idle effect such as `breathe` plays by itself, without any pointer.
+- **Keyboard users.** `pointer-focus()` starts `sweep`, `scan`, `trace` and `noise`, but not `spotlight` and `rise`, which follow the pointer. For those, show focus another way, such as a border, and call `pointer-down` in the middle when Enter is pressed. The tutorial does this.
+
+The defaults come from [`DitherMotion`](../overview/), so a `DitherFx` that sets nothing follows the rest of your app. `animated` follows `DitherTheme.animated`, so one switch stills it too.
+
+## Properties
+
+<Api file="fx" />

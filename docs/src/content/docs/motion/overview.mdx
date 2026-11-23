@@ -1,74 +1,82 @@
 ---
 title: Motion
-description: Hover, press and idle effects.
+description: "How the hover, press and idle effects work, and how to set them for one component or the whole app."
 ---
 
-import MotionDemo from '../../../components/MotionDemo.astro';
+Every dither component can move, and the movement is drawn in the same dots as the rest. There are three kinds of effect, one for each moment:
 
-<MotionDemo />
+| Kind | Plays when | Examples |
+| --- | --- | --- |
+| **Hover** | The pointer comes in, or the component gets keyboard focus. | A sweep across the box, a spotlight that follows the pointer. |
+| **Press** | The pointer goes down. | A ring that grows from where you pressed, sparks, a glitch. |
+| **Idle** | Nothing is happening. | A slow shimmer, a glow that breathes, twinkling stars. |
 
+You pick one effect of each kind, or `none`. The [Effects](../effects/) page plays every one of them.
 
-Every dither component plays small effects drawn in dots. `DitherFx` is the layer behind them, and the button, badge and card use it. You can put it inside any box:
+## Which components have it
+
+`DitherButton`, `DitherBadge`, `DitherCard` and `DitherInput` play these effects. They have a property for each kind:
+
+| Component | `hover-effect` | `press-effect` | `idle-effect` |
+| --- | :---: | :---: | :---: |
+| `DitherButton` | yes | yes | yes |
+| `DitherBadge` | yes | yes | yes |
+| `DitherCard` | yes | yes | yes |
+| `DitherInput` | yes | yes | no |
+
+For your own components, [`DitherFx`](../dither-fx/) is the layer these four use, and you can put it inside any box. [Build your own](../build-your-own/) shows how.
+
+## For one component
+
+Set the effects on the component:
 
 ```slint
-Rectangle {
-    fx := DitherFx {
-        hover: DitherHover.spotlight;
-        press: DitherPress.burst;
-    }
-    TouchArea {
-        changed has-hover => {
-            if self.has-hover { fx.pointer-enter(self.mouse-x, self.mouse-y); }
-            else { fx.pointer-leave(); }
-        }
-        pointer-event(event) => {
-            if event.kind == PointerEventKind.down { fx.pointer-down(self.mouse-x, self.mouse-y); }
-            else if event.kind == PointerEventKind.move { fx.pointer-move(self.mouse-x, self.mouse-y); }
-        }
+DitherButton {
+    text: "Deploy";
+    hover-effect: DitherHover.trace;
+    press-effect: DitherPress.glitch;
+    idle-effect: DitherIdle.shimmer;
+}
+```
+
+To switch one kind off, use `none`, for example `hover-effect: DitherHover.none`.
+
+## For the whole app
+
+`DitherMotion` is a global with the default of every component. Set it once, in the `init` callback of your window:
+
+```slint
+export component AppWindow inherits Window {
+    init => {
+        DitherMotion.hover = DitherHover.spotlight;
+        DitherMotion.press = DitherPress.burst;
+        DitherMotion.idle = DitherIdle.breathe;
     }
 }
 ```
 
-## Hover
+A property on a component beats the global, so you can set a default and still give one button something else. The [Theming](../../guides/theming/) page shows how to set the same thing from Rust.
 
-| Effect | |
-| --- | --- |
-| `sweep` | A soft diagonal band crosses from left to right. |
-| `spotlight` | A glow that follows the pointer. |
-| `scan` | A bright line drops down the box and leaves a trail. |
-| `trace` | A comet runs once around the edge. |
-| `rise` | The bottom lights up. |
-| `noise` | Random cells flicker like static. |
+## Speed, intensity and matrix
 
-## Press
+Three more settings on `DitherMotion` shape how every effect looks:
 
-| Effect | |
-| --- | --- |
-| `ripple` | A ring grows from where you pressed. |
-| `burst` | Sparks fly out and blink away. |
-| `flash` | The whole box lights up, brightest at the press. |
-| `pulse` | Two square rings follow each other. |
-| `glitch` | Bars of the box tear sideways. |
-
-## Idle
-
-| Effect | |
-| --- | --- |
-| `shimmer` | A fainter sweep every few seconds. |
-| `breathe` | The edge glows in and out. |
-| `twinkle` | Stars that wink. |
-
-## Choosing the defaults
-
-`DitherMotion` is a global with the defaults for every component:
+| Setting | Does | Default |
+| --- | --- | --- |
+| `speed` | How fast the effects play. 2 is twice as fast, 0.5 half. | 1 |
+| `intensity` | How bright the dots are, from 0 (invisible) to 1. | 1 |
+| `matrix` | The [dither pattern](../../engine/matrices/) of the effects. | `bayer4` |
 
 ```slint
-DitherMotion.hover = DitherHover.spotlight;
-DitherMotion.press = DitherPress.burst;
-DitherMotion.idle = DitherIdle.breathe;
-DitherMotion.speed = 1.5;
-DitherMotion.intensity = 0.8;
-DitherMotion.matrix = DitherMatrix.bayer8;
+init => {
+    DitherMotion.speed = 1.5;
+    DitherMotion.intensity = 0.8;
+    DitherMotion.matrix = DitherMatrix.bayer8;
+}
 ```
 
-A component's own `hover`, `press` or `idle` property wins. `DitherTheme.animated = false` turns all of it off.
+The sliders on the [Effects](../effects/) page show what each of them does.
+
+## Turning it off
+
+`DitherTheme.animated = false` stills every component, including all of the effects. This is the one switch for a reduced-motion setting. Each of the four components has its own `animated` property that follows the global, so one of them can still choose `animated: true`.

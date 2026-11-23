@@ -1,0 +1,18 @@
+{
+ "DitherFx": {
+  "cell": "Size of one dither cell in the effects.",
+  "color": "The colour of the dots. Defaults to <code>DitherTheme.ink</code>.",
+  "strength": "How bright the effects are, 0 to 1. It is multiplied by <code>intensity</code>.",
+  "hover": "The effect that plays when the pointer enters, or follows it. Defaults to <code>DitherMotion.hover</code>.",
+  "press": "The effect that plays when the pointer goes down. Defaults to <code>DitherMotion.press</code>.",
+  "idle": "The effect that plays while nothing is happening. Defaults to <code>DitherMotion.idle</code>.",
+  "matrix": "The dither pattern of the effects. Defaults to <code>DitherMotion.matrix</code>.",
+  "speed": "How fast the effects play, 1 is normal. Defaults to <code>DitherMotion.speed</code>.",
+  "intensity": "Scales how bright the effects are, 0 to 1. Defaults to <code>DitherMotion.intensity</code>.",
+  "pointer-enter": "Tell it the pointer came in, at this position in the box. Starts the hover effect.",
+  "pointer-move": "Tell it the pointer moved. Effects that follow the pointer, such as <code>spotlight</code>, use the position.",
+  "pointer-leave": "Tell it the pointer left. Held effects, such as <code>spotlight</code> and <code>rise</code>, fade out.",
+  "pointer-focus": "Tell it the box got keyboard focus. Starts the hover effects that play once, so keyboard users see them too. <code>spotlight</code> and <code>rise</code> follow the pointer and do not play on focus.",
+  "pointer-down": "Tell it the pointer went down, at this position in the box. Starts the press effect."
+ }
+}

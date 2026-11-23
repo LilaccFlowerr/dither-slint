@@ -1,0 +1,56 @@
+---
+title: Effects
+description: "Every hover, press and idle effect, played live."
+---
+
+import MotionDemo from '../../../components/MotionDemo.astro';
+
+Move the pointer over a tile to play its hover effect, click it for a press effect, and watch the idle ones play by themselves. The sliders change the speed, the intensity and the matrix of all of them at once, the same three settings as `DitherMotion` in [Motion](../overview/).
+
+<MotionDemo />
+
+## Hover
+
+These play when the pointer comes in. Two of them stay while the pointer is inside and follow it, the others play once.
+
+| Effect | Looks like | Lasts |
+| --- | --- | --- |
+| `sweep` | A soft diagonal band crosses from left to right. The default. | 0.6 s |
+| `spotlight` | A glow that follows the pointer and fades out when it leaves. | While hovering |
+| `scan` | A bright line drops down the box and leaves a trail. | 0.6 s |
+| `trace` | A comet runs once around the edge. | 0.9 s |
+| `rise` | The bottom lights up and fades out when the pointer leaves. | While hovering |
+| `noise` | Random cells flicker like static. | 0.5 s |
+
+## Press
+
+These play when the pointer goes down, from where it went down.
+
+| Effect | Looks like | Lasts |
+| --- | --- | --- |
+| `ripple` | A ring grows from where you pressed. The default. | 0.6 s |
+| `burst` | Sparks fly out and blink away. | 0.6 s |
+| `flash` | The whole box lights up, brightest at the press. | 0.4 s |
+| `pulse` | Two square rings follow each other. | 0.7 s |
+| `glitch` | Bars of the box tear sideways. | 0.4 s |
+
+## Idle
+
+These play when nothing is happening. The default is `none`.
+
+| Effect | Looks like |
+| --- | --- |
+| `shimmer` | A fainter sweep every few seconds. |
+| `breathe` | The edge glows in and out, about every 2.6 seconds. |
+| `twinkle` | Stars that wink. |
+
+The times are at `speed` 1. At 2 everything lasts half as long.
+
+## Which to pick
+
+- **Hover on things you can click.** `sweep` is quiet, `spotlight` is the one that makes a card feel alive.
+- **Press on the actions that matter.** `ripple` is the familiar one. `burst` and `glitch` are loud, so use them where the press is an event.
+- **Idle on one thing per screen.** An idle effect is always moving, so give it to the one component you want people to notice, such as a call to action. Elsewhere leave it at `none`.
+- **Do not mix everything.** One hover, one press and one idle effect for the whole app looks more intended than a different one on every button.
+
+Set them on [one component or the whole app](../overview/), or use them in your [own components](../build-your-own/).
